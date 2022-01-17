@@ -7,10 +7,7 @@ import (
 
 // constants
 
-type languageKey string
-
 var (
-	LanguageKey       languageKey
 	SiteConfiguration Configuration
 )
 

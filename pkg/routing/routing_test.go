@@ -6,9 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/node"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/text/language"
 )
 
 func TestMatchRoute(t *testing.T) {
@@ -84,9 +86,8 @@ func TestMatchRoute(t *testing.T) {
 
 		t.Run(test.description, func(t *testing.T) {
 			req := httptest.NewRequest("GET", test.url, nil)
-
-			req.Header.Add("Accept-Language", test.language)
-
+			ctx := locale.WithLocale(req.Context(), language.MustParse(test.language))
+			req = req.WithContext(ctx)
 			handler := Handler(testHandler, mockLoader{
 				nodes: nodes,
 			},

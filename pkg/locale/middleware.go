@@ -14,7 +14,6 @@ var languageKey key
 
 /*
 Prefered language is set by contentmanagement API,
-When
 */
 func Handler(next http.Handler, cfg config.Configuration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +30,7 @@ func Handler(next http.Handler, cfg config.Configuration) http.Handler {
 		matcher := language.NewMatcher(cfg.Languages)
 
 		tag, _, _ := matcher.Match(t...)
-		ctx := context.WithValue(r.Context(), languageKey, tag)
+		ctx := WithLocale(r.Context(), tag)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
@@ -39,4 +38,8 @@ func Handler(next http.Handler, cfg config.Configuration) http.Handler {
 
 func FromContext(ctx context.Context) language.Tag {
 	return ctx.Value(languageKey).(language.Tag)
+}
+
+func WithLocale(ctx context.Context, tag language.Tag) context.Context {
+	return context.WithValue(ctx, languageKey, tag)
 }
