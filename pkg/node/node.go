@@ -8,25 +8,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type nodeKey string
+type key int
 
-var NodeKey nodeKey = "context-nodes"
+var nodeKey key
 
 type Node struct {
 	URLSegment map[string]string
 	ID         uuid.UUID
-	Parent     *Node
+	ParentID   uuid.UUID
 }
 
 // Checks if a node matches a urlsegment
 func (n Node) Match(ctx context.Context, remaining []string) (match bool, segments []string) {
 	segments = remaining
 	lang := ctx.Value(config.LanguageKey).(string)
-
-	if len(remaining) == 0 {
-		match = false
-		return
-	}
 
 	segment := remaining[0]
 	nodeSegment, exist := n.URLSegment[lang]
@@ -43,4 +38,12 @@ func (n Node) Match(ctx context.Context, remaining []string) (match bool, segmen
 		segments = segments[1:]
 	}
 	return
+}
+
+func WithNode(ctx context.Context, node Node) context.Context {
+	return context.WithValue(ctx, nodeKey, node)
+}
+
+func RoutedNode(ctx context.Context) Node {
+	return ctx.Value(nodeKey).(Node)
 }

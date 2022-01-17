@@ -10,38 +10,41 @@ import (
 	"github.com/crikke/cms/pkg/node"
 )
 
+type Matcher interface {
+	Match(ctx context.Context, remainingPath string) bool
+}
+
 /*
 Routing logic works as following:
 	1. Split url path into url segments
 	2. While remaining segments is not empty
 	3.   Get child nodes from previous matched node through context
 	4.   Loop through child nodes and check if node contain this segment then pop matched segment from remainingsegments and
-	     set push matched node to context.
+	     set matchedNode
+	5. When done looping through segments, set matchedNode to context
 */
-func RouteHandler(next http.Handler, contentLoader contentloader.Loader) http.Handler {
+func Handler(next http.Handler, contentLoader contentloader.Loader) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		ctx := r.Context()
-		// TODO: Maybe move localization to its own middleware
-		language := r.Header.Get("Accept-Language")
-		if language == "" {
-			language = config.SiteConfiguration.DefaultLanguage
-		}
-
-		ctx = context.WithValue(ctx, config.LanguageKey, language)
 		var segments []string
 		segments = strings.Split(r.URL.Path, "/")
 
 		// first item is always rootnode
-		currentNode, err := contentLoader.GetContent(ctx, config.SiteConfiguration.RootPage)
+		currentNode, err := contentLoader.GetContent(r.Context(), config.SiteConfiguration.RootPage)
 		if err != nil {
 			// TODO: Handle error
 			panic(err)
 		}
 
-		for i := 1; i < len(segments); i++ {
+		for len(segments) > 0 {
 
-			nodes, err := contentLoader.GetChildNodes(ctx, currentNode.ID)
+			// if empty segment remove it
+			if segments[0] == "" {
+				segments = segments[1:]
+				continue
+			}
+
+			nodes, err := contentLoader.GetChildNodes(r.Context(), currentNode.ID)
 
 			if err != nil {
 				// TODO: Handle error
@@ -51,7 +54,7 @@ func RouteHandler(next http.Handler, contentLoader contentloader.Loader) http.Ha
 			match := false
 			for _, child := range nodes {
 
-				match, segments = child.Match(ctx, segments)
+				match, segments = child.Match(r.Context(), segments)
 
 				if match {
 					currentNode = child
@@ -59,7 +62,7 @@ func RouteHandler(next http.Handler, contentLoader contentloader.Loader) http.Ha
 				}
 			}
 		}
-		ctx = context.WithValue(ctx, node.NodeKey, currentNode)
+		ctx := node.WithNode(r.Context(), currentNode)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

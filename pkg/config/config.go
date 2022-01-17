@@ -1,6 +1,9 @@
 package config
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"golang.org/x/text/language"
+)
 
 // constants
 
@@ -12,6 +15,7 @@ var (
 )
 
 type Configuration struct {
-	DefaultLanguage string
-	RootPage        uuid.UUID
+	// Languages are configured by contentdelivery api. The elements are prioritized.
+	Languages []language.Tag
+	RootPage  uuid.UUID
 }
