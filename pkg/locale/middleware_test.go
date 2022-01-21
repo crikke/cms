@@ -39,6 +39,10 @@ func TestLocaleHandler(t *testing.T) {
 			statuscode:     200,
 		},
 		{
+			expected:   language.MustParse("sv-SE"),
+			statuscode: 200,
+		},
+		{
 			acceptlanguage: "malformed",
 			statuscode:     400,
 		},
