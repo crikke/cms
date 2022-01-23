@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/content"
 	"github.com/crikke/cms/pkg/contentloader"
-	"github.com/crikke/cms/pkg/node"
 )
 
-type Matcher interface {
-	Match(ctx context.Context, remainingPath string) bool
-}
+type key int
+
+var nodeKey key
 
 /*
 Routing logic works as following:
@@ -62,8 +62,16 @@ func RoutingHandler(next http.Handler, contentLoader contentloader.Loader) http.
 				}
 			}
 		}
-		ctx := node.WithNode(r.Context(), currentNode)
+		ctx := WithNode(r.Context(), currentNode)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func WithNode(ctx context.Context, node content.Content) context.Context {
+	return context.WithValue(ctx, nodeKey, node)
+}
+
+func RoutedNode(ctx context.Context) content.Content {
+	return ctx.Value(nodeKey).(content.Content)
 }

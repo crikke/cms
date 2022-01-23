@@ -6,85 +6,53 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/crikke/cms/pkg/locale"
-	"github.com/crikke/cms/pkg/node"
+	"github.com/crikke/cms/pkg/content"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/text/language"
 )
 
 func TestMatchRoute(t *testing.T) {
 
-	// a := uuid.New()
-	// b := uuid.New()
-	// c := uuid.New()
+	a := uuid.New()
+	b := uuid.New()
+	c := uuid.New()
 
-	nodes := []node.Node{
-		// {
-		// 	ID: a,
-		// 	Content: map[int]node.ContentData{
-		// 		0: {
-		// 			URLSegment: map[string]string{
-		// 				"sv": "a",
-		// 				"en": "aa",
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	ID:       b,
-		// 	ParentID: a,
-		// 	Content: map[int]node.ContentData{
-		// 		0: {
-		// 			URLSegment: map[string]string{
-		// 				"sv": "b",
-		// 				"en": "bb",
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	ParentID: b,
-		// 	ID:       c,
-		// 	Content: map[int]node.ContentData{
-		// 		0: {
-		// 			URLSegment: map[string]string{
-		// 				"sv": "c",
-		// 				"en": "cc",
-		// 			},
-		// 		},
-		// 	},
-		// },
+	nodes := []content.Content{
+		{
+			ID:         a,
+			URLSegment: "a",
+		},
+		{
+			ID:         b,
+			ParentID:   a,
+			URLSegment: "b",
+		},
+		{
+			ParentID:   b,
+			ID:         c,
+			URLSegment: "c",
+		},
 	}
 
 	tests := []struct {
 		description  string
 		url          string
 		language     string
-		expectedNode node.Node
+		expectedNode content.Content
 	}{
 		{
 			description:  "node matched with sv language",
 			url:          "/a/b/c",
-			language:     "sv",
-			expectedNode: nodes[2],
-		},
-		{
-			description:  "node matched with en language",
-			url:          "/aa/bb/cc",
-			language:     "en",
 			expectedNode: nodes[2],
 		},
 		{
 			description:  "multiple slashes in path ",
 			url:          "///a//b////c",
-			language:     "sv",
 			expectedNode: nodes[2],
 		},
 		{
 			description:  "path ends with '/' ",
 			url:          "/a/b/c/",
-			language:     "sv",
 			expectedNode: nodes[2],
 		},
 	}
@@ -92,14 +60,12 @@ func TestMatchRoute(t *testing.T) {
 	for _, test := range tests {
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			routedNode := node.RoutedNode(r.Context())
+			routedNode := RoutedNode(r.Context())
 			assert.Equal(t, test.expectedNode.ID, routedNode.ID)
 		})
 
 		t.Run(test.description, func(t *testing.T) {
 			req := httptest.NewRequest("GET", test.url, nil)
-			ctx := locale.WithLocale(req.Context(), language.MustParse(test.language))
-			req = req.WithContext(ctx)
 			handler := RoutingHandler(testHandler, mockLoader{
 				nodes: nodes,
 			},
@@ -110,22 +76,22 @@ func TestMatchRoute(t *testing.T) {
 }
 
 type mockLoader struct {
-	nodes []node.Node
+	nodes []content.Content
 }
 
-func (m mockLoader) GetContent(ctx context.Context, id uuid.UUID) (node.Node, error) {
+func (m mockLoader) GetContent(ctx context.Context, id uuid.UUID) (content.Content, error) {
 
 	for _, node := range m.nodes {
 		if node.ID == id {
 			return node, nil
 		}
 	}
-	return node.Node{}, nil
+	return content.Content{}, nil
 }
 
-func (m mockLoader) GetChildNodes(ctx context.Context, id uuid.UUID) ([]node.Node, error) {
+func (m mockLoader) GetChildNodes(ctx context.Context, id uuid.UUID) ([]content.Content, error) {
 
-	result := []node.Node{}
+	result := []content.Content{}
 
 	for _, node := range m.nodes {
 		if node.ParentID == id {
