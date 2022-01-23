@@ -15,34 +15,46 @@ import (
 
 func TestMatchRoute(t *testing.T) {
 
-	a := uuid.New()
-	b := uuid.New()
-	c := uuid.New()
+	// a := uuid.New()
+	// b := uuid.New()
+	// c := uuid.New()
 
 	nodes := []node.Node{
-		{
-			ID: a,
-			URLSegment: map[string]string{
-				"sv": "a",
-				"en": "aa",
-			},
-		},
-		{
-			ID:       b,
-			ParentID: a,
-			URLSegment: map[string]string{
-				"sv": "b",
-				"en": "bb",
-			},
-		},
-		{
-			ParentID: b,
-			ID:       c,
-			URLSegment: map[string]string{
-				"sv": "c",
-				"en": "cc",
-			},
-		},
+		// {
+		// 	ID: a,
+		// 	Content: map[int]node.ContentData{
+		// 		0: {
+		// 			URLSegment: map[string]string{
+		// 				"sv": "a",
+		// 				"en": "aa",
+		// 			},
+		// 		},
+		// 	},
+		// },
+		// {
+		// 	ID:       b,
+		// 	ParentID: a,
+		// 	Content: map[int]node.ContentData{
+		// 		0: {
+		// 			URLSegment: map[string]string{
+		// 				"sv": "b",
+		// 				"en": "bb",
+		// 			},
+		// 		},
+		// 	},
+		// },
+		// {
+		// 	ParentID: b,
+		// 	ID:       c,
+		// 	Content: map[int]node.ContentData{
+		// 		0: {
+		// 			URLSegment: map[string]string{
+		// 				"sv": "c",
+		// 				"en": "cc",
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 
 	tests := []struct {
@@ -88,7 +100,7 @@ func TestMatchRoute(t *testing.T) {
 			req := httptest.NewRequest("GET", test.url, nil)
 			ctx := locale.WithLocale(req.Context(), language.MustParse(test.language))
 			req = req.WithContext(ctx)
-			handler := Handler(testHandler, mockLoader{
+			handler := RoutingHandler(testHandler, mockLoader{
 				nodes: nodes,
 			},
 			)

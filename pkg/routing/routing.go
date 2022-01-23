@@ -23,7 +23,7 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func Handler(next http.Handler, contentLoader contentloader.Loader) http.Handler {
+func RoutingHandler(next http.Handler, contentLoader contentloader.Loader) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var segments []string
