@@ -5,8 +5,6 @@ import (
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/content"
-	"github.com/crikke/cms/pkg/locale"
-	"github.com/google/uuid"
 	"golang.org/x/text/language"
 )
 
@@ -15,8 +13,8 @@ import (
 */
 
 type Loader interface {
-	GetContent(ctx context.Context, id uuid.UUID) (content.Content, error)
-	GetChildNodes(ctx context.Context, id uuid.UUID) ([]content.Content, error)
+	GetContent(ctx context.Context, contentReference content.ContentReference) (content.Content, error)
+	GetChildNodes(ctx context.Context, contentReference content.ContentReference) ([]content.Content, error)
 }
 
 type loader struct {
@@ -28,19 +26,21 @@ func NewLoader(db Repository, cfg config.Configuration) loader {
 	return loader{db, cfg}
 }
 
-func (l *loader) GetContent(ctx context.Context, id uuid.UUID) (content.Content, error) {
+func (l *loader) GetContent(ctx context.Context, contentReference content.ContentReference) (content.Content, error) {
 
-	content, err := l.db.GetContent(ctx, id)
+	// TODO: should probably move getting version logic to database, locale should still be here for now since it contains fallback logic
+	content, err := l.db.GetContent(ctx, contentReference.ID)
 
 	if err != nil {
 		panic(err)
 	}
 
-	t := locale.FromContext(ctx)
+	t := l.cfg.Languages[0]
 
-	if t == language.Und {
-		t = l.cfg.Languages[0]
+	if contentReference.Locale != nil {
+		t = *contentReference.Locale
 	}
+
 	return convert(
 		content,
 		t,
@@ -52,7 +52,7 @@ func (l *loader) GetContent(ctx context.Context, id uuid.UUID) (content.Content,
 func convert(entity contentData, lang language.Tag, fallbackLang language.Tag, version int) (content.Content, error) {
 
 	result := content.Content{
-		ID:       entity.ID,
+		ID:       content.ContentReference{ID: entity.ID, Locale: &lang, Version: version},
 		ParentID: entity.ParentID,
 		Created:  entity.Created,
 		Updated:  entity.Updated,

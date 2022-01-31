@@ -8,6 +8,7 @@ import (
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/content"
 	"github.com/crikke/cms/pkg/loader"
+	"github.com/crikke/cms/pkg/locale"
 )
 
 type key int
@@ -23,14 +24,20 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(next http.Handler, loader loader.Loader) http.Handler {
+func RoutingHandler(next http.Handler, cfg config.Configuration, loader loader.Loader) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var segments []string
 		segments = strings.Split(r.URL.Path, "/")
 
 		// first item is always rootnode
-		currentNode, err := loader.GetContent(r.Context(), config.SiteConfiguration.RootPage)
+		locale := locale.FromContext(r.Context())
+		contentReference := content.ContentReference{
+			ID:     cfg.RootPage,
+			Locale: &locale,
+		}
+
+		currentNode, err := loader.GetContent(r.Context(), contentReference)
 		if err != nil {
 			// TODO: Handle error
 			panic(err)
@@ -44,7 +51,7 @@ func RoutingHandler(next http.Handler, loader loader.Loader) http.Handler {
 				continue
 			}
 
-			nodes, err := loader.GetChildNodes(r.Context(), currentNode.ID)
+			nodes, err := loader.GetChildNodes(r.Context(), contentReference)
 
 			if err != nil {
 				// TODO: Handle error
@@ -54,10 +61,11 @@ func RoutingHandler(next http.Handler, loader loader.Loader) http.Handler {
 			match := false
 			for _, child := range nodes {
 
-				match, segments = child.Match(r.Context(), segments)
+				match, segments = Match(child, segments)
 
 				if match {
 					currentNode = child
+					contentReference = child.ID
 					break
 				}
 			}
@@ -66,6 +74,21 @@ func RoutingHandler(next http.Handler, loader loader.Loader) http.Handler {
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
+}
+func Match(c content.Content, remaining []string) (match bool, segments []string) {
+	segments = remaining
+
+	segment := remaining[0]
+
+	nodeSegment := c.URLSegment
+
+	match = strings.EqualFold(segment, nodeSegment)
+
+	if match {
+		// pop matched segment
+		segments = segments[1:]
+	}
+	return
 }
 
 func WithNode(ctx context.Context, node content.Content) context.Context {

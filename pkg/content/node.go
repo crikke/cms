@@ -1,11 +1,10 @@
 package content
 
 import (
-	"context"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/text/language"
 )
 
 type Property struct {
@@ -16,13 +15,20 @@ type Property struct {
 	Value     interface{}
 }
 
+// A contentreference is a reference to a piece of content that is versioned & has a locale
+type ContentReference struct {
+	ID      uuid.UUID
+	Version int
+	Locale  *language.Tag
+}
+
 // det är contentloader som hanterar hämtningen av korrekt localized / version av node.
 // alltså propertytransform vid hämtning från db och inte vid json marshal
 // Därför ska Content (Content) inte ha några maps eller version, utan endast datan som ska skickas
 // ansvaret för att Mappa DbContent till Content görs alltså av contentloader
 type Content struct {
 	// A node are required to have a localized URLSegment for each configured locale.
-	ID         uuid.UUID
+	ID         ContentReference
 	ParentID   uuid.UUID
 	URLSegment string
 	Name       string
@@ -32,21 +38,6 @@ type Content struct {
 }
 
 // Checks if a node matches a urlsegment
-func (n Content) Match(ctx context.Context, remaining []string) (match bool, segments []string) {
-	segments = remaining
-
-	segment := remaining[0]
-
-	nodeSegment := n.URLSegment
-
-	match = strings.EqualFold(segment, nodeSegment)
-
-	if match {
-		// pop matched segment
-		segments = segments[1:]
-	}
-	return
-}
 
 /* json data structure
 this is probably how the page will look in the database

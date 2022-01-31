@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/content"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +20,17 @@ func TestMatchRoute(t *testing.T) {
 
 	nodes := []content.Content{
 		{
-			ID:         a,
+			ID:         content.ContentReference{ID: a},
 			URLSegment: "a",
 		},
 		{
-			ID:         b,
+			ID:         content.ContentReference{ID: b},
 			ParentID:   a,
 			URLSegment: "b",
 		},
 		{
 			ParentID:   b,
-			ID:         c,
+			ID:         content.ContentReference{ID: c},
 			URLSegment: "c",
 		},
 	}
@@ -66,9 +67,11 @@ func TestMatchRoute(t *testing.T) {
 
 		t.Run(test.description, func(t *testing.T) {
 			req := httptest.NewRequest("GET", test.url, nil)
-			handler := RoutingHandler(testHandler, mockLoader{
-				nodes: nodes,
-			},
+			handler := RoutingHandler(testHandler,
+				config.Configuration{},
+				mockLoader{
+					nodes: nodes,
+				},
 			)
 			handler.ServeHTTP(httptest.NewRecorder(), req)
 		})
@@ -79,7 +82,7 @@ type mockLoader struct {
 	nodes []content.Content
 }
 
-func (m mockLoader) GetContent(ctx context.Context, id uuid.UUID) (content.Content, error) {
+func (m mockLoader) GetContent(ctx context.Context, id content.ContentReference) (content.Content, error) {
 
 	for _, node := range m.nodes {
 		if node.ID == id {
@@ -89,12 +92,12 @@ func (m mockLoader) GetContent(ctx context.Context, id uuid.UUID) (content.Conte
 	return content.Content{}, nil
 }
 
-func (m mockLoader) GetChildNodes(ctx context.Context, id uuid.UUID) ([]content.Content, error) {
+func (m mockLoader) GetChildNodes(ctx context.Context, id content.ContentReference) ([]content.Content, error) {
 
 	result := []content.Content{}
 
 	for _, node := range m.nodes {
-		if node.ParentID == id {
+		if node.ParentID == id.ID {
 			result = append(result, node)
 		}
 	}
