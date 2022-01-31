@@ -2,7 +2,6 @@ package content
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -14,7 +13,7 @@ type Property struct {
 	Name      string
 	Type      string
 	Localized bool
-	json.Marshaler
+	Value     interface{}
 }
 
 // det är contentloader som hanterar hämtningen av korrekt localized / version av node.
@@ -27,7 +26,7 @@ type Content struct {
 	ParentID   uuid.UUID
 	URLSegment string
 	Name       string
-	Properties []json.Marshaler
+	Properties []Property
 	Created    time.Time
 	Updated    time.Time
 }

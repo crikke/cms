@@ -7,7 +7,7 @@ import (
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/content"
-	"github.com/crikke/cms/pkg/contentloader"
+	"github.com/crikke/cms/pkg/loader"
 )
 
 type key int
@@ -23,14 +23,14 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(next http.Handler, contentLoader contentloader.Loader) http.Handler {
+func RoutingHandler(next http.Handler, loader loader.Loader) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var segments []string
 		segments = strings.Split(r.URL.Path, "/")
 
 		// first item is always rootnode
-		currentNode, err := contentLoader.GetContent(r.Context(), config.SiteConfiguration.RootPage)
+		currentNode, err := loader.GetContent(r.Context(), config.SiteConfiguration.RootPage)
 		if err != nil {
 			// TODO: Handle error
 			panic(err)
@@ -44,7 +44,7 @@ func RoutingHandler(next http.Handler, contentLoader contentloader.Loader) http.
 				continue
 			}
 
-			nodes, err := contentLoader.GetChildNodes(r.Context(), currentNode.ID)
+			nodes, err := loader.GetChildNodes(r.Context(), currentNode.ID)
 
 			if err != nil {
 				// TODO: Handle error

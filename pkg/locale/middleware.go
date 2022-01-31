@@ -13,7 +13,8 @@ type key int
 var languageKey key
 
 /*
-Prefered language is set by contentmanagement API,
+	Prefered language is set by contentmanagement API,
+	If Accept-Header isnt set, configured default language is used as fallback
 */
 func Handler(next http.Handler, cfg config.Configuration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +38,13 @@ func Handler(next http.Handler, cfg config.Configuration) http.Handler {
 }
 
 func FromContext(ctx context.Context) language.Tag {
-	return ctx.Value(languageKey).(language.Tag)
+	t := ctx.Value(languageKey)
+
+	if t == nil {
+		t = language.Tag{}
+	}
+
+	return t.(language.Tag)
 }
 
 func WithLocale(ctx context.Context, tag language.Tag) context.Context {
