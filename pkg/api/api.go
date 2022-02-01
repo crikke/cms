@@ -8,11 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ContentHandler(group gin.IRouter, c config.Configuration, l loader.Loader) {
+func ContentHandler(group gin.IRouter, c config.SiteConfiguration, l loader.Loader) {
 
 	r := group.Group("/content", routing.RoutingHandler(c, l))
 
-	r.GET("/*node", security.Authorization("read", nil), func(c *gin.Context) {
+	r.GET("/*node", security.AuthorizationHandler("read", nil), func(c *gin.Context) {
 		c.JSON(200, routing.RoutedNode(*c))
 	})
 }

@@ -19,10 +19,10 @@ type Loader interface {
 
 type loader struct {
 	db  Repository
-	cfg config.Configuration
+	cfg config.SiteConfiguration
 }
 
-func NewLoader(db Repository, cfg config.Configuration) loader {
+func NewLoader(db Repository, cfg config.SiteConfiguration) loader {
 	return loader{db, cfg}
 }
 
