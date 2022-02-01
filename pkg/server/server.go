@@ -19,8 +19,6 @@ func NewServer(cfg config.SiteConfiguration, loader loader.Loader) (Server, erro
 
 func (s Server) Start() error {
 
-	cfg := config.LoadConfiguration()
-
 	r := gin.Default()
 	r.Use(locale.Handler(s.Configuration))
 
