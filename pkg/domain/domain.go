@@ -7,6 +7,19 @@ import (
 	"golang.org/x/text/language"
 )
 
+type User struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (u User) GetID() uuid.UUID {
+	return u.ID
+}
+
+func (u User) GetName() string {
+	return u.Name
+}
+
 type Property struct {
 	ID        uuid.UUID
 	Name      string
