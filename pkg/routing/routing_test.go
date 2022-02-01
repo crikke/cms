@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/content"
+	"github.com/crikke/cms/pkg/domain"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,19 +19,19 @@ func TestMatchRoute(t *testing.T) {
 	b := uuid.New()
 	c := uuid.New()
 
-	nodes := []content.Content{
+	nodes := []domain.Content{
 		{
-			ID:         content.ContentReference{ID: a},
+			ID:         domain.ContentReference{ID: a},
 			URLSegment: "a",
 		},
 		{
-			ID:         content.ContentReference{ID: b},
+			ID:         domain.ContentReference{ID: b},
 			ParentID:   a,
 			URLSegment: "b",
 		},
 		{
 			ParentID:   b,
-			ID:         content.ContentReference{ID: c},
+			ID:         domain.ContentReference{ID: c},
 			URLSegment: "c",
 		},
 	}
@@ -39,7 +40,7 @@ func TestMatchRoute(t *testing.T) {
 		description  string
 		url          string
 		language     string
-		expectedNode content.Content
+		expectedNode domain.Content
 	}{
 		{
 			description:  "node matched with sv language",
@@ -60,41 +61,40 @@ func TestMatchRoute(t *testing.T) {
 
 	for _, test := range tests {
 
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			routedNode := RoutedNode(r.Context())
-			assert.Equal(t, test.expectedNode.ID, routedNode.ID)
-		})
-
 		t.Run(test.description, func(t *testing.T) {
-			req := httptest.NewRequest("GET", test.url, nil)
-			handler := RoutingHandler(testHandler,
-				config.Configuration{},
-				mockLoader{
-					nodes: nodes,
-				},
-			)
-			handler.ServeHTTP(httptest.NewRecorder(), req)
+			router := gin.Default()
+
+			router.GET("/*nodes", RoutingHandler(config.Configuration{}, mockLoader{
+				nodes: nodes,
+			}), func(c *gin.Context) {
+				assert.Equal(t, test.expectedNode.ID, RoutedNode(*c).ID, test.description)
+			})
+
+			w := httptest.NewRecorder()
+			r, _ := http.NewRequest("GET", test.url, nil)
+
+			router.ServeHTTP(w, r)
 		})
 	}
 }
 
 type mockLoader struct {
-	nodes []content.Content
+	nodes []domain.Content
 }
 
-func (m mockLoader) GetContent(ctx context.Context, id content.ContentReference) (content.Content, error) {
+func (m mockLoader) GetContent(ctx context.Context, id domain.ContentReference) (domain.Content, error) {
 
 	for _, node := range m.nodes {
 		if node.ID == id {
 			return node, nil
 		}
 	}
-	return content.Content{}, nil
+	return domain.Content{}, nil
 }
 
-func (m mockLoader) GetChildNodes(ctx context.Context, id content.ContentReference) ([]content.Content, error) {
+func (m mockLoader) GetChildNodes(ctx context.Context, id domain.ContentReference) ([]domain.Content, error) {
 
-	result := []content.Content{}
+	result := []domain.Content{}
 
 	for _, node := range m.nodes {
 		if node.ParentID == id.ID {

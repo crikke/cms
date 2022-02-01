@@ -1,11 +1,11 @@
 package locale
 
 import (
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/crikke/cms/pkg/config"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
 )
@@ -51,17 +51,19 @@ func TestLocaleHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.acceptlanguage, func(t *testing.T) {
 
-			assertHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, test.expected, FromContext(r.Context()))
-			})
+			router := gin.Default()
+
 			r := httptest.NewRequest("GET", "/", nil)
 			r.Header.Add("Accept-Language", test.acceptlanguage)
 
 			w := httptest.NewRecorder()
-			h := Handler(assertHandler, config)
-			h.ServeHTTP(w, r)
 
-			assert.Equal(t, test.statuscode, w.Result().StatusCode)
+			router.GET("/", Handler(config), func(c *gin.Context) {
+				assert.Equal(t, test.expected, FromContext(*c))
+			})
+
+			router.ServeHTTP(w, r)
+			assert.Equal(t, test.statuscode, w.Code)
 		})
 	}
 }

@@ -1,19 +1,16 @@
 package routing
 
 import (
-	"context"
-	"net/http"
 	"strings"
 
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/content"
+	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/loader"
 	"github.com/crikke/cms/pkg/locale"
+	"github.com/gin-gonic/gin"
 )
 
-type key int
-
-var nodeKey key
+var nodeKey = "nodeKey"
 
 /*
 Routing logic works as following:
@@ -24,20 +21,21 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(next http.Handler, cfg config.Configuration, loader loader.Loader) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func RoutingHandler(cfg config.Configuration, loader loader.Loader) gin.HandlerFunc {
 
+	return func(c *gin.Context) {
 		var segments []string
-		segments = strings.Split(r.URL.Path, "/")
+		c.Param("nodes")
+		segments = strings.Split(c.Param("nodes"), "/")
 
 		// first item is always rootnode
-		locale := locale.FromContext(r.Context())
-		contentReference := content.ContentReference{
+		locale := locale.FromContext(*c)
+		contentReference := domain.ContentReference{
 			ID:     cfg.RootPage,
 			Locale: &locale,
 		}
 
-		currentNode, err := loader.GetContent(r.Context(), contentReference)
+		currentNode, err := loader.GetContent(c.Request.Context(), contentReference)
 		if err != nil {
 			// TODO: Handle error
 			panic(err)
@@ -51,7 +49,7 @@ func RoutingHandler(next http.Handler, cfg config.Configuration, loader loader.L
 				continue
 			}
 
-			nodes, err := loader.GetChildNodes(r.Context(), contentReference)
+			nodes, err := loader.GetChildNodes(c.Request.Context(), contentReference)
 
 			if err != nil {
 				// TODO: Handle error
@@ -70,12 +68,11 @@ func RoutingHandler(next http.Handler, cfg config.Configuration, loader loader.L
 				}
 			}
 		}
-		ctx := WithNode(r.Context(), currentNode)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
+		c.Set(nodeKey, currentNode)
+		c.Next()
+	}
 }
-func Match(c content.Content, remaining []string) (match bool, segments []string) {
+func Match(c domain.Content, remaining []string) (match bool, segments []string) {
 	segments = remaining
 
 	segment := remaining[0]
@@ -91,10 +88,13 @@ func Match(c content.Content, remaining []string) (match bool, segments []string
 	return
 }
 
-func WithNode(ctx context.Context, node content.Content) context.Context {
-	return context.WithValue(ctx, nodeKey, node)
-}
+func RoutedNode(c gin.Context) domain.Content {
 
-func RoutedNode(ctx context.Context) content.Content {
-	return ctx.Value(nodeKey).(content.Content)
+	node, exist := c.Get(nodeKey)
+
+	if !exist {
+		node = domain.Content{}
+	}
+
+	return node.(domain.Content)
 }

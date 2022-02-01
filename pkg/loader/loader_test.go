@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/content"
+	"github.com/crikke/cms/pkg/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
@@ -20,7 +20,7 @@ func TestLoadContentWithDefaultLanguage(t *testing.T) {
 	}
 	loader := NewLoader(newMockRepo(), cfg)
 
-	content, err := loader.GetContent(context.TODO(), content.ContentReference{})
+	content, err := loader.GetContent(context.TODO(), domain.ContentReference{})
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, content)
