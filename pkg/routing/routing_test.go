@@ -1,13 +1,13 @@
 package routing
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/domain"
+	"github.com/crikke/cms/pkg/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -64,8 +64,8 @@ func TestMatchRoute(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			router := gin.Default()
 
-			router.GET("/*nodes", RoutingHandler(config.Configuration{}, mockLoader{
-				nodes: nodes,
+			router.GET("/*nodes", RoutingHandler(config.Configuration{}, mocks.MockLoader{
+				Nodes: nodes,
 			}), func(c *gin.Context) {
 				assert.Equal(t, test.expectedNode.ID, RoutedNode(*c).ID, test.description)
 			})
@@ -76,30 +76,4 @@ func TestMatchRoute(t *testing.T) {
 			router.ServeHTTP(w, r)
 		})
 	}
-}
-
-type mockLoader struct {
-	nodes []domain.Content
-}
-
-func (m mockLoader) GetContent(ctx context.Context, id domain.ContentReference) (domain.Content, error) {
-
-	for _, node := range m.nodes {
-		if node.ID == id {
-			return node, nil
-		}
-	}
-	return domain.Content{}, nil
-}
-
-func (m mockLoader) GetChildNodes(ctx context.Context, id domain.ContentReference) ([]domain.Content, error) {
-
-	result := []domain.Content{}
-
-	for _, node := range m.nodes {
-		if node.ParentID == id.ID {
-			result = append(result, node)
-		}
-	}
-	return result, nil
 }

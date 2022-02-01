@@ -25,8 +25,7 @@ func RoutingHandler(cfg config.Configuration, loader loader.Loader) gin.HandlerF
 
 	return func(c *gin.Context) {
 		var segments []string
-		c.Param("nodes")
-		segments = strings.Split(c.Param("nodes"), "/")
+		segments = strings.Split(c.Param("node"), "/")
 
 		// first item is always rootnode
 		locale := locale.FromContext(*c)
