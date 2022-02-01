@@ -4,6 +4,8 @@
 
 # CMS
 ## Overview
+A headless CMS. 
+Reliability, scalability, speed.
 ## Choosing a Database
 Cassandra vs MongoDB
 Cassandra has multiple master nodes so write speeds are improved
