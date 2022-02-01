@@ -4,24 +4,32 @@ import (
 	"net/http"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/persist"
+	mongodbadapter "github.com/casbin/mongodb-adapter/v3"
+	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/routing"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-// Authorization Handler must be run after Routing Handler & Authentication Handler
-func Authorization(act string, policyAdapter persist.Adapter) gin.HandlerFunc {
+// AuthorizationHandler Handler must be run after Routing Handler & Authentication Handler
+func AuthorizationHandler(act string, cfg *config.ServerConfiguration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		e, err := casbin.NewEnforcer("model.conf", policyAdapter)
+		a, err := mongodbadapter.NewAdapter(cfg.ConnectionStrings.Mongodb)
+
+		if err != nil {
+			panic(err)
+		}
+
+		e, err := casbin.NewEnforcer("model.conf", a)
 
 		if err != nil {
 			// TODO: Handle error gracefully
 			panic(err)
 		}
 
+		e.LoadPolicy()
 		node := routing.RoutedNode(*c)
 		user, _ := CurrentUser(c)
 		allowed, err := e.Enforce(user.GetID(), node.ID.ID, act)

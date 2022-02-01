@@ -14,7 +14,7 @@ var languageKey = "languagekey"
 	Prefered language is set by contentmanagement API,
 	If Accept-Header isnt set, configured default language is used as fallback
 */
-func Handler(cfg config.Configuration) gin.HandlerFunc {
+func Handler(cfg config.SiteConfiguration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accept := c.Request.Header.Get("Accept-Language")
 

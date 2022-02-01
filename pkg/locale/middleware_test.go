@@ -12,7 +12,7 @@ import (
 
 func TestLocaleHandler(t *testing.T) {
 
-	config := config.Configuration{
+	config := config.SiteConfiguration{
 		Languages: []language.Tag{
 			language.MustParse("sv-SE"),
 			language.MustParse("nb-NO")},

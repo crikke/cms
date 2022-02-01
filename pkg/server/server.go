@@ -11,11 +11,11 @@ import (
 )
 
 type Server struct {
-	Configuration config.Configuration
+	Configuration config.SiteConfiguration
 	Loader        loader.Loader
 }
 
-func NewServer(cfg config.Configuration, loader loader.Loader) (Server, error) {
+func NewServer(cfg config.SiteConfiguration, loader loader.Loader) (Server, error) {
 	return Server{cfg, loader}, nil
 }
 

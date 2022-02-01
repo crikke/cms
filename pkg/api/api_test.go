@@ -41,7 +41,7 @@ func TestGetContent(t *testing.T) {
 		},
 	}
 	router := gin.Default()
-	ContentHandler(router, config.Configuration{RootPage: loader.Nodes[0].ID.ID}, loader)
+	ContentHandler(router, config.SiteConfiguration{RootPage: loader.Nodes[0].ID.ID}, loader)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", "/content/foo", nil)

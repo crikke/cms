@@ -21,7 +21,7 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(cfg config.Configuration, loader loader.Loader) gin.HandlerFunc {
+func RoutingHandler(cfg config.SiteConfiguration, loader loader.Loader) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var segments []string

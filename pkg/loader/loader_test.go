@@ -13,7 +13,7 @@ import (
 
 func TestLoadContentWithDefaultLanguage(t *testing.T) {
 
-	cfg := config.Configuration{
+	cfg := config.SiteConfiguration{
 		Languages: []language.Tag{
 			language.Swedish,
 		},
