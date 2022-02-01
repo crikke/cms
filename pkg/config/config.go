@@ -19,7 +19,7 @@ type SiteConfiguration struct {
 	RootPage  uuid.UUID
 }
 
-func LoadConfiguration() {
+func LoadConfiguration() ServerConfiguration {
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -40,4 +40,6 @@ func LoadConfiguration() {
 	if err != nil {
 		panic(err)
 	}
+
+	return *c
 }

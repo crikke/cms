@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/crikke/cms/pkg/api"
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/loader"
@@ -19,7 +17,9 @@ func NewServer(cfg config.SiteConfiguration, loader loader.Loader) (Server, erro
 	return Server{cfg, loader}, nil
 }
 
-func (s Server) Start() http.Handler {
+func (s Server) Start() error {
+
+	cfg := config.LoadConfiguration()
 
 	r := gin.Default()
 	r.Use(locale.Handler(s.Configuration))
@@ -28,7 +28,6 @@ func (s Server) Start() http.Handler {
 	{
 		api.ContentHandler(v1, s.Configuration, s.Loader)
 	}
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 
-	})
+	return r.Run()
 }
