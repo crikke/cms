@@ -6,6 +6,15 @@
 ## Overview
 A headless CMS. 
 Reliability, scalability, speed.
+
+### Content Delivery Api
+Decoupled from ContentManagementApi
+Responsible for fetching content
+Read optimized
+
+### Content Management Api
+Responsible for creating content & ContentTypes
+
 ## Choosing a Database
 Cassandra vs MongoDB
 Cassandra has multiple master nodes so write speeds are improved

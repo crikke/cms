@@ -16,7 +16,7 @@ import (
 func AuthorizationHandler(act string, cfg *config.ServerConfiguration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		a, err := mongodbadapter.NewAdapter(cfg.ConnectionStrings.Mongodb)
+		a, err := mongodbadapter.NewAdapter(cfg.ConnectionString.Mongodb)
 
 		if err != nil {
 			panic(err)

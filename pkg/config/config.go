@@ -7,19 +7,22 @@ import (
 )
 
 type ServerConfiguration struct {
-	ConnectionStrings struct {
+	ConnectionString struct {
 		Mongodb string
 	}
+	LogLevel int
 }
 
-// Configuration bound to site, such as root page & configured languages
+// Configuration bound to site, such as root page & configured languages.
+// Since this configuration is configured by users. It should not be stored as a ConfigMap.
+// TODO: this can wait and have hardcoded defaults for now.
 type SiteConfiguration struct {
 	// Languages are configured by contentdelivery api. The elements are prioritized.
 	Languages []language.Tag
 	RootPage  uuid.UUID
 }
 
-func LoadConfiguration() ServerConfiguration {
+func LoadServerConfiguration() ServerConfiguration {
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")

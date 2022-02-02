@@ -11,7 +11,6 @@ import (
 /*
 	Loader is responsible for retreiving content from database and transforms it to content.Content
 */
-
 type Loader interface {
 	GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error)
 	GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error)
@@ -22,11 +21,11 @@ type loader struct {
 	cfg config.SiteConfiguration
 }
 
-func NewLoader(db Repository, cfg config.SiteConfiguration) loader {
+func NewLoader(db Repository, cfg config.SiteConfiguration) Loader {
 	return loader{db, cfg}
 }
 
-func (l *loader) GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error) {
+func (l loader) GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error) {
 
 	// TODO: should probably move getting version logic to database, locale should still be here for now since it contains fallback logic
 	content, err := l.db.GetContent(ctx, contentReference.ID)
@@ -46,6 +45,9 @@ func (l *loader) GetContent(ctx context.Context, contentReference domain.Content
 		t,
 		l.cfg.Languages[0],
 		0)
+}
+func (l loader) GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error) {
+	return nil, nil
 }
 
 // Converts a db entity to content.Content
