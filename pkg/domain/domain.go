@@ -71,8 +71,8 @@ Later could do something like a version could point to a older version. (somethi
 	data: {
 		1: {
 			urlSegment: {
-				sv: "/",
-				en: "/"
+				sv: "/hej-world",
+				en: "/hello-world"
 			},
 			name: {
 				sv: "Hejsan!",
@@ -137,3 +137,5 @@ Later could do something like a version could point to a older version. (somethi
 }
 
 */
+
+// {"_id":{"$oid":"61fa9eb92cab5a2a027c1e95"},"status":"published","publishedVersion":0,"parentID":"","data":{"0":{"urlSegment":{"sv":"/hej-world","en":"/hello-world"},"name":{"sv":"Hejsan!","en":"Hello!"},"properties":[{"id":"uuid","name":"header","type":"text","value":{"sv":"Hejsan Värden!","en":"Hello World!"},"localized":true}]}}}
