@@ -28,7 +28,7 @@ func NewLoader(db Repository, cfg config.SiteConfiguration) Loader {
 func (l loader) GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error) {
 
 	// TODO: should probably move getting version logic to database, locale should still be here for now since it contains fallback logic
-	content, err := l.db.GetContent(ctx, contentReference.ID)
+	content, err := l.db.GetContent(ctx, contentReference)
 
 	if err != nil {
 		panic(err)

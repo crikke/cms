@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/text/language"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type Repository interface {

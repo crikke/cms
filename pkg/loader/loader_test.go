@@ -70,6 +70,6 @@ func newMockRepo() mockRepo {
 
 	return repo
 }
-func (m mockRepo) GetContent(ctx context.Context, id uuid.UUID) (contentData, error) {
+func (m mockRepo) GetContent(ctx context.Context, contentReference domain.ContentReference) (contentData, error) {
 	return m.content[0], nil
 }
