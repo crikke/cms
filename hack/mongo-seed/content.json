@@ -1,0 +1,63 @@
+[
+    {
+        "_id": {
+            "$oid": "61fa9eb92cab5a2a027c1e95"
+        },
+        "status": "published",
+        "publishedVersion": 0,
+        "parentID": "",
+        "data": {
+            "0": {
+                "urlSegment": {
+                    "sv": "hej-world",
+                    "en": "hello-world"
+                },
+                "name": {
+                    "sv": "Hejsan!",
+                    "en": "Hello!"
+                },
+                "properties": [
+                    {
+                        "id": "uuid",
+                        "name": "header",
+                        "type": "text",
+                        "value": {
+                            "sv": "Hejsan Värden!",
+                            "en": "Hello World!"
+                        },
+                        "localized": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "status": "published",
+        "publishedVersion": 0,
+        "parentID": "61fa9eb92cab5a2a027c1e95",
+        "data": {
+            "0": {
+                "urlSegment": {
+                    "sv": "sida2",
+                    "en": "page2"
+                },
+                "name": {
+                    "sv": "Sida 2",
+                    "en": "Page 2"
+                },
+                "properties": [
+                    {
+                        "id": "uuid",
+                        "name": "header",
+                        "type": "text",
+                        "value": {
+                            "sv": "Page 2",
+                            "en": "Sida 2"
+                        },
+                        "localized": true
+                    }
+                ]
+            }
+        }
+    }
+]

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for f in $(find ./testdata -name *.json)
+for f in $(find . -name *.json)
 do
-    mongoimport --username $1 --password $2 --uri $3 --collection $(basename $f .json)
+    mongoimport --uri "mongodb://0.0.0.0/cms" --collection $(basename $f .json) --file $f --jsonArray --drop
 done
