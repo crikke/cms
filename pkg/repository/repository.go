@@ -56,10 +56,8 @@ var (
 	tTag        = reflect.TypeOf(language.Tag{})
 	uuidSubtype = byte(0x04)
 	registry    = bson.NewRegistryBuilder().
-			RegisterTypeDecoder(tTag, bsoncodec.ValueDecoderFunc(decodeLanguageTag)).
 			RegisterTypeEncoder(tUUID, bsoncodec.ValueEncoderFunc(encodeUUID)).
 			RegisterTypeDecoder(tUUID, bsoncodec.ValueDecoderFunc(decodeUUID)).
-			RegisterTypeEncoder(tTag, bsoncodec.ValueEncoderFunc(encodeLanguageTag)).
 			Build()
 )
 
