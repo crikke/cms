@@ -17,7 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/text/language"
 )
 
 type Repository interface {
@@ -53,7 +52,6 @@ type repository struct {
 
 var (
 	tUUID       = reflect.TypeOf(uuid.UUID{})
-	tTag        = reflect.TypeOf(language.Tag{})
 	uuidSubtype = byte(0x04)
 	registry    = bson.NewRegistryBuilder().
 			RegisterTypeEncoder(tUUID, bsoncodec.ValueEncoderFunc(encodeUUID)).
