@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var nodeKey = "nodeKey"
+const nodeKey = "nodeKey"
 
 /*
 Routing logic works as following:
@@ -25,7 +25,7 @@ func RoutingHandler(cfg config.SiteConfiguration, loader loader.Loader) gin.Hand
 
 	return func(c *gin.Context) {
 		var segments []string
-		segments = strings.Split(c.Param("node"), "/")
+		segments = strings.Split(c.Param("nodes"), "/")
 
 		// first item is always rootnode
 		locale := locale.FromContext(*c)

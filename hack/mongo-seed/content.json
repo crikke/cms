@@ -1,11 +1,10 @@
 [
     {
         "_id": {
-            "$oid": "61fa9eb92cab5a2a027c1e95"
+            "$uuid": "a1f6da93-80c9-4315-a012-1ea4249d7413"
         },
         "status": "published",
         "publishedVersion": 0,
-        "parentID": "",
         "data": {
             "0": {
                 "urlSegment": {
@@ -18,7 +17,9 @@
                 },
                 "properties": [
                     {
-                        "id": "uuid",
+                        "id": {
+                            "$uuid": "a7971e45-1136-4f1f-b72d-c26a84132989"
+                        },
                         "name": "header",
                         "type": "text",
                         "value": {
@@ -32,9 +33,14 @@
         }
     },
     {
+        "_id": {
+            "$uuid": "b2184714-4bae-4c50-9642-98fc5cadab86"
+        },
         "status": "published",
         "publishedVersion": 0,
-        "parentID": "61fa9eb92cab5a2a027c1e95",
+        "parentID": {
+            "$uuid": "a1f6da93-80c9-4315-a012-1ea4249d7413"
+        },
         "data": {
             "0": {
                 "urlSegment": {
@@ -47,7 +53,9 @@
                 },
                 "properties": [
                     {
-                        "id": "uuid",
+                        "id": {
+                            "$uuid": "3c3bc848-59ef-4ec5-986b-d375269d6adf"
+                        },
                         "name": "header",
                         "type": "text",
                         "value": {

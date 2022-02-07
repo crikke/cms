@@ -6,6 +6,7 @@ import (
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/domain"
+	"github.com/crikke/cms/pkg/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
@@ -34,17 +35,17 @@ func TestLoadContentWithDefaultLanguage(t *testing.T) {
 }
 
 type mockRepo struct {
-	content []contentData
+	content []repository.ContentData
 }
 
 func newMockRepo() mockRepo {
 
 	repo := mockRepo{}
 
-	cd := contentData{
-		ID:      uuid.UUID{},
-		Version: 0,
-		Data: map[int]contentVersion{
+	cd := repository.ContentData{
+		ID:               uuid.UUID{},
+		PublishedVersion: 0,
+		Data: map[int]repository.ContentVersion{
 			0: {
 				Name: map[language.Tag]string{
 					language.Swedish: "foo",
@@ -52,7 +53,7 @@ func newMockRepo() mockRepo {
 				URLSegment: map[language.Tag]string{
 					language.Swedish: "foo",
 				},
-				Properties: []contentProperty{
+				Properties: []repository.ContentProperty{
 					{
 						ID:        uuid.UUID{},
 						Name:      "prop",
@@ -66,10 +67,10 @@ func newMockRepo() mockRepo {
 			},
 		},
 	}
-	repo.content = []contentData{cd}
+	repo.content = []repository.ContentData{cd}
 
 	return repo
 }
-func (m mockRepo) GetContent(ctx context.Context, contentReference domain.ContentReference) (contentData, error) {
+func (m mockRepo) GetContent(ctx context.Context, contentReference domain.ContentReference) (repository.ContentData, error) {
 	return m.content[0], nil
 }

@@ -30,6 +30,8 @@ func LoadServerConfiguration() ServerConfiguration {
 	viper.AddConfigPath("$HOME/.ffcms/")
 	viper.AddConfigPath(".")
 
+	viper.SetDefault("ConnectionString.Mongodb", "mongodb://0.0.0.0")
+
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			panic(err)

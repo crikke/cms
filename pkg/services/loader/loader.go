@@ -5,6 +5,7 @@ import (
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/domain"
+	"github.com/crikke/cms/pkg/repository"
 	"golang.org/x/text/language"
 )
 
@@ -17,11 +18,11 @@ type Loader interface {
 }
 
 type loader struct {
-	db  Repository
+	db  repository.Repository
 	cfg config.SiteConfiguration
 }
 
-func NewLoader(db Repository, cfg config.SiteConfiguration) Loader {
+func NewLoader(db repository.Repository, cfg config.SiteConfiguration) Loader {
 	return loader{db, cfg}
 }
 
@@ -51,7 +52,7 @@ func (l loader) GetChildNodes(ctx context.Context, contentReference domain.Conte
 }
 
 // Converts a db entity to content.Content
-func convert(entity contentData, lang language.Tag, fallbackLang language.Tag, version int) (domain.Content, error) {
+func convert(entity repository.ContentData, lang language.Tag, fallbackLang language.Tag, version int) (domain.Content, error) {
 
 	result := domain.Content{
 		ID:       domain.ContentReference{ID: entity.ID, Locale: &lang, Version: version},
