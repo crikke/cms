@@ -5,8 +5,8 @@ import (
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/domain"
-	"github.com/crikke/cms/pkg/loader"
 	"github.com/crikke/cms/pkg/locale"
+	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
 )
 

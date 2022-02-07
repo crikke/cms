@@ -21,6 +21,7 @@ import (
 
 type Repository interface {
 	GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error)
+	GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error)
 }
 
 type ContentData struct {
@@ -87,6 +88,28 @@ func (r repository) GetContent(ctx context.Context, contentReference domain.Cont
 		return ContentData{}, err
 	}
 	return *doc, nil
+}
+func (r repository) GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error) {
+
+	cur, err := r.client.Database("cms").Collection("content").Find(ctx, bson.D{primitive.E{Key: "parentId", Value: contentReference.ID}})
+
+	if err != nil {
+		return nil, err
+	}
+
+	n := true
+	for n {
+		doc := &ContentData{}
+		err = cur.Decode(doc)
+
+		if err != nil {
+			return nil, err
+		}
+
+		n = cur.Next(ctx)
+	}
+
+	return make([]ContentData, 0), nil
 }
 
 func decodeUUID(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {

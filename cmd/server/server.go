@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/loader"
+	"github.com/crikke/cms/pkg/repository"
 	"github.com/crikke/cms/pkg/server"
+	"github.com/crikke/cms/pkg/services/loader"
 	"golang.org/x/text/language"
 )
 
@@ -17,7 +18,7 @@ func main() {
 		},
 	}
 
-	db, err := loader.NewRepository(context.Background(), cfg)
+	db, err := repository.NewRepository(context.Background(), cfg)
 	if err != nil {
 		panic(err)
 	}

@@ -67,15 +67,15 @@ func convert(entity repository.ContentData, lang language.Tag, fallbackLang lang
 		return domain.Content{}, ContentError{entity.ID, version, "not found"}
 	}
 
-	result.URLSegment = data.URLSegment[lang]
-	result.Name = data.Name[lang]
+	result.URLSegment = data.URLSegment[lang.String()]
+	result.Name = data.Name[lang.String()]
 
 	for _, prop := range data.Properties {
 
-		localized := prop.Value[fallbackLang]
+		localized := prop.Value[fallbackLang.String()]
 		if prop.Localized {
 
-			p, exist := prop.Value[lang]
+			p, exist := prop.Value[lang.String()]
 
 			if exist {
 				localized = p

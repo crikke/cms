@@ -2,9 +2,9 @@ package api
 
 import (
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/loader"
 	"github.com/crikke/cms/pkg/routing"
 	"github.com/crikke/cms/pkg/security"
+	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
 )
 
