@@ -6,18 +6,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/repository"
-	"github.com/google/uuid"
 	"github.com/streadway/amqp"
-	"golang.org/x/text/language"
 )
 
 const cfgExchange = "cms.siteconfiguration"
-
-type Configuration struct {
-	Languages []language.Tag
-	RootPage  uuid.UUID
-}
 
 type consumer struct {
 	conn    *amqp.Connection
@@ -26,13 +20,13 @@ type consumer struct {
 	done    chan error
 }
 
-func LoadSiteConfiguration(ctx context.Context, repo repository.Repository) (*Configuration, error) {
+func LoadSiteConfiguration(ctx context.Context, repo repository.Repository) (*domain.SiteConfiguration, error) {
 
 	return nil, nil
 }
 
 // Initializes a temporary queue that subscribes to configuration changes
-func NewConfigurationWatcher(uri string, cfg *Configuration) (io.Closer, error) {
+func NewConfigurationWatcher(uri string, cfg *domain.SiteConfiguration) (io.Closer, error) {
 	c := &consumer{
 		conn:    nil,
 		channel: nil,
@@ -110,12 +104,12 @@ func (c consumer) Close() error {
 	return <-c.done
 }
 
-func messageHandler(cfg *Configuration, messages <-chan amqp.Delivery, done chan error) {
+func messageHandler(cfg *domain.SiteConfiguration, messages <-chan amqp.Delivery, done chan error) {
 
 	for msg := range messages {
 
 		// store unmarshaled code in a temporary variable to prevent config to be corrupt if error occures
-		unmarshaled := &Configuration{}
+		unmarshaled := &domain.SiteConfiguration{}
 		err := json.Unmarshal(msg.Body, unmarshaled)
 
 		if err != nil {

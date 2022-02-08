@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/mocks"
 	"github.com/gin-gonic/gin"
@@ -41,7 +40,7 @@ func TestGetContent(t *testing.T) {
 		},
 	}
 	router := gin.Default()
-	ContentHandler(router, siteconfiguration.Configuration{RootPage: loader.Nodes[0].ID.ID}, loader)
+	ContentHandler(router, domain.SiteConfiguration{RootPage: loader.Nodes[0].ID.ID}, loader)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", "/content/foo", nil)

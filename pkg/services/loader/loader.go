@@ -3,7 +3,6 @@ package loader
 import (
 	"context"
 
-	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/repository"
 	"golang.org/x/text/language"
@@ -20,10 +19,10 @@ type Loader interface {
 
 type loader struct {
 	db         repository.Repository
-	siteConfig siteconfiguration.Configuration
+	siteConfig domain.SiteConfiguration
 }
 
-func NewLoader(db repository.Repository, cfg siteconfiguration.Configuration) Loader {
+func NewLoader(db repository.Repository, cfg domain.SiteConfiguration) Loader {
 	return loader{db, cfg}
 }
 

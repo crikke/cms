@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/crikke/cms/pkg/api"
-	"github.com/crikke/cms/pkg/config/siteconfiguration"
+	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,7 @@ func NewServer(loader loader.Loader) (Server, error) {
 
 func (s Server) Start() error {
 
-	cfg := siteconfiguration.Configuration{}
+	cfg := domain.SiteConfiguration{}
 	r := gin.Default()
 	r.Use(locale.Handler(cfg))
 

@@ -20,6 +20,11 @@ func (u User) GetName() string {
 	return u.Name
 }
 
+type SiteConfiguration struct {
+	Languages []language.Tag
+	RootPage  uuid.UUID
+}
+
 type Property struct {
 	ID        uuid.UUID
 	Name      string

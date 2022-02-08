@@ -2,7 +2,7 @@ package main
 
 func main() {
 	// cfg := config.LoadServerConfiguration()
-	// siteCfg := siteconfiguration.Configuration{
+	// siteCfg := domain.SiteConfiguration{
 	// 	Languages: []language.Tag{
 	// 		language.Swedish,
 	// 	},
