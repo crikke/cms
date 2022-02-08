@@ -1,10 +1,12 @@
 package siteconfiguration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 
+	"github.com/crikke/cms/pkg/repository"
 	"github.com/google/uuid"
 	"github.com/streadway/amqp"
 	"golang.org/x/text/language"
@@ -22,6 +24,11 @@ type consumer struct {
 	channel *amqp.Channel
 	tag     string
 	done    chan error
+}
+
+func LoadSiteConfiguration(ctx context.Context, repo repository.Repository) (*Configuration, error) {
+
+	return nil, nil
 }
 
 // Initializes a temporary queue that subscribes to configuration changes
@@ -107,16 +114,16 @@ func messageHandler(cfg *Configuration, messages <-chan amqp.Delivery, done chan
 
 	for msg := range messages {
 
+		// store unmarshaled code in a temporary variable to prevent config to be corrupt if error occures
 		unmarshaled := &Configuration{}
 		err := json.Unmarshal(msg.Body, unmarshaled)
 
 		if err != nil {
 			fmt.Println(err.Error())
+			continue
 		}
-		fmt.Printf("got %dB delivery: [%v] %q",
-			len(msg.Body),
-			msg.DeliveryTag,
-			msg.Body)
+
+		*cfg = *unmarshaled
 
 		msg.Ack(false)
 	}
