@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,6 +75,62 @@ func TestMatchRoute(t *testing.T) {
 			r, _ := http.NewRequest("GET", test.url, nil)
 
 			router.ServeHTTP(w, r)
+		})
+	}
+}
+
+func Test_GenerateUrl(t *testing.T) {
+	a := uuid.New()
+	b := uuid.New()
+	c := uuid.New()
+
+	nodes := []domain.Content{
+		{
+			ID:         domain.ContentReference{ID: a},
+			URLSegment: "a",
+		},
+		{
+			ID:         domain.ContentReference{ID: b},
+			ParentID:   a,
+			URLSegment: "b",
+		},
+		{
+			ParentID:   b,
+			ID:         domain.ContentReference{ID: c},
+			URLSegment: "c",
+		},
+	}
+
+	tests := []struct {
+		description string
+		node        domain.Content
+		expected    string
+	}{
+		{
+			description: "generate url node c",
+			expected:    "/a/b/c/",
+			node:        nodes[2],
+		},
+		{
+			description: "generate url node b ",
+			expected:    "/a/b/",
+			node:        nodes[1],
+		},
+	}
+
+	for _, test := range tests {
+
+		t.Run(test.description, func(t *testing.T) {
+
+			mock := mocks.MockLoader{
+				Nodes: nodes,
+			}
+
+			result, err := GenerateUrl(context.TODO(), mock, test.node.ID)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expected, result)
 		})
 	}
 }

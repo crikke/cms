@@ -1,6 +1,8 @@
 package routing
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"github.com/crikke/cms/pkg/config"
@@ -8,6 +10,7 @@ import (
 	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 const nodeKey = "nodeKey"
@@ -25,7 +28,7 @@ func RoutingHandler(cfg config.SiteConfiguration, loader loader.Loader) gin.Hand
 
 	return func(c *gin.Context) {
 		var segments []string
-		segments = strings.Split(c.Param("nodes"), "/")
+		segments = strings.Split(c.Param("node"), "/")
 
 		// first item is always rootnode
 		locale := locale.FromContext(*c)
@@ -55,12 +58,12 @@ func RoutingHandler(cfg config.SiteConfiguration, loader loader.Loader) gin.Hand
 				panic(err)
 			}
 
-			match := false
+			m := false
 			for _, child := range nodes {
 
-				match, segments = Match(child, segments)
+				m, segments = match(child, segments)
 
-				if match {
+				if m {
 					currentNode = child
 					contentReference = child.ID
 					break
@@ -71,7 +74,40 @@ func RoutingHandler(cfg config.SiteConfiguration, loader loader.Loader) gin.Hand
 		c.Next()
 	}
 }
-func Match(c domain.Content, remaining []string) (match bool, segments []string) {
+
+func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference domain.ContentReference) (string, error) {
+
+	c, err := loader.GetContent(ctx, contentReference)
+
+	if err != nil {
+		return "", err
+	}
+	path := fmt.Sprintf("/%s/", c.URLSegment)
+
+	next := c
+
+	for (next.ParentID != uuid.UUID{}) {
+
+		pRef := domain.ContentReference{
+			ID:     next.ParentID,
+			Locale: contentReference.Locale,
+		}
+
+		c, err = loader.GetContent(ctx, pRef)
+		if err != nil {
+			return "", err
+
+		}
+
+		path = fmt.Sprintf("/%s%s", c.URLSegment, path)
+
+		next = c
+	}
+
+	return path, nil
+}
+
+func match(c domain.Content, remaining []string) (match bool, segments []string) {
 	segments = remaining
 
 	segment := remaining[0]
