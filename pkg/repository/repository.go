@@ -89,16 +89,18 @@ func (r repository) GetContent(ctx context.Context, contentReference domain.Cont
 	}
 	return *doc, nil
 }
+
 func (r repository) GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error) {
 
-	cur, err := r.client.Database("cms").Collection("content").Find(ctx, bson.D{primitive.E{Key: "parentId", Value: contentReference.ID}})
+	cur, err := r.client.Database("cms").Collection("content").Find(ctx, bson.D{primitive.E{Key: "parentID", Value: contentReference.ID}})
 
 	if err != nil {
 		return nil, err
 	}
 
-	n := true
-	for n {
+	result := []ContentData{}
+
+	for cur.Next(ctx) {
 		doc := &ContentData{}
 		err = cur.Decode(doc)
 
@@ -106,10 +108,10 @@ func (r repository) GetChildren(ctx context.Context, contentReference domain.Con
 			return nil, err
 		}
 
-		n = cur.Next(ctx)
+		result = append(result, *doc)
 	}
 
-	return make([]ContentData, 0), nil
+	return result, nil
 }
 
 func decodeUUID(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {

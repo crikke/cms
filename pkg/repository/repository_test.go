@@ -96,7 +96,7 @@ func Test_GetChildDocuments(t *testing.T) {
 				match := false
 				for i := 0; i < len(test.returnedIds); i++ {
 
-					match = data.ID == test.uid
+					match = data.ID == test.returnedIds[i]
 
 					if match {
 						break

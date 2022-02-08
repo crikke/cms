@@ -47,11 +47,11 @@ func newMockRepo() mockRepo {
 		PublishedVersion: 0,
 		Data: map[int]repository.ContentVersion{
 			0: {
-				Name: map[language.Tag]string{
-					language.Swedish: "foo",
+				Name: map[string]string{
+					"sv": "foo",
 				},
-				URLSegment: map[language.Tag]string{
-					language.Swedish: "foo",
+				URLSegment: map[string]string{
+					"sv": "foo",
 				},
 				Properties: []repository.ContentProperty{
 					{
@@ -59,8 +59,8 @@ func newMockRepo() mockRepo {
 						Name:      "prop",
 						Type:      "text",
 						Localized: false,
-						Value: map[language.Tag]interface{}{
-							language.Swedish: "bar",
+						Value: map[string]interface{}{
+							"sv": "bar",
 						},
 					},
 				},
@@ -73,4 +73,8 @@ func newMockRepo() mockRepo {
 }
 func (m mockRepo) GetContent(ctx context.Context, contentReference domain.ContentReference) (repository.ContentData, error) {
 	return m.content[0], nil
+}
+
+func (m mockRepo) GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]repository.ContentData, error) {
+	return nil, nil
 }
