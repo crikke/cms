@@ -1,7 +1,9 @@
 package siteconfiguration
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/google/uuid"
 	"github.com/streadway/amqp"
@@ -10,11 +12,7 @@ import (
 
 const cfgExchange = "cms.siteconfiguration"
 
-// Configuration bound to site, such as root page & configured languages.
-// Since this configuration is configured by users. It should not be stored as a ConfigMap.
-// TODO: this can wait and have hardcoded defaults for now.
 type Configuration struct {
-	// Languages are configured by contentdelivery api. The elements are prioritized.
 	Languages []language.Tag
 	RootPage  uuid.UUID
 }
@@ -27,7 +25,7 @@ type consumer struct {
 }
 
 // Initializes a temporary queue that subscribes to configuration changes
-func NewSubscriber(uri string) error {
+func NewConfigurationWatcher(uri string, cfg *Configuration) (io.Closer, error) {
 	c := &consumer{
 		conn:    nil,
 		channel: nil,
@@ -39,7 +37,7 @@ func NewSubscriber(uri string) error {
 	c.conn, err = amqp.Dial(uri)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	go func() {
@@ -49,7 +47,7 @@ func NewSubscriber(uri string) error {
 	c.channel, err = c.conn.Channel()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = c.channel.ExchangeDeclare(
@@ -62,7 +60,7 @@ func NewSubscriber(uri string) error {
 		nil)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	q, err := c.channel.QueueDeclare(
@@ -75,7 +73,7 @@ func NewSubscriber(uri string) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = c.channel.QueueBind(
@@ -87,27 +85,40 @@ func NewSubscriber(uri string) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	deliveries, err := c.channel.Consume(q.Name, "", false, true, false, false, nil)
+	messages, err := c.channel.Consume(q.Name, "", false, true, false, false, nil)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	go messageHandler(deliveries, c.done)
-	return nil
+	go messageHandler(cfg, messages, c.done)
+	return c, nil
 }
 
-func messageHandler(deliveries <-chan amqp.Delivery, done chan error) {
+func (c consumer) Close() error {
+	c.conn.Close()
+	return <-c.done
+}
 
-	for d := range deliveries {
+func messageHandler(cfg *Configuration, messages <-chan amqp.Delivery, done chan error) {
 
+	for msg := range messages {
+
+		unmarshaled := &Configuration{}
+		err := json.Unmarshal(msg.Body, unmarshaled)
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 		fmt.Printf("got %dB delivery: [%v] %q",
-			len(d.Body),
-			d.DeliveryTag,
-			d.Body)
+			len(msg.Body),
+			msg.DeliveryTag,
+			msg.Body)
+
+		msg.Ack(false)
 	}
 	done <- nil
 }
