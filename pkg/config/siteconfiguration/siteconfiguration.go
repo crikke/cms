@@ -1,13 +1,11 @@
 package siteconfiguration
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/crikke/cms/pkg/domain"
-	"github.com/crikke/cms/pkg/repository"
 	"github.com/streadway/amqp"
 )
 
@@ -18,11 +16,6 @@ type consumer struct {
 	channel *amqp.Channel
 	tag     string
 	done    chan error
-}
-
-func LoadSiteConfiguration(ctx context.Context, repo repository.Repository) (*domain.SiteConfiguration, error) {
-
-	return nil, nil
 }
 
 // Initializes a temporary queue that subscribes to configuration changes

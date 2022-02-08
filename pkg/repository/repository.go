@@ -24,6 +24,7 @@ type Repository interface {
 	GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error)
 }
 
+// ContentData is not part of domain to make it clear that the repository is responsible this struct,
 type ContentData struct {
 	ID               uuid.UUID `bson:"_id"`
 	ParentID         uuid.UUID
@@ -49,6 +50,7 @@ type ContentProperty struct {
 type repository struct {
 	connectionString string
 	client           *mongo.Client
+	database         *mongo.Database
 }
 
 var (
@@ -75,6 +77,7 @@ func NewRepository(ctx context.Context, cfg config.ServerConfiguration) (Reposit
 	}
 
 	r.client = c
+	r.database = c.Database("cms")
 
 	return r, nil
 }
@@ -82,7 +85,7 @@ func NewRepository(ctx context.Context, cfg config.ServerConfiguration) (Reposit
 func (r repository) GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error) {
 
 	doc := &ContentData{}
-	err := r.client.Database("cms").Collection("content").FindOne(ctx, bson.D{primitive.E{Key: "_id", Value: contentReference.ID}}).Decode(doc)
+	err := r.database.Collection("content").FindOne(ctx, bson.D{primitive.E{Key: "_id", Value: contentReference.ID}}).Decode(doc)
 
 	if err != nil {
 		return ContentData{}, err
@@ -92,7 +95,7 @@ func (r repository) GetContent(ctx context.Context, contentReference domain.Cont
 
 func (r repository) GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error) {
 
-	cur, err := r.client.Database("cms").Collection("content").Find(ctx, bson.D{primitive.E{Key: "parentID", Value: contentReference.ID}})
+	cur, err := r.database.Collection("content").Find(ctx, bson.D{primitive.E{Key: "parentID", Value: contentReference.ID}})
 
 	if err != nil {
 		return nil, err
@@ -112,6 +115,21 @@ func (r repository) GetChildren(ctx context.Context, contentReference domain.Con
 	}
 
 	return result, nil
+}
+
+func (r repository) LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error) {
+
+	cfg := &domain.SiteConfiguration{}
+	err := r.database.
+		Collection("configuration").
+		FindOne(ctx, bson.D{}).
+		Decode(cfg)
+
+	if err != nil && err != mongo.ErrNoDocuments {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func decodeUUID(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
