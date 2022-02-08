@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ContentHandler(group gin.IRouter, c siteconfiguration.SiteConfiguration, l loader.Loader) {
+func ContentHandler(group gin.IRouter, c siteconfiguration.Configuration, l loader.Loader) {
 
 	r := group.Group("/content", routing.RoutingHandler(c, l))
 
