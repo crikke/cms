@@ -3,7 +3,7 @@ package loader
 import (
 	"context"
 
-	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/repository"
 	"golang.org/x/text/language"
@@ -19,11 +19,11 @@ type Loader interface {
 }
 
 type loader struct {
-	db  repository.Repository
-	cfg config.SiteConfiguration
+	db         repository.Repository
+	siteConfig siteconfiguration.Configuration
 }
 
-func NewLoader(db repository.Repository, cfg config.SiteConfiguration) Loader {
+func NewLoader(db repository.Repository, cfg siteconfiguration.Configuration) Loader {
 	return loader{db, cfg}
 }
 
@@ -36,7 +36,7 @@ func (l loader) GetContent(ctx context.Context, contentReference domain.ContentR
 		return domain.Content{}, err
 	}
 
-	t := l.cfg.Languages[0]
+	t := l.siteConfig.Languages[0]
 
 	if contentReference.Locale != nil {
 		t = *contentReference.Locale
@@ -45,7 +45,7 @@ func (l loader) GetContent(ctx context.Context, contentReference domain.ContentR
 	return convert(
 		content,
 		t,
-		l.cfg.Languages[0],
+		l.siteConfig.Languages[0],
 		0)
 }
 func (l loader) GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error) {
@@ -59,13 +59,13 @@ func (l loader) GetChildNodes(ctx context.Context, contentReference domain.Conte
 	result := []domain.Content{}
 
 	for _, c := range content {
-		t := l.cfg.Languages[0]
+		t := l.siteConfig.Languages[0]
 
 		if contentReference.Locale != nil {
 			t = *contentReference.Locale
 		}
 
-		transformed, err := convert(c, t, l.cfg.Languages[0], 0)
+		transformed, err := convert(c, t, l.siteConfig.Languages[0], 0)
 
 		if err != nil {
 			return nil, err

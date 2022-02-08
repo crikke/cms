@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/services/loader"
@@ -24,7 +24,7 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(cfg config.SiteConfiguration, loader loader.Loader) gin.HandlerFunc {
+func RoutingHandler(cfg siteconfiguration.Configuration, loader loader.Loader) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var segments []string

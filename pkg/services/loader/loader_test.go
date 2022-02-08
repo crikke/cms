@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/repository"
 	"github.com/google/uuid"
@@ -14,7 +14,7 @@ import (
 
 func TestLoadContentWithDefaultLanguage(t *testing.T) {
 
-	cfg := config.SiteConfiguration{
+	cfg := siteconfiguration.Configuration{
 		Languages: []language.Tag{
 			language.Swedish,
 		},

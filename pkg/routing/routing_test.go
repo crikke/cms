@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/mocks"
 	"github.com/gin-gonic/gin"
@@ -65,7 +65,7 @@ func TestMatchRoute(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			router := gin.Default()
 
-			router.GET("/*nodes", RoutingHandler(config.SiteConfiguration{}, mocks.MockLoader{
+			router.GET("/*nodes", RoutingHandler(siteconfiguration.Configuration{}, mocks.MockLoader{
 				Nodes: nodes,
 			}), func(c *gin.Context) {
 				assert.Equal(t, test.expectedNode.ID, RoutedNode(*c).ID, test.description)

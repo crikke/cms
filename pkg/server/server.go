@@ -2,29 +2,30 @@ package server
 
 import (
 	"github.com/crikke/cms/pkg/api"
-	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	Configuration config.SiteConfiguration
-	Loader        loader.Loader
+	// Configuration config.SiteConfiguration
+	Loader loader.Loader
 }
 
-func NewServer(cfg config.SiteConfiguration, loader loader.Loader) (Server, error) {
-	return Server{cfg, loader}, nil
+func NewServer(loader loader.Loader) (Server, error) {
+	return Server{loader}, nil
 }
 
 func (s Server) Start() error {
 
+	cfg := siteconfiguration.Configuration{}
 	r := gin.Default()
-	r.Use(locale.Handler(s.Configuration))
+	r.Use(locale.Handler(cfg))
 
 	v1 := r.Group("/v1")
 	{
-		api.ContentHandler(v1, s.Configuration, s.Loader)
+		api.ContentHandler(v1, cfg, s.Loader)
 	}
 
 	return r.Run()

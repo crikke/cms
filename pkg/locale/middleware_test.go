@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/crikke/cms/pkg/config"
+	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
@@ -12,7 +12,7 @@ import (
 
 func TestLocaleHandler(t *testing.T) {
 
-	config := config.SiteConfiguration{
+	config := siteconfiguration.Configuration{
 		Languages: []language.Tag{
 			language.MustParse("sv-SE"),
 			language.MustParse("nb-NO")},

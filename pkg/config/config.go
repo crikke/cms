@@ -1,25 +1,15 @@
 package config
 
 import (
-	"github.com/google/uuid"
 	"github.com/spf13/viper"
-	"golang.org/x/text/language"
 )
 
 type ServerConfiguration struct {
 	ConnectionString struct {
-		Mongodb string
+		Mongodb  string
+		RabbitMQ string
 	}
 	LogLevel int
-}
-
-// Configuration bound to site, such as root page & configured languages.
-// Since this configuration is configured by users. It should not be stored as a ConfigMap.
-// TODO: this can wait and have hardcoded defaults for now.
-type SiteConfiguration struct {
-	// Languages are configured by contentdelivery api. The elements are prioritized.
-	Languages []language.Tag
-	RootPage  uuid.UUID
 }
 
 func LoadServerConfiguration() ServerConfiguration {
