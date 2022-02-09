@@ -11,6 +11,7 @@ import (
 	"github.com/crikke/cms/pkg/repository"
 	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Server struct {
@@ -61,6 +62,7 @@ func (s Server) Start() error {
 
 	r := gin.Default()
 	r.Use(locale.Handler(s.SiteConfig))
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	v1 := r.Group("/v1")
 	{
