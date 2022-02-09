@@ -1,4 +1,7 @@
 SHELL := /bin/bash
+RABBITMQ_HOSTNAME := cms_rabbitmq
+IMAGE_NAME := contentdelivery
+IMAGE_TAG := local
 
 .PHONY: all
 all: test vet 
@@ -23,3 +26,16 @@ db-seed: db-up
 	--network host \
 	--entrypoint /seed/seed-database.sh mongo
  
+
+
+ .PHONY: start-local
+ start-local: db-seed
+	docker build . -t $(IMAGE_NAME):$(IMAGE_TAG) 
+
+	docker run --rm -d \
+	-p 5672:5672 \
+	--hostname $(RABBITMQ_HOSTNAME) \
+	rabbitmq  
+
+	docker run --rm $(IMAGE_NAME):$(IMAGE_TAG)
+

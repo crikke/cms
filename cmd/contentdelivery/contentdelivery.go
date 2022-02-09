@@ -31,7 +31,7 @@ func main() {
 
 	siteConfig, err := db.LoadSiteConfiguration(context.Background())
 
-	closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.Mongodb, siteConfig)
+	closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
 
 	if err != nil {
 		panic(err)

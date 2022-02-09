@@ -15,47 +15,63 @@ import (
 
 func TestMatchRoute(t *testing.T) {
 
+	root := uuid.New()
 	a := uuid.New()
 	b := uuid.New()
-	c := uuid.New()
 
 	nodes := []domain.Content{
 		{
+			ID:         domain.ContentReference{ID: root},
+			URLSegment: "",
+		},
+		{
 			ID:         domain.ContentReference{ID: a},
+			ParentID:   root,
 			URLSegment: "a",
 		},
 		{
-			ID:         domain.ContentReference{ID: b},
 			ParentID:   a,
+			ID:         domain.ContentReference{ID: b},
 			URLSegment: "b",
-		},
-		{
-			ParentID:   b,
-			ID:         domain.ContentReference{ID: c},
-			URLSegment: "c",
 		},
 	}
 
 	tests := []struct {
-		description  string
-		url          string
-		language     string
-		expectedNode domain.Content
+		description        string
+		url                string
+		language           string
+		expectedNode       domain.Content
+		expectedStatusCode int
 	}{
 		{
-			description:  "node matched with sv language",
-			url:          "/a/b/c",
-			expectedNode: nodes[2],
+			description:        "node matched with sv language",
+			url:                "/a/b",
+			expectedNode:       nodes[2],
+			expectedStatusCode: http.StatusOK,
 		},
 		{
-			description:  "multiple slashes in path ",
-			url:          "///a//b////c",
-			expectedNode: nodes[2],
+			description:        "multiple slashes in path ",
+			url:                `/a///b`,
+			expectedNode:       nodes[2],
+			expectedStatusCode: http.StatusOK,
 		},
 		{
-			description:  "path ends with '/' ",
-			url:          "/a/b/c/",
-			expectedNode: nodes[2],
+			description:        "path ends with '/' ",
+			url:                "/a/b/",
+			expectedNode:       nodes[2],
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			description:        "route not found ",
+			url:                "/a/b/c/d",
+			expectedNode:       domain.Content{},
+			expectedStatusCode: http.StatusNotFound,
+		},
+		{
+			description:        "root",
+			url:                "/",
+			expectedNode:       nodes[0],
+			expectedStatusCode: http.StatusOK,
 		},
 	}
 
@@ -64,7 +80,9 @@ func TestMatchRoute(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			router := gin.Default()
 
-			router.GET("/*node", RoutingHandler(&domain.SiteConfiguration{}, mocks.MockLoader{
+			router.GET("/*node", RoutingHandler(&domain.SiteConfiguration{
+				RootPage: root,
+			}, mocks.MockLoader{
 				Nodes: nodes,
 			}), func(c *gin.Context) {
 				assert.Equal(t, test.expectedNode.ID, RoutedNode(c).ID, test.description)
@@ -74,6 +92,7 @@ func TestMatchRoute(t *testing.T) {
 			r, _ := http.NewRequest("GET", test.url, nil)
 
 			router.ServeHTTP(w, r)
+			assert.Equal(t, test.expectedStatusCode, w.Code)
 		})
 	}
 }

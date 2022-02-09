@@ -15,7 +15,7 @@ type MockLoader struct {
 func (m MockLoader) GetContent(ctx context.Context, id domain.ContentReference) (domain.Content, error) {
 
 	for _, node := range m.Nodes {
-		if node.ID == id {
+		if node.ID.ID == id.ID {
 			return node, nil
 		}
 	}

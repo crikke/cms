@@ -3,6 +3,7 @@ package routing
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/crikke/cms/pkg/domain"
@@ -67,6 +68,11 @@ func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.Han
 					contentReference = child.ID
 					break
 				}
+			}
+
+			if !m {
+				c.AbortWithStatus(http.StatusNotFound)
+				return
 			}
 		}
 		c.Set(nodeKey, currentNode)
