@@ -108,3 +108,63 @@ func Test_GetChildDocuments(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetEmptyConfig(t *testing.T) {
+
+	cfg := config.LoadServerConfiguration()
+
+	r, err := NewRepository(context.TODO(), cfg)
+	assert.NoError(t, err)
+
+	seed := func(input domain.SiteConfiguration) {
+		_, err := r.(repository).database.
+			Collection("configuration").
+			InsertOne(context.TODO(), input)
+
+		assert.NoError(t, err)
+	}
+
+	tests := []struct {
+		name   string
+		input  *domain.SiteConfiguration
+		expect domain.SiteConfiguration
+	}{
+		{
+			name:   "Empty config",
+			input:  nil,
+			expect: domain.SiteConfiguration{},
+		},
+		{
+			name: "Existing config",
+			input: &domain.SiteConfiguration{
+				Languages: []language.Tag{language.Swahili},
+			},
+			expect: domain.SiteConfiguration{
+				Languages: []language.Tag{language.Swahili},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			err = truncateCollection("configuration", r.(repository))
+			assert.NoError(t, err)
+
+			if test.input != nil {
+				seed(*test.input)
+			}
+
+			res, err := r.LoadSiteConfiguration(context.TODO())
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.expect, *res)
+		})
+	}
+
+}
+
+func truncateCollection(col string, r repository) error {
+
+	return r.database.Collection(col).Drop(context.TODO())
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/text/language"
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/domain"
@@ -22,6 +23,7 @@ import (
 type Repository interface {
 	GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error)
 	GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error)
+	LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error)
 }
 
 // ContentData is not part of domain to make it clear that the repository is responsible this struct,
@@ -55,10 +57,13 @@ type repository struct {
 
 var (
 	tUUID       = reflect.TypeOf(uuid.UUID{})
+	tTag        = reflect.TypeOf(language.Tag{})
 	uuidSubtype = byte(0x04)
 	registry    = bson.NewRegistryBuilder().
 			RegisterTypeEncoder(tUUID, bsoncodec.ValueEncoderFunc(encodeUUID)).
 			RegisterTypeDecoder(tUUID, bsoncodec.ValueDecoderFunc(decodeUUID)).
+			RegisterTypeEncoder(tTag, bsoncodec.ValueEncoderFunc(encodeTag)).
+			RegisterTypeDecoder(tTag, bsoncodec.ValueDecoderFunc(decodeTag)).
 			Build()
 )
 
@@ -166,6 +171,50 @@ func decodeUUID(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.V
 	}
 
 	val.Set(reflect.ValueOf(uuid))
+	return nil
+}
+
+func encodeTag(ec bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+
+	if !val.IsValid() || val.Type() != tTag {
+		return bsoncodec.ValueEncoderError{Name: "encodeTag", Types: []reflect.Type{tTag}, Received: val}
+	}
+
+	b := val.Interface().(language.Tag)
+
+	return vw.WriteString(b.String())
+}
+
+func decodeTag(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+	if !val.CanSet() || val.Type() != tTag {
+		return bsoncodec.ValueDecoderError{Name: "decodeTag", Types: []reflect.Type{tTag}, Received: val}
+	}
+
+	var str string
+	var err error
+
+	switch vrType := vr.Type(); vrType {
+	case bsontype.String:
+		str, err = vr.ReadString()
+	case bsontype.Null:
+		err = vr.ReadNull()
+	case bsontype.Undefined:
+		err = vr.ReadUndefined()
+	default:
+		return fmt.Errorf("cannot decode %v into a UUID", vrType)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	tag, err := language.Parse(str)
+
+	if err != nil {
+		return err
+	}
+
+	val.Set(reflect.ValueOf(tag))
 	return nil
 }
 
