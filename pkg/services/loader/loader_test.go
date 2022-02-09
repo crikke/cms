@@ -77,3 +77,7 @@ func (m mockRepo) GetContent(ctx context.Context, contentReference domain.Conten
 func (m mockRepo) GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]repository.ContentData, error) {
 	return nil, nil
 }
+
+func (m mockRepo) LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error) {
+	return nil, nil
+}

@@ -1,51 +1,39 @@
 package api
 
-import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
+// func TestGetContent(t *testing.T) {
 
-	"github.com/crikke/cms/pkg/domain"
-	"github.com/crikke/cms/pkg/mocks"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-)
+// 	root := domain.ContentReference{
+// 		ID: uuid.New(),
+// 	}
+// 	loader := mocks.MockLoader{
+// 		Nodes: []domain.Content{
+// 			{
+// 				ID:         root,
+// 				Name:       "root",
+// 				URLSegment: "",
+// 			},
+// 			{
+// 				ParentID:   root.ID,
+// 				Name:       "foo",
+// 				URLSegment: "foo",
+// 				Properties: []domain.Property{
+// 					{
+// 						ID:    uuid.New(),
+// 						Name:  "header",
+// 						Type:  "text",
+// 						Value: "hello world",
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+// 	router := gin.Default()
+// 	ContentHandler(router, domain.SiteConfiguration{RootPage: loader.Nodes[0].ID.ID}, loader)
 
-func TestGetContent(t *testing.T) {
+// 	w := httptest.NewRecorder()
+// 	r, _ := http.NewRequest("GET", "/content/foo", nil)
 
-	root := domain.ContentReference{
-		ID: uuid.New(),
-	}
-	loader := mocks.MockLoader{
-		Nodes: []domain.Content{
-			{
-				ID:         root,
-				Name:       "root",
-				URLSegment: "",
-			},
-			{
-				ParentID:   root.ID,
-				Name:       "foo",
-				URLSegment: "foo",
-				Properties: []domain.Property{
-					{
-						ID:    uuid.New(),
-						Name:  "header",
-						Type:  "text",
-						Value: "hello world",
-					},
-				},
-			},
-		},
-	}
-	router := gin.Default()
-	ContentHandler(router, domain.SiteConfiguration{RootPage: loader.Nodes[0].ID.ID}, loader)
+// 	router.ServeHTTP(w, r)
 
-	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/content/foo", nil)
-
-	router.ServeHTTP(w, r)
-
-	assert.Contains(t, w.Body.String(), "hello world")
-}
+// 	assert.Contains(t, w.Body.String(), "hello world")
+// }

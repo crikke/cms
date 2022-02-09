@@ -64,7 +64,7 @@ func TestMatchRoute(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			router := gin.Default()
 
-			router.GET("/*nodes", RoutingHandler(domain.SiteConfiguration{}, mocks.MockLoader{
+			router.GET("/*node", RoutingHandler(domain.SiteConfiguration{}, mocks.MockLoader{
 				Nodes: nodes,
 			}), func(c *gin.Context) {
 				assert.Equal(t, test.expectedNode.ID, RoutedNode(*c).ID, test.description)
