@@ -8,12 +8,12 @@
         "data": {
             "0": {
                 "urlSegment": {
-                    "sv": "hej-world",
-                    "en": "hello-world"
+                    "sv-SE": "hej-world",
+                    "en-US": "hello-world"
                 },
                 "name": {
-                    "sv": "Hejsan!",
-                    "en": "Hello!"
+                    "sv-SE": "Hejsan!",
+                    "en-US": "Hello!"
                 },
                 "properties": [
                     {
@@ -23,8 +23,8 @@
                         "name": "header",
                         "type": "text",
                         "value": {
-                            "sv": "Hejsan Värden!",
-                            "en": "Hello World!"
+                            "sv-SE": "Hejsan Värden!",
+                            "en-US": "Hello World!"
                         },
                         "localized": true
                     }
@@ -44,12 +44,12 @@
         "data": {
             "0": {
                 "urlSegment": {
-                    "sv": "sida2",
-                    "en": "page2"
+                    "sv-SE": "sida2",
+                    "en-US": "page2"
                 },
                 "name": {
-                    "sv": "Sida 2",
-                    "en": "Page 2"
+                    "sv-SE": "Sida 2",
+                    "en-US": "Page 2"
                 },
                 "properties": [
                     {
@@ -59,8 +59,8 @@
                         "name": "header",
                         "type": "text",
                         "value": {
-                            "sv": "Page 2",
-                            "en": "Sida 2"
+                            "sv-SE": "Page 2",
+                            "en-US": "Sida 2"
                         },
                         "localized": true
                     }

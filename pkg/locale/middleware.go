@@ -1,6 +1,7 @@
 package locale
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/crikke/cms/pkg/domain"
@@ -28,6 +29,16 @@ func Handler(cfg *domain.SiteConfiguration) gin.HandlerFunc {
 		matcher := language.NewMatcher(cfg.Languages)
 
 		tag, _, _ := matcher.Match(t...)
+
+		base, _ := tag.Base()
+		region, _ := tag.Region()
+		tag, err = language.Compose(base, region)
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(tag)
 		c.Set(string(languageKey), tag)
 		c.Next()
 	}
