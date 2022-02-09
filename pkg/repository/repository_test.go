@@ -24,13 +24,13 @@ func Test_GetDocument(t *testing.T) {
 			name:         "Test GetDefault",
 			uid:          uuid.MustParse("a1f6da93-80c9-4315-a012-1ea4249d7413"),
 			expectedName: "Hejsan!",
-			locale:       "sv",
+			locale:       "sv-SE",
 		},
 		{
 			name:         "Test GetDefault - en",
 			uid:          uuid.MustParse("a1f6da93-80c9-4315-a012-1ea4249d7413"),
 			expectedName: "Hello!",
-			locale:       "en",
+			locale:       "en-US",
 		},
 	}
 
