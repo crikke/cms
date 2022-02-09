@@ -12,7 +12,7 @@ import (
 
 func TestLocaleHandler(t *testing.T) {
 
-	config := domain.SiteConfiguration{
+	config := &domain.SiteConfiguration{
 		Languages: []language.Tag{
 			language.MustParse("sv-SE"),
 			language.MustParse("nb-NO")},
@@ -59,7 +59,7 @@ func TestLocaleHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			router.GET("/", Handler(config), func(c *gin.Context) {
-				assert.Equal(t, test.expected, FromContext(*c))
+				assert.Equal(t, test.expected, FromContext(c))
 			})
 
 			router.ServeHTTP(w, r)

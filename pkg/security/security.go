@@ -30,7 +30,7 @@ func AuthorizationHandler(act string, cfg *config.ServerConfiguration) gin.Handl
 		}
 
 		e.LoadPolicy()
-		node := routing.RoutedNode(*c)
+		node := routing.RoutedNode(c)
 		user, _ := CurrentUser(c)
 		allowed, err := e.Enforce(user.GetID(), node.ID.ID, act)
 

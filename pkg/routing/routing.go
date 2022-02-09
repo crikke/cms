@@ -23,14 +23,14 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(cfg domain.SiteConfiguration, loader loader.Loader) gin.HandlerFunc {
+func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var segments []string
 		segments = strings.Split(c.Param("node"), "/")
 
 		// first item is always rootnode
-		locale := locale.FromContext(*c)
+		locale := locale.FromContext(c)
 		contentReference := domain.ContentReference{
 			ID:     cfg.RootPage,
 			Locale: &locale,
@@ -122,7 +122,7 @@ func match(c domain.Content, remaining []string) (match bool, segments []string)
 	return
 }
 
-func RoutedNode(c gin.Context) domain.Content {
+func RoutedNode(c *gin.Context) domain.Content {
 
 	node, exist := c.Get(nodeKey)
 
