@@ -8,6 +8,7 @@ import (
 	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/locale"
+	"github.com/crikke/cms/pkg/prom"
 	"github.com/crikke/cms/pkg/repository"
 	"github.com/crikke/cms/pkg/services/loader"
 	"github.com/gin-gonic/gin"
@@ -61,11 +62,17 @@ func main() {
 func (s Server) Start() error {
 
 	r := gin.Default()
-	r.Use(locale.Handler(s.SiteConfig))
+
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	r.Use(
+		prom.Handle(),
+		gin.Recovery(),
+		locale.Handler(s.SiteConfig),
+	)
 
 	v1 := r.Group("/v1")
 	{
+
 		api.ContentHandler(v1, s.SiteConfig, s.Loader)
 	}
 

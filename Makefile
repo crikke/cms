@@ -28,14 +28,14 @@ db-seed: db-up
  
 
 
- .PHONY: start-local
- start-local: db-seed
-	docker build . -t $(IMAGE_NAME):$(IMAGE_TAG) 
+ .PHONY: rabbitmq
+ rabbitmq: db-seed
+	# docker build . -t $(IMAGE_NAME):$(IMAGE_TAG) 
 
 	docker run --rm -d \
 	-p 5672:5672 \
 	--hostname $(RABBITMQ_HOSTNAME) \
 	rabbitmq  
 
-	docker run --rm $(IMAGE_NAME):$(IMAGE_TAG)
+	# docker run --rm $(IMAGE_NAME):$(IMAGE_TAG)
 
