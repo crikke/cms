@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 
-	"github.com/crikke/cms/pkg/api"
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/config/siteconfiguration"
 	"github.com/crikke/cms/pkg/domain"
@@ -72,8 +71,7 @@ func (s Server) Start() error {
 
 	v1 := r.Group("/v1")
 	{
-
-		api.ContentHandler(v1, s.SiteConfig, s.Loader)
+		ContentHandler(v1, s.SiteConfig, s.Loader)
 	}
 
 	return r.Run()

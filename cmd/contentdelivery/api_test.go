@@ -1,4 +1,4 @@
-package api
+package main
 
 // func TestGetContent(t *testing.T) {
 

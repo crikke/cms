@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"github.com/crikke/cms/pkg/domain"
