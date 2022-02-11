@@ -5,6 +5,7 @@ import (
 
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/config/siteconfiguration"
+	"github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/prom"
@@ -73,7 +74,7 @@ func (s Server) Start() error {
 
 	v1 := r.Group("/v1")
 	{
-		ContentHandler(v1, s.SiteConfig, s.Loader)
+		content.RegisterEndpoints(v1, s.SiteConfig, s.Loader)
 	}
 
 	return r.Run()

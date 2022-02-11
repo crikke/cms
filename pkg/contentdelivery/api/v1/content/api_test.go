@@ -1,4 +1,4 @@
-package main
+package content
 
 // func TestGetContent(t *testing.T) {
 

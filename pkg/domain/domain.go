@@ -65,6 +65,18 @@ type Content struct {
 	Updated    time.Time
 }
 
+type ContentDefinition struct {
+	ID      uuid.UUID
+	Name    string
+	Created time.Time
+	Updated time.Time
+
+	Properties []PropertyDefinition
+}
+
+type PropertyDefinition struct {
+}
+
 // Checks if a node matches a urlsegment
 
 /* json data structure
