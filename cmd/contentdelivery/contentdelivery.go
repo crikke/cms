@@ -32,19 +32,21 @@ func main() {
 
 	siteConfig, err := db.LoadSiteConfiguration(context.Background())
 
-	closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
+	if serverConfig.ConnectionString.Mongodb != "" {
+		closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
 
-	if err != nil {
-		panic(err)
-	}
-
-	defer func() {
-		err = closer.Close()
 		if err != nil {
 			panic(err)
 		}
-	}()
 
+		defer func() {
+			err = closer.Close()
+			if err != nil {
+				panic(err)
+			}
+		}()
+
+	}
 	l := loader.NewLoader(db, siteConfig)
 	if err != nil {
 		panic(err)
