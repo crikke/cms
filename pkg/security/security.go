@@ -25,8 +25,8 @@ func AuthorizationHandler(act string, cfg *config.ServerConfiguration) gin.Handl
 		e, err := casbin.NewEnforcer("model.conf", a)
 
 		if err != nil {
-			// TODO: Handle error gracefully
-			panic(err)
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
 		}
 
 		e.LoadPolicy()
@@ -35,11 +35,11 @@ func AuthorizationHandler(act string, cfg *config.ServerConfiguration) gin.Handl
 		allowed, err := e.Enforce(user.GetID(), node.ID.ID, act)
 
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
+			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		if !allowed {
-			c.Status(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
