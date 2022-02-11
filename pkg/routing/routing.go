@@ -39,8 +39,8 @@ func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.Han
 
 		currentNode, err := loader.GetContent(c.Request.Context(), contentReference)
 		if err != nil {
-			// TODO: Handle error
-			panic(err)
+			c.Error(err)
+			return
 		}
 
 		for len(segments) > 0 {
@@ -54,8 +54,8 @@ func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.Han
 			nodes, err := loader.GetChildNodes(c.Request.Context(), contentReference)
 
 			if err != nil {
-				// TODO: Handle error
-				panic(err)
+				c.Error(err)
+				return
 			}
 
 			m := false

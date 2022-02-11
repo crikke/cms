@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,6 +39,15 @@ type ContentReference struct {
 	ID      uuid.UUID
 	Version int
 	Locale  *language.Tag
+}
+
+func (c ContentReference) String() string {
+	l := language.Tag{}
+
+	if c.Locale != nil {
+		l = *c.Locale
+	}
+	return fmt.Sprintf("%s-%d-%s", c.ID, c.Version, l)
 }
 
 // det är contentloader som hanterar hämtningen av korrekt localized / version av node.

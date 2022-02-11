@@ -5,6 +5,7 @@ import (
 
 	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/repository"
+	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/text/language"
 )
 
@@ -32,6 +33,9 @@ func (l loader) GetContent(ctx context.Context, contentReference domain.ContentR
 	content, err := l.db.GetContent(ctx, contentReference)
 
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			err = domain.ErrContentNotFound(contentReference)
+		}
 		return domain.Content{}, err
 	}
 
@@ -89,14 +93,14 @@ func convert(entity repository.ContentData, lang language.Tag, fallbackLang lang
 	data, exist := entity.Data[version]
 
 	if !exist {
-		return domain.Content{}, ContentError{entity.ID, version, "not found"}
+		return domain.Content{}, domain.ErrContentNotFound(result.ID)
 	}
 
 	result.URLSegment, exist = data.URLSegment[lang.String()]
 
 	// Localized content must have a URL segment for given locale.
 	if !exist {
-		return domain.Content{}, ContentError{entity.ID, version, "missing locale"}
+		return domain.Content{}, domain.ErrContentNotFound(result.ID)
 	}
 
 	result.Name, exist = data.Name[lang.String()]
