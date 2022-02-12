@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/crikke/cms/pkg/domain"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 )
@@ -16,7 +16,7 @@ var languageKey = "languagekey"
 	Prefered language is set by contentmanagement API,
 	If Accept-Header isnt set, configured default language is used as fallback
 */
-func Handler(cfg *domain.SiteConfiguration) gin.HandlerFunc {
+func Handler(cfg *siteconfiguration.SiteConfiguration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accept := c.Request.Header.Get("Accept-Language")
 

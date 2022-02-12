@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/crikke/cms/pkg/domain"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
@@ -14,13 +13,13 @@ func Test_MessageHandlerUpdatesConfiguration(t *testing.T) {
 
 	ch := make(chan amqp.Delivery)
 	done := make(chan error)
-	cfg := &domain.SiteConfiguration{
+	cfg := &SiteConfiguration{
 		Languages: []language.Tag{
 			language.Swahili,
 		},
 	}
 
-	newCfg := &domain.SiteConfiguration{
+	newCfg := &SiteConfiguration{
 		Languages: []language.Tag{
 			language.Norwegian,
 		},

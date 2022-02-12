@@ -1,4 +1,4 @@
-package repository
+package db
 
 import (
 	"context"
@@ -6,31 +6,14 @@ import (
 	"reflect"
 
 	"github.com/google/uuid"
-	"golang.org/x/text/language"
-
-	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/domain"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/text/language"
 )
-
-type Repository interface {
-	// GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error)
-	// GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error)
-	LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error)
-}
-
-// ContentData is not part of domain to make it clear that the repository is responsible this struct,
-
-type repository struct {
-	connectionString string
-	client           *mongo.Client
-	database         *mongo.Database
-}
 
 var (
 	tUUID       = reflect.TypeOf(uuid.UUID{})
@@ -44,39 +27,22 @@ var (
 			Build()
 )
 
-func NewRepository(ctx context.Context, cfg config.ServerConfiguration) (Repository, error) {
-	r := repository{connectionString: cfg.ConnectionString.Mongodb}
-	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(cfg.ConnectionString.Mongodb))
+func Connect(ctx context.Context, connectionstring string) (*mongo.Database, error) {
+	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(connectionstring))
 
-	// defer func() {
-	// 	if err = c.Disconnect(ctx); err != nil {
-	// 		panic(err)
-	// 	}
-	// }()
+	defer func() {
+		if err = c.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
 
 	if err != nil {
 		return nil, err
 	}
 
-	r.client = c
-	r.database = c.Database("cms")
+	db := c.Database("cms")
 
-	return r, nil
-}
-
-func (r repository) LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error) {
-
-	cfg := &domain.SiteConfiguration{}
-	err := r.database.
-		Collection("configuration").
-		FindOne(ctx, bson.D{}).
-		Decode(cfg)
-
-	if err != nil && err != mongo.ErrNoDocuments {
-		return nil, err
-	}
-
-	return cfg, nil
+	return db, nil
 }
 
 func decodeUUID(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {

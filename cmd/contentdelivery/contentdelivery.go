@@ -4,34 +4,35 @@ import (
 	"context"
 
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/config/siteconfiguration"
-	"github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
-	"github.com/crikke/cms/pkg/domain"
+	contentapi "github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
+	"github.com/crikke/cms/pkg/contentdelivery/content"
+	"github.com/crikke/cms/pkg/contentdelivery/db"
 	"github.com/crikke/cms/pkg/locale"
-	"github.com/crikke/cms/pkg/repository"
-	"github.com/crikke/cms/pkg/services/loader"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/crikke/cms/pkg/telemetry"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Server struct {
 	// Configuration config.SiteConfiguration
-	Loader     loader.Loader
-	SiteConfig *domain.SiteConfiguration
+	database   *mongo.Database
+	SiteConfig *siteconfiguration.SiteConfiguration
 }
 
 func main() {
 
 	serverConfig := config.LoadServerConfiguration()
 
-	db, err := repository.NewRepository(context.Background(), serverConfig)
+	database, err := db.Connect(context.Background(), serverConfig.ConnectionString.Mongodb)
 
 	if err != nil {
 		panic(err)
 	}
 
-	siteConfig, err := db.LoadSiteConfiguration(context.Background())
+	configRepo := siteconfiguration.NewConfigurationRepository(database)
+	siteConfig, err := configRepo.LoadConfiguration(context.Background())
 
 	if serverConfig.ConnectionString.Mongodb != "" {
 		closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
@@ -48,13 +49,13 @@ func main() {
 		}()
 
 	}
-	l := loader.NewLoader(db, siteConfig)
+	// l := loader.NewLoader(db, siteConfig)
 	if err != nil {
 		panic(err)
 	}
 
 	server := Server{
-		Loader:     l,
+		database:   database,
 		SiteConfig: siteConfig,
 	}
 
@@ -74,7 +75,8 @@ func (s Server) Start() error {
 
 	v1 := r.Group("/v1")
 	{
-		content.RegisterEndpoints(v1, s.SiteConfig, s.Loader)
+		contentRepo := content.NewContentRepository(s.database, s.SiteConfig)
+		contentapi.RegisterEndpoints(v1, s.SiteConfig, contentRepo)
 	}
 
 	return r.Run()

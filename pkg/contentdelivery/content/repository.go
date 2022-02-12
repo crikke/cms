@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/locale"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,7 +21,7 @@ type ContentRepository interface {
 
 type repository struct {
 	database *mongo.Database
-	cfg      *domain.SiteConfiguration
+	cfg      *siteconfiguration.SiteConfiguration
 }
 
 type contentData struct {
@@ -60,7 +60,7 @@ func ErrContentNotFound(ref ContentReference) ErrorResponse {
 	return ErrorResponse{ID: ref, StatusCode: http.StatusNotFound, Message: ref.String()}
 }
 
-func NewContentRepository(db *mongo.Database, cfg *domain.SiteConfiguration) ContentRepository {
+func NewContentRepository(db *mongo.Database, cfg *siteconfiguration.SiteConfiguration) ContentRepository {
 	return repository{database: db, cfg: cfg}
 }
 

@@ -1,136 +1,136 @@
 package loader
 
-import (
-	"context"
+// import (
+// 	"context"
 
-	"github.com/crikke/cms/pkg/domain"
-	"github.com/crikke/cms/pkg/repository"
-	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/text/language"
-)
+// 	"github.com/crikke/cms/pkg/domain"
+// 	"github.com/crikke/cms/pkg/repository"
+// 	"go.mongodb.org/mongo-driver/mongo"
+// 	"golang.org/x/text/language"
+// )
 
-/*
-	Loader is responsible for fetching content from repository and transforming it.
-	In the future, Loader will also handle fetching & persisnt content from a cache, such as redis.
-*/
-type Loader interface {
-	GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error)
-	GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error)
-}
+// /*
+// 	Loader is responsible for fetching content from repository and transforming it.
+// 	In the future, Loader will also handle fetching & persisnt content from a cache, such as redis.
+// */
+// type Loader interface {
+// 	GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error)
+// 	GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error)
+// }
 
-type loader struct {
-	db         repository.Repository
-	siteConfig *domain.SiteConfiguration
-}
+// type loader struct {
+// 	db         repository.Repository
+// 	siteConfig *domain.SiteConfiguration
+// }
 
-func NewLoader(db repository.Repository, cfg *domain.SiteConfiguration) Loader {
-	return loader{db, cfg}
-}
+// func NewLoader(db repository.Repository, cfg *domain.SiteConfiguration) Loader {
+// 	return loader{db, cfg}
+// }
 
-func (l loader) GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error) {
+// func (l loader) GetContent(ctx context.Context, contentReference domain.ContentReference) (domain.Content, error) {
 
-	// TODO: should probably move getting version logic to database, locale should still be here for now since it contains fallback logic
-	content, err := l.db.GetContent(ctx, contentReference)
+// 	// TODO: should probably move getting version logic to database, locale should still be here for now since it contains fallback logic
+// 	content, err := l.db.GetContent(ctx, contentReference)
 
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			err = domain.ErrContentNotFound(contentReference)
-		}
-		return domain.Content{}, err
-	}
+// 	if err != nil {
+// 		if err == mongo.ErrNoDocuments {
+// 			err = domain.ErrContentNotFound(contentReference)
+// 		}
+// 		return domain.Content{}, err
+// 	}
 
-	t := l.siteConfig.Languages[0]
+// 	t := l.siteConfig.Languages[0]
 
-	if contentReference.Locale != nil {
-		t = *contentReference.Locale
-	}
+// 	if contentReference.Locale != nil {
+// 		t = *contentReference.Locale
+// 	}
 
-	return convert(
-		content,
-		t,
-		l.siteConfig.Languages[0],
-		0)
-}
-func (l loader) GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error) {
+// 	return convert(
+// 		content,
+// 		t,
+// 		l.siteConfig.Languages[0],
+// 		0)
+// }
+// func (l loader) GetChildNodes(ctx context.Context, contentReference domain.ContentReference) ([]domain.Content, error) {
 
-	content, err := l.db.GetChildren(ctx, contentReference)
+// 	content, err := l.db.GetChildren(ctx, contentReference)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	result := []domain.Content{}
+// 	result := []domain.Content{}
 
-	for _, c := range content {
-		t := l.siteConfig.Languages[0]
+// 	for _, c := range content {
+// 		t := l.siteConfig.Languages[0]
 
-		if contentReference.Locale != nil {
-			t = *contentReference.Locale
-		}
+// 		if contentReference.Locale != nil {
+// 			t = *contentReference.Locale
+// 		}
 
-		transformed, err := convert(c, t, l.siteConfig.Languages[0], 0)
+// 		transformed, err := convert(c, t, l.siteConfig.Languages[0], 0)
 
-		if err != nil {
-			return nil, err
-		}
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-		result = append(result, transformed)
-	}
+// 		result = append(result, transformed)
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
-// Converts a db entity to content.Content
-func convert(entity repository.ContentData, lang language.Tag, fallbackLang language.Tag, version int) (domain.Content, error) {
+// // Converts a db entity to content.Content
+// func convert(entity repository.ContentData, lang language.Tag, fallbackLang language.Tag, version int) (domain.Content, error) {
 
-	result := domain.Content{
-		ID:       domain.ContentReference{ID: entity.ID, Locale: &lang, Version: version},
-		ParentID: entity.ParentID,
-		Created:  entity.Created,
-		Updated:  entity.Updated,
-	}
+// 	result := domain.Content{
+// 		ID:       domain.ContentReference{ID: entity.ID, Locale: &lang, Version: version},
+// 		ParentID: entity.ParentID,
+// 		Created:  entity.Created,
+// 		Updated:  entity.Updated,
+// 	}
 
-	data, exist := entity.Data[version]
+// 	data, exist := entity.Data[version]
 
-	if !exist {
-		return domain.Content{}, domain.ErrContentNotFound(result.ID)
-	}
+// 	if !exist {
+// 		return domain.Content{}, domain.ErrContentNotFound(result.ID)
+// 	}
 
-	result.URLSegment, exist = data.URLSegment[lang.String()]
+// 	result.URLSegment, exist = data.URLSegment[lang.String()]
 
-	// Localized content must have a URL segment for given locale.
-	if !exist {
-		return domain.Content{}, domain.ErrContentNotFound(result.ID)
-	}
+// 	// Localized content must have a URL segment for given locale.
+// 	if !exist {
+// 		return domain.Content{}, domain.ErrContentNotFound(result.ID)
+// 	}
 
-	result.Name, exist = data.Name[lang.String()]
+// 	result.Name, exist = data.Name[lang.String()]
 
-	if !exist {
-		result.Name = data.Name[fallbackLang.String()]
-	}
+// 	if !exist {
+// 		result.Name = data.Name[fallbackLang.String()]
+// 	}
 
-	for _, prop := range data.Properties {
+// 	for _, prop := range data.Properties {
 
-		localized := prop.Value[fallbackLang.String()]
-		if prop.Localized {
+// 		localized := prop.Value[fallbackLang.String()]
+// 		if prop.Localized {
 
-			p, exist := prop.Value[lang.String()]
+// 			p, exist := prop.Value[lang.String()]
 
-			if exist {
-				localized = p
-			}
-		}
+// 			if exist {
+// 				localized = p
+// 			}
+// 		}
 
-		cp := domain.Property{
-			ID:        prop.ID,
-			Name:      prop.Name,
-			Type:      prop.Type,
-			Localized: prop.Localized,
-			Value:     localized,
-		}
-		result.Properties = append(result.Properties, cp)
-		continue
-	}
+// 		cp := domain.Property{
+// 			ID:        prop.ID,
+// 			Name:      prop.Name,
+// 			Type:      prop.Type,
+// 			Localized: prop.Localized,
+// 			Value:     localized,
+// 		}
+// 		result.Properties = append(result.Properties, cp)
+// 		continue
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }

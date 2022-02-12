@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/crikke/cms/pkg/domain"
 	"github.com/streadway/amqp"
 )
 
@@ -19,7 +18,7 @@ type consumer struct {
 }
 
 // Initializes a temporary queue that subscribes to configuration changes
-func NewConfigurationWatcher(uri string, cfg *domain.SiteConfiguration) (io.Closer, error) {
+func NewConfigurationWatcher(uri string, cfg *SiteConfiguration) (io.Closer, error) {
 	c := &consumer{
 		conn:    nil,
 		channel: nil,
@@ -97,12 +96,12 @@ func (c consumer) Close() error {
 	return <-c.done
 }
 
-func messageHandler(cfg *domain.SiteConfiguration, messages <-chan amqp.Delivery, done chan error) {
+func messageHandler(cfg *SiteConfiguration, messages <-chan amqp.Delivery, done chan error) {
 
 	for msg := range messages {
 
 		// store unmarshaled code in a temporary variable to prevent config to be corrupt if error occures
-		unmarshaled := &domain.SiteConfiguration{}
+		unmarshaled := &SiteConfiguration{}
 		err := json.Unmarshal(msg.Body, unmarshaled)
 
 		if err != nil {

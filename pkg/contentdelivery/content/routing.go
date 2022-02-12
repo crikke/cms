@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/crikke/cms/pkg/domain"
 	"github.com/crikke/cms/pkg/locale"
-	"github.com/crikke/cms/pkg/services/loader"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -25,7 +24,7 @@ Routing logic works as following:
 	5. When done looping through segments, set matchedNode to context
 */
 // TODO move to api and not as middleware
-func RoutingHandler(cfg *domain.SiteConfiguration, repo ContentRepository) gin.HandlerFunc {
+func RoutingHandler(cfg *siteconfiguration.SiteConfiguration, repo ContentRepository) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var segments []string
@@ -81,9 +80,9 @@ func RoutingHandler(cfg *domain.SiteConfiguration, repo ContentRepository) gin.H
 	}
 }
 
-func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference ContentReference) (string, error) {
+func GenerateUrl(ctx context.Context, repo ContentRepository, contentReference ContentReference) (string, error) {
 
-	c, err := loader.GetContent(ctx, contentReference)
+	c, err := repo.GetContent(ctx, contentReference)
 
 	if err != nil {
 		return "", err
@@ -99,7 +98,7 @@ func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference Con
 			Locale: contentReference.Locale,
 		}
 
-		c, err = loader.GetContent(ctx, pRef)
+		c, err = repo.GetContent(ctx, pRef)
 		if err != nil {
 			return "", err
 
