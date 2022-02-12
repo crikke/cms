@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/text/language"
@@ -15,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -27,27 +25,6 @@ type Repository interface {
 }
 
 // ContentData is not part of domain to make it clear that the repository is responsible this struct,
-type ContentData struct {
-	ID               uuid.UUID `bson:"_id"`
-	ParentID         uuid.UUID
-	PublishedVersion int
-	Created          time.Time
-	Updated          time.Time
-	Data             map[int]ContentVersion
-}
-type ContentVersion struct {
-	Properties []ContentProperty
-	Name       map[string]string
-	URLSegment map[string]string
-}
-
-type ContentProperty struct {
-	ID        uuid.UUID
-	Name      string
-	Type      string
-	Localized bool
-	Value     map[string]interface{}
-}
 
 type repository struct {
 	connectionString string
@@ -85,41 +62,6 @@ func NewRepository(ctx context.Context, cfg config.ServerConfiguration) (Reposit
 	r.database = c.Database("cms")
 
 	return r, nil
-}
-
-func (r repository) GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error) {
-
-	doc := &ContentData{}
-	err := r.database.Collection("content").FindOne(ctx, bson.D{primitive.E{Key: "_id", Value: contentReference.ID}}).Decode(doc)
-
-	if err != nil {
-		return ContentData{}, err
-	}
-	return *doc, nil
-}
-
-func (r repository) GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error) {
-
-	cur, err := r.database.Collection("content").Find(ctx, bson.D{primitive.E{Key: "parentID", Value: contentReference.ID}})
-
-	if err != nil {
-		return nil, err
-	}
-
-	result := []ContentData{}
-
-	for cur.Next(ctx) {
-		doc := &ContentData{}
-		err = cur.Decode(doc)
-
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, *doc)
-	}
-
-	return result, nil
 }
 
 func (r repository) LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error) {

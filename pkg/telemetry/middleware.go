@@ -1,4 +1,4 @@
-package prom
+package telemetry
 
 import (
 	"fmt"

@@ -26,21 +26,6 @@ type SiteConfiguration struct {
 	RootPage  uuid.UUID
 }
 
-type Property struct {
-	ID        uuid.UUID
-	Name      string
-	Type      string
-	Localized bool
-	Value     interface{}
-}
-
-// A contentreference is a reference to a piece of content that is versioned & has a locale
-type ContentReference struct {
-	ID      uuid.UUID
-	Version int
-	Locale  *language.Tag
-}
-
 func (c ContentReference) String() string {
 	l := language.Tag{}
 
@@ -54,16 +39,6 @@ func (c ContentReference) String() string {
 // alltså propertytransform vid hämtning från db och inte vid json marshal
 // Därför ska Content (Content) inte ha några maps eller version, utan endast datan som ska skickas
 // ansvaret för att Mappa DbContent till Content görs alltså av contentloader
-type Content struct {
-	// A node are required to have a localized URLSegment for each configured locale.
-	ID         ContentReference
-	ParentID   uuid.UUID
-	URLSegment string
-	Name       string
-	Properties []Property
-	Created    time.Time
-	Updated    time.Time
-}
 
 type ContentDefinition struct {
 	ID      uuid.UUID
@@ -75,6 +50,9 @@ type ContentDefinition struct {
 }
 
 type PropertyDefinition struct {
+	ID           uuid.UUID
+	Name         string
+	PropertyType string
 }
 
 // Checks if a node matches a urlsegment

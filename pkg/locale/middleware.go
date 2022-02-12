@@ -1,6 +1,7 @@
 package locale
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -52,4 +53,10 @@ func FromContext(c *gin.Context) language.Tag {
 	}
 
 	return t.(language.Tag)
+}
+
+func FromContextNew(c context.Context) *language.Tag {
+	t := c.Value(languageKey)
+
+	return t.(*language.Tag)
 }
