@@ -19,8 +19,8 @@ import (
 )
 
 type Repository interface {
-	GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error)
-	GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error)
+	// GetContent(ctx context.Context, contentReference domain.ContentReference) (ContentData, error)
+	// GetChildren(ctx context.Context, contentReference domain.ContentReference) ([]ContentData, error)
 	LoadSiteConfiguration(ctx context.Context) (*domain.SiteConfiguration, error)
 }
 

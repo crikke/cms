@@ -2,6 +2,7 @@ package content
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/crikke/cms/pkg/domain"
@@ -43,6 +44,20 @@ type contentProperty struct {
 	Type      string
 	Localized bool
 	Value     map[string]interface{}
+}
+
+type ErrorResponse struct {
+	ID         ContentReference
+	Message    string
+	StatusCode int
+}
+
+func (e ErrorResponse) Error() string {
+	return e.Message
+}
+
+func ErrContentNotFound(ref ContentReference) ErrorResponse {
+	return ErrorResponse{ID: ref, StatusCode: http.StatusNotFound, Message: ref.String()}
 }
 
 func NewContentRepository(db *mongo.Database, cfg *domain.SiteConfiguration) ContentRepository {
@@ -115,14 +130,14 @@ func (r repository) transform(ctx context.Context, in *contentData) (Content, er
 	data, exist := in.Data[0]
 
 	if !exist {
-		return Content{}, domain.ErrContentNotFound(result.ID)
+		return Content{}, ErrContentNotFound(result.ID)
 	}
 
 	result.URLSegment, exist = data.URLSegment[defaultLang.String()]
 
 	// Localized content must have a URL segment for given locale.
 	if !exist {
-		return Content{}, domain.ErrContentNotFound(result.ID)
+		return Content{}, ErrContentNotFound(result.ID)
 	}
 
 	result.Name = lookupLocalizedValueString(data.Name, lang...)

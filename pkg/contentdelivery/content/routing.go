@@ -1,4 +1,4 @@
-package routing
+package content
 
 import (
 	"context"
@@ -24,7 +24,8 @@ Routing logic works as following:
 	     set matchedNode
 	5. When done looping through segments, set matchedNode to context
 */
-func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.HandlerFunc {
+// TODO move to api and not as middleware
+func RoutingHandler(cfg *domain.SiteConfiguration, repo ContentRepository) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		var segments []string
@@ -32,12 +33,12 @@ func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.Han
 
 		// first item is always rootnode
 		locale := locale.FromContext(c)
-		contentReference := domain.ContentReference{
+		contentReference := ContentReference{
 			ID:     cfg.RootPage,
 			Locale: &locale,
 		}
 
-		currentNode, err := loader.GetContent(c.Request.Context(), contentReference)
+		currentNode, err := repo.GetContent(c.Request.Context(), contentReference)
 		if err != nil {
 			c.Error(err)
 			return
@@ -51,7 +52,7 @@ func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.Han
 				continue
 			}
 
-			nodes, err := loader.GetChildNodes(c.Request.Context(), contentReference)
+			nodes, err := repo.GetChildren(c.Request.Context(), contentReference)
 
 			if err != nil {
 				c.Error(err)
@@ -80,7 +81,7 @@ func RoutingHandler(cfg *domain.SiteConfiguration, loader loader.Loader) gin.Han
 	}
 }
 
-func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference domain.ContentReference) (string, error) {
+func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference ContentReference) (string, error) {
 
 	c, err := loader.GetContent(ctx, contentReference)
 
@@ -93,7 +94,7 @@ func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference dom
 
 	for (next.ParentID != uuid.UUID{}) {
 
-		pRef := domain.ContentReference{
+		pRef := ContentReference{
 			ID:     next.ParentID,
 			Locale: contentReference.Locale,
 		}
@@ -112,7 +113,7 @@ func GenerateUrl(ctx context.Context, loader loader.Loader, contentReference dom
 	return path, nil
 }
 
-func match(c domain.Content, remaining []string) (match bool, segments []string) {
+func match(c Content, remaining []string) (match bool, segments []string) {
 	segments = remaining
 
 	segment := remaining[0]
@@ -128,13 +129,13 @@ func match(c domain.Content, remaining []string) (match bool, segments []string)
 	return
 }
 
-func RoutedNode(c *gin.Context) domain.Content {
+func RoutedNode(c *gin.Context) Content {
 
 	node, exist := c.Get(nodeKey)
 
 	if !exist {
-		node = domain.Content{}
+		node = Content{}
 	}
 
-	return node.(domain.Content)
+	return node.(Content)
 }
