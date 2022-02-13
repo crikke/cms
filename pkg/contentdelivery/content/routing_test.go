@@ -1,141 +1,184 @@
 package content
 
-// func TestMatchRoute(t *testing.T) {
+import (
+	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-// 	root := uuid.New()
-// 	a := uuid.New()
-// 	b := uuid.New()
+	"github.com/crikke/cms/pkg/siteconfiguration"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+)
 
-// 	nodes := []Content{
-// 		{
-// 			ID:         ContentReference{ID: root},
-// 			URLSegment: "",
-// 		},
-// 		{
-// 			ID:         ContentReference{ID: a},
-// 			ParentID:   root,
-// 			URLSegment: "a",
-// 		},
-// 		{
-// 			ParentID:   a,
-// 			ID:         ContentReference{ID: b},
-// 			URLSegment: "b",
-// 		},
-// 	}
+func TestMatchRoute(t *testing.T) {
 
-// 	tests := []struct {
-// 		description        string
-// 		url                string
-// 		language           string
-// 		expectedNode       Content
-// 		expectedStatusCode int
-// 	}{
-// 		{
-// 			description:        "node matched with sv language",
-// 			url:                "/a/b",
-// 			expectedNode:       nodes[2],
-// 			expectedStatusCode: http.StatusOK,
-// 		},
-// 		{
-// 			description:        "multiple slashes in path ",
-// 			url:                `/a///b`,
-// 			expectedNode:       nodes[2],
-// 			expectedStatusCode: http.StatusOK,
-// 		},
-// 		{
-// 			description:        "path ends with '/' ",
-// 			url:                "/a/b/",
-// 			expectedNode:       nodes[2],
-// 			expectedStatusCode: http.StatusOK,
-// 		},
-// 		{
-// 			description:        "route not found ",
-// 			url:                "/a/b/c/d",
-// 			expectedNode:       Content{},
-// 			expectedStatusCode: http.StatusNotFound,
-// 		},
-// 		{
-// 			description:        "root",
-// 			url:                "/",
-// 			expectedNode:       nodes[0],
-// 			expectedStatusCode: http.StatusOK,
-// 		},
-// 	}
+	root := uuid.New()
+	a := uuid.New()
+	b := uuid.New()
 
-// 	for _, test := range tests {
+	nodes := []Content{
+		{
+			ID:         ContentReference{ID: root},
+			URLSegment: "",
+		},
+		{
+			ID:         ContentReference{ID: a},
+			ParentID:   root,
+			URLSegment: "a",
+		},
+		{
+			ParentID:   a,
+			ID:         ContentReference{ID: b},
+			URLSegment: "b",
+		},
+	}
 
-// 		t.Run(test.description, func(t *testing.T) {
-// 			router := gin.Default()
+	tests := []struct {
+		description        string
+		url                string
+		language           string
+		expectedNode       Content
+		expectedStatusCode int
+	}{
+		{
+			description:        "node matched with sv language",
+			url:                "/a/b",
+			expectedNode:       nodes[2],
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			description:        "multiple slashes in path ",
+			url:                `/a///b`,
+			expectedNode:       nodes[2],
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			description:        "path ends with '/' ",
+			url:                "/a/b/",
+			expectedNode:       nodes[2],
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			description:        "route not found ",
+			url:                "/a/b/c/d",
+			expectedNode:       Content{},
+			expectedStatusCode: http.StatusNotFound,
+		},
+		{
+			description:        "root",
+			url:                "/",
+			expectedNode:       nodes[0],
+			expectedStatusCode: http.StatusOK,
+		},
+	}
 
-// 			router.GET("/*node", RoutingHandler(&domain.SiteConfiguration{
-// 				RootPage: root,
-// 			}, mocks.MockLoader{
-// 				Nodes: nodes,
-// 			}), func(c *gin.Context) {
-// 				assert.Equal(t, test.expectedNode.ID, RoutedNode(c).ID, test.description)
-// 			})
+	for _, test := range tests {
 
-// 			w := httptest.NewRecorder()
-// 			r, _ := http.NewRequest("GET", test.url, nil)
+		t.Run(test.description, func(t *testing.T) {
+			router := gin.Default()
 
-// 			router.ServeHTTP(w, r)
-// 			assert.Equal(t, test.expectedStatusCode, w.Code)
-// 		})
-// 	}
-// }
+			router.GET("/*node", RoutingHandler(&siteconfiguration.SiteConfiguration{
+				RootPage: root,
+			}, MockRepo{
+				Nodes: nodes,
+			}), func(c *gin.Context) {
+				assert.Equal(t, test.expectedNode.ID, RoutedNode(c).ID, test.description)
+			})
 
-// func Test_GenerateUrl(t *testing.T) {
-// 	a := uuid.New()
-// 	b := uuid.New()
-// 	c := uuid.New()
+			w := httptest.NewRecorder()
+			r, _ := http.NewRequest("GET", test.url, nil)
 
-// 	nodes := []Content{
-// 		{
-// 			ID:         ContentReference{ID: a},
-// 			URLSegment: "a",
-// 		},
-// 		{
-// 			ID:         ContentReference{ID: b},
-// 			ParentID:   a,
-// 			URLSegment: "b",
-// 		},
-// 		{
-// 			ParentID:   b,
-// 			ID:         ContentReference{ID: c},
-// 			URLSegment: "c",
-// 		},
-// 	}
+			router.ServeHTTP(w, r)
+			assert.Equal(t, test.expectedStatusCode, w.Code)
+		})
+	}
+}
 
-// 	tests := []struct {
-// 		description string
-// 		node        Content
-// 		expected    string
-// 	}{
-// 		{
-// 			description: "generate url node c",
-// 			expected:    "/a/b/c/",
-// 			node:        nodes[2],
-// 		},
-// 		{
-// 			description: "generate url node b ",
-// 			expected:    "/a/b/",
-// 			node:        nodes[1],
-// 		},
-// 	}
+func Test_GenerateUrl(t *testing.T) {
+	a := uuid.New()
+	b := uuid.New()
+	c := uuid.New()
 
-// 	for _, test := range tests {
+	nodes := []Content{
+		{
+			ID:         ContentReference{ID: a},
+			URLSegment: "a",
+		},
+		{
+			ID:         ContentReference{ID: b},
+			ParentID:   a,
+			URLSegment: "b",
+		},
+		{
+			ParentID:   b,
+			ID:         ContentReference{ID: c},
+			URLSegment: "c",
+		},
+	}
 
-// 		t.Run(test.description, func(t *testing.T) {
+	tests := []struct {
+		description string
+		node        Content
+		expected    string
+	}{
+		{
+			description: "generate url node c",
+			expected:    "/a/b/c/",
+			node:        nodes[2],
+		},
+		{
+			description: "generate url node b ",
+			expected:    "/a/b/",
+			node:        nodes[1],
+		},
+	}
 
-// 			mock := mocks.MockLoader{
-// 				Nodes: nodes,
-// 			}
+	for _, test := range tests {
 
-// 			result, err := GenerateUrl(context.TODO(), mock, test.node.ID)
+		t.Run(test.description, func(t *testing.T) {
 
-// 			assert.NoError(t, err)
+			mock := MockRepo{
+				Nodes: nodes,
+			}
 
-// 			assert.Equal(t, test.expected, result)
-// 		})
-// 	}
-// }
+			result, err := GenerateUrl(context.TODO(), mock, test.node.ID)
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+type MockRepo struct {
+	Nodes []Content
+}
+
+func (m MockRepo) GetContent(ctx context.Context, id ContentReference) (Content, error) {
+
+	for _, node := range m.Nodes {
+		if node.ID.ID == id.ID {
+			return node, nil
+		}
+	}
+	return Content{}, nil
+}
+
+func (m MockRepo) GetChildren(ctx context.Context, id ContentReference) ([]Content, error) {
+
+	if id.ID == uuid.Nil {
+		return nil, errors.New("empty uuid")
+	}
+
+	result := []Content{}
+
+	for _, node := range m.Nodes {
+		if node.ParentID == id.ID {
+			result = append(result, node)
+		}
+	}
+	return result, nil
+}

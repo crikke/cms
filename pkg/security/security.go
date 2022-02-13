@@ -5,9 +5,8 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	mongodbadapter "github.com/casbin/mongodb-adapter/v3"
-	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/domain"
-	"github.com/crikke/cms/pkg/routing"
+	"github.com/crikke/cms/pkg/contentdelivery/config"
+	"github.com/crikke/cms/pkg/contentdelivery/content"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -30,7 +29,7 @@ func AuthorizationHandler(act string, cfg *config.ServerConfiguration) gin.Handl
 		}
 
 		e.LoadPolicy()
-		node := routing.RoutedNode(c)
+		node := content.RoutedNode(c)
 		user, _ := CurrentUser(c)
 		allowed, err := e.Enforce(user.GetID(), node.ID.ID, act)
 
@@ -59,7 +58,7 @@ type Identity interface {
 
 func MockAuthenticationHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Set("user", domain.User{ID: uuid.MustParse("b39ca6e6-c08d-4351-9007-d3e232259b5a"), Name: "test"})
+		// c.Set("user", contentUser{ID: uuid.MustParse("b39ca6e6-c08d-4351-9007-d3e232259b5a"), Name: "test"})
 		c.Next()
 	}
 }
