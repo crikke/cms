@@ -1,11 +1,11 @@
-package repository
+package content
 
 import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/domain"
+	"github.com/crikke/cms/pkg/contentdelivery/db"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
@@ -16,7 +16,7 @@ func Test_GetDocument(t *testing.T) {
 	tests := []struct {
 		name         string
 		uid          uuid.UUID
-		version      int
+		version      *int
 		locale       string
 		expectedName string
 	}{
@@ -34,15 +34,21 @@ func Test_GetDocument(t *testing.T) {
 		},
 	}
 
-	cfg := config.LoadServerConfiguration()
-	r, err := NewRepository(context.TODO(), cfg)
+	cfg := &siteconfiguration.SiteConfiguration{
+		Languages: []language.Tag{
+			language.Swedish,
+		},
+	}
+
+	database, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
 	assert.NoError(t, err)
+	r := NewContentRepository(database, cfg)
 
 	for _, test := range tests {
 
 		t.Run(test.name, func(t *testing.T) {
 
-			cref := domain.ContentReference{ID: test.uid,
+			cref := ContentReference{ID: test.uid,
 				Version: test.version,
 			}
 			l := language.MustParse(test.locale)
@@ -52,7 +58,7 @@ func Test_GetDocument(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, test.uid, c.ID)
-			assert.Equal(t, test.expectedName, c.Data[test.version].Name[test.locale])
+			assert.Equal(t, test.expectedName, c.Name)
 		})
 	}
 }
@@ -61,7 +67,7 @@ func Test_GetChildDocuments(t *testing.T) {
 	tests := []struct {
 		name        string
 		uid         uuid.UUID
-		version     int
+		version     *int
 		locale      string
 		returnedIds []uuid.UUID
 	}{
@@ -74,13 +80,18 @@ func Test_GetChildDocuments(t *testing.T) {
 			},
 		},
 	}
-	cfg := config.LoadServerConfiguration()
-	r, err := NewRepository(context.TODO(), cfg)
-	assert.NoError(t, err)
+	cfg := &siteconfiguration.SiteConfiguration{
+		Languages: []language.Tag{
+			language.Swedish,
+		},
+	}
 
+	database, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
+	r := NewContentRepository(database, cfg)
 	for _, test := range tests {
 
-		cref := domain.ContentReference{ID: test.uid,
+		cref := ContentReference{ID: test.uid,
 			Version: test.version,
 		}
 		l := language.MustParse(test.locale)
@@ -96,7 +107,7 @@ func Test_GetChildDocuments(t *testing.T) {
 				match := false
 				for i := 0; i < len(test.returnedIds); i++ {
 
-					match = data.ID == test.returnedIds[i]
+					match = data.ID.ID == test.returnedIds[i]
 
 					if match {
 						break
@@ -107,61 +118,6 @@ func Test_GetChildDocuments(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_GetEmptyConfig(t *testing.T) {
-
-	cfg := config.LoadServerConfiguration()
-
-	r, err := NewRepository(context.TODO(), cfg)
-	assert.NoError(t, err)
-
-	seed := func(input domain.SiteConfiguration) {
-		_, err := r.(repository).database.
-			Collection("configuration").
-			InsertOne(context.TODO(), input)
-
-		assert.NoError(t, err)
-	}
-
-	tests := []struct {
-		name   string
-		input  *domain.SiteConfiguration
-		expect domain.SiteConfiguration
-	}{
-		{
-			name:   "Empty config",
-			input:  nil,
-			expect: domain.SiteConfiguration{},
-		},
-		{
-			name: "Existing config",
-			input: &domain.SiteConfiguration{
-				Languages: []language.Tag{language.Swahili},
-			},
-			expect: domain.SiteConfiguration{
-				Languages: []language.Tag{language.Swahili},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-
-			err = truncateCollection("configuration", r.(repository))
-			assert.NoError(t, err)
-
-			if test.input != nil {
-				seed(*test.input)
-			}
-
-			res, err := r.LoadSiteConfiguration(context.TODO())
-
-			assert.NoError(t, err)
-			assert.Equal(t, test.expect, *res)
-		})
-	}
-
 }
 
 func truncateCollection(col string, r repository) error {

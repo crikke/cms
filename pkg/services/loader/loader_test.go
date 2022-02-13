@@ -1,27 +1,5 @@
 package loader
 
-// func TestLoadContentWithDefaultLanguage(t *testing.T) {
-
-// 	cfg := &domain.SiteConfiguration{
-// 		Languages: []language.Tag{
-// 			language.Swedish,
-// 		},
-// 	}
-// 	loader := NewLoader(newMockRepo(), cfg)
-
-// 	content, err := loader.GetContent(context.TODO(), domain.ContentReference{})
-
-// 	assert.NoError(t, err)
-// 	assert.NotEmpty(t, content)
-
-// 	assert.Equal(t, "foo", content.Name)
-// 	assert.Equal(t, "foo", content.URLSegment)
-// 	assert.Equal(t, "prop", content.Properties[0].Name)
-// 	assert.Equal(t, "text", content.Properties[0].Type)
-// 	assert.Equal(t, "bar", content.Properties[0].Value)
-
-// }
-
 // type mockRepo struct {
 // 	content []repository.ContentData
 // }
