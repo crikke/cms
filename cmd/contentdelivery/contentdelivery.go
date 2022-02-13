@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/crikke/cms/pkg/config"
 	contentapi "github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
+	"github.com/crikke/cms/pkg/contentdelivery/config"
 	"github.com/crikke/cms/pkg/contentdelivery/content"
 	"github.com/crikke/cms/pkg/contentdelivery/db"
 	"github.com/crikke/cms/pkg/locale"
@@ -33,6 +33,9 @@ func main() {
 
 	configRepo := siteconfiguration.NewConfigurationRepository(database)
 	siteConfig, err := configRepo.LoadConfiguration(context.Background())
+	if err != nil {
+		panic(err)
+	}
 
 	if serverConfig.ConnectionString.Mongodb != "" {
 		closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
@@ -48,10 +51,6 @@ func main() {
 			}
 		}()
 
-	}
-	// l := loader.NewLoader(db, siteConfig)
-	if err != nil {
-		panic(err)
 	}
 
 	server := Server{

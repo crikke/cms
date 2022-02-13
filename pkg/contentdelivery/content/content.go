@@ -35,7 +35,7 @@ func (c ContentReference) String() string {
 	}
 
 	if c.Locale != nil {
-		str = fmt.Sprintf("%s-%s", str, c.Locale.String)
+		str = fmt.Sprintf("%s-%s", str, c.Locale.String())
 	}
 
 	return str

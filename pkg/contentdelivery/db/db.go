@@ -30,11 +30,11 @@ var (
 func Connect(ctx context.Context, connectionstring string) (*mongo.Database, error) {
 	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(connectionstring))
 
-	defer func() {
-		if err = c.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
+	// defer func() {
+	// 	if err = c.Disconnect(ctx); err != nil {
+	// 		panic(err)
+	// 	}
+	// }()
 
 	if err != nil {
 		return nil, err
