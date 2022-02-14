@@ -6,7 +6,7 @@
 Roadmap to v1 can be found [here](https://github.com/crikke/ffcms/projects/1)
 ## Overview
 A headless CMS. 
-Reliability, scalability, speed.
+use chi instead of gin
 
 ### Content Delivery Api
 Decoupled from ContentManagementApi
