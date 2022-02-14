@@ -7,7 +7,6 @@ import (
 	"github.com/crikke/cms/pkg/contentdelivery/config"
 	"github.com/crikke/cms/pkg/contentdelivery/content"
 	"github.com/crikke/cms/pkg/contentdelivery/db"
-	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/crikke/cms/pkg/telemetry"
 	"github.com/gin-gonic/gin"
@@ -69,7 +68,7 @@ func (s Server) Start() error {
 	r.Use(
 		telemetry.Handle(),
 		gin.Recovery(),
-		locale.Handler(s.SiteConfig),
+		// locale.Handler(s.SiteConfig),
 	)
 
 	v1 := r.Group("/v1")
