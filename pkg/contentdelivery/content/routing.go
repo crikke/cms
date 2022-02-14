@@ -31,7 +31,11 @@ func RoutingHandler(cfg *siteconfiguration.SiteConfiguration, repo ContentReposi
 		segments = strings.Split(c.Param("node"), "/")
 
 		// first item is always rootnode
-		locale := locale.FromContext(c)
+		locale, err := locale.GetLocale(c.Request, cfg)
+		if err != nil {
+			c.Error(err)
+			return
+		}
 		contentReference := ContentReference{
 			ID:     cfg.RootPage,
 			Locale: &locale,

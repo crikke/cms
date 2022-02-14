@@ -10,7 +10,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-func TestLocaleHandler(t *testing.T) {
+func Test_GetLocale(t *testing.T) {
 
 	config := &siteconfiguration.SiteConfiguration{
 		Languages: []language.Tag{
@@ -21,30 +21,31 @@ func TestLocaleHandler(t *testing.T) {
 	tests := []struct {
 		acceptlanguage string
 		expected       language.Tag
-		statuscode     int
+		ok             bool
 	}{
 		{
 			acceptlanguage: "sv-SE",
 			expected:       language.MustParse("sv-SE"),
-			statuscode:     200,
+			ok:             true,
 		},
 		{
 			acceptlanguage: "sv-SE;q=0.1, nb-NO;q=0.5",
 			expected:       language.MustParse("nb-NO"),
-			statuscode:     200,
+			ok:             true,
 		},
 		{
 			acceptlanguage: "sv-SE;q=0.1, nb-NO;q=0.1",
 			expected:       language.MustParse("sv-SE"),
-			statuscode:     200,
+			ok:             true,
 		},
 		{
-			expected:   language.MustParse("sv-SE"),
-			statuscode: 200,
+			expected: language.MustParse("sv-SE"),
+			ok:       true,
 		},
 		{
 			acceptlanguage: "malformed",
-			statuscode:     400,
+			expected:       language.Tag{},
+			ok:             false,
 		},
 	}
 
@@ -58,12 +59,17 @@ func TestLocaleHandler(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			router.GET("/", Handler(config), func(c *gin.Context) {
-				assert.Equal(t, test.expected, FromContext(c))
+			router.GET("/", func(c *gin.Context) {
+
+				tag, err := GetLocale(c.Request, config)
+
+				ok := err == nil
+
+				assert.Equal(t, test.ok, ok)
+				assert.Equal(t, test.expected, tag)
 			})
 
 			router.ServeHTTP(w, r)
-			assert.Equal(t, test.statuscode, w.Code)
 		})
 	}
 }

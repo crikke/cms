@@ -36,7 +36,7 @@ func Test_GetDocument(t *testing.T) {
 
 	cfg := &siteconfiguration.SiteConfiguration{
 		Languages: []language.Tag{
-			language.Swedish,
+			language.MustParse("sv-SE"),
 		},
 	}
 
@@ -57,7 +57,7 @@ func Test_GetDocument(t *testing.T) {
 			c, err := r.GetContent(context.Background(), cref)
 			assert.NoError(t, err)
 
-			assert.Equal(t, test.uid, c.ID)
+			assert.Equal(t, test.uid, c.ID.ID)
 			assert.Equal(t, test.expectedName, c.Name)
 		})
 	}
@@ -82,7 +82,7 @@ func Test_GetChildDocuments(t *testing.T) {
 	}
 	cfg := &siteconfiguration.SiteConfiguration{
 		Languages: []language.Tag{
-			language.Swedish,
+			language.MustParse("sv-SE"),
 		},
 	}
 

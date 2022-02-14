@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/crikke/cms/pkg/locale"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
@@ -72,7 +71,15 @@ func (r repository) GetContent(ctx context.Context, contentReference ContentRefe
 	if err != nil {
 		return Content{}, err
 	}
-	return r.transform(ctx, doc)
+
+	lang := []language.Tag{}
+
+	if contentReference.Locale != nil {
+		lang = append(lang, *contentReference.Locale)
+	}
+	lang = append(lang, r.cfg.Languages...)
+
+	return r.transform(ctx, doc, lang)
 }
 
 func (r repository) GetChildren(ctx context.Context, contentReference ContentReference) ([]Content, error) {
@@ -82,6 +89,13 @@ func (r repository) GetChildren(ctx context.Context, contentReference ContentRef
 	if err != nil {
 		return nil, err
 	}
+
+	lang := []language.Tag{}
+
+	if contentReference.Locale != nil {
+		lang = append(lang, *contentReference.Locale)
+	}
+	lang = append(lang, r.cfg.Languages...)
 
 	result := []Content{}
 
@@ -93,7 +107,7 @@ func (r repository) GetChildren(ctx context.Context, contentReference ContentRef
 			return nil, err
 		}
 
-		doc, err := r.transform(ctx, data)
+		doc, err := r.transform(ctx, data, lang)
 		if err != nil {
 			return nil, err
 		}
@@ -106,18 +120,9 @@ func (r repository) GetChildren(ctx context.Context, contentReference ContentRef
 
 // if property is localized. Find localized value by priorited language.Tags
 // else get property by default language
-func (r repository) transform(ctx context.Context, in *contentData) (Content, error) {
+func (r repository) transform(ctx context.Context, in *contentData, lang []language.Tag) (Content, error) {
 
 	defaultLang := r.cfg.Languages[0]
-	lang := []language.Tag{}
-
-	t := locale.FromContextNew(ctx)
-
-	if t != nil {
-		lang = append(lang, *t)
-	}
-
-	lang = append(lang, r.cfg.Languages...)
 
 	result := Content{
 		ID:       ContentReference{ID: in.ID, Locale: &lang[0], Version: nil},
@@ -160,7 +165,7 @@ func (r repository) transform(ctx context.Context, in *contentData) (Content, er
 		result.Properties = append(result.Properties, cp)
 		continue
 	}
-	return Content{}, nil
+	return result, nil
 }
 
 // todo use generics when available
