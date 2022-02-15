@@ -15,8 +15,9 @@ type repository struct {
 	db *mongo.Database
 }
 
-func NewConfigurationRepository(db *mongo.Database) ConfigurationRepository {
+func NewConfigurationRepository(c *mongo.Client) ConfigurationRepository {
 
+	db := c.Database("cms")
 	repo := repository{db}
 	return repo
 }

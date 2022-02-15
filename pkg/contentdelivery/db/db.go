@@ -27,7 +27,7 @@ var (
 			Build()
 )
 
-func Connect(ctx context.Context, connectionstring string) (*mongo.Database, error) {
+func Connect(ctx context.Context, connectionstring string) (*mongo.Client, error) {
 	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(connectionstring))
 
 	// defer func() {
@@ -40,9 +40,7 @@ func Connect(ctx context.Context, connectionstring string) (*mongo.Database, err
 		return nil, err
 	}
 
-	db := c.Database("cms")
-
-	return db, nil
+	return c, nil
 }
 
 func decodeUUID(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {

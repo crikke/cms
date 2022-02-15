@@ -40,9 +40,9 @@ func Test_GetDocument(t *testing.T) {
 		},
 	}
 
-	database, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
+	c, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
 	assert.NoError(t, err)
-	r := NewContentRepository(database, cfg)
+	r := NewContentRepository(c, cfg)
 
 	for _, test := range tests {
 

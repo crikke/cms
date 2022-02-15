@@ -1,25 +1,24 @@
 package contentdefinition
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type contentdefinitionQuerier struct {
-}
-
 type ContentDefinition struct {
-	ID      uuid.UUID
-	Name    string
-	Created time.Time
-	Updated time.Time
-
-	Properties []PropertyDefinition
+	ID          uuid.UUID
+	Name        string
+	Description string
+	Created     time.Time
 }
 
-type PropertyDefinition struct {
-	ID           uuid.UUID
-	Name         string
-	PropertyType string
+func NewContentDefinition(name, desc string) (ContentDefinition, error) {
+
+	if name == "" {
+		return ContentDefinition{}, errors.New("missing field: Name")
+	}
+
+	return ContentDefinition{Name: name, Description: desc}, nil
 }

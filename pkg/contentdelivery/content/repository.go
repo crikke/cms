@@ -59,7 +59,8 @@ func ErrContentNotFound(ref ContentReference) ErrorResponse {
 	return ErrorResponse{ID: ref, StatusCode: http.StatusNotFound, Message: ref.String()}
 }
 
-func NewContentRepository(db *mongo.Database, cfg *siteconfiguration.SiteConfiguration) ContentRepository {
+func NewContentRepository(c *mongo.Client, cfg *siteconfiguration.SiteConfiguration) ContentRepository {
+	db := c.Database("cms")
 	return repository{database: db, cfg: cfg}
 }
 

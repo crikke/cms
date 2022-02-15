@@ -12,9 +12,10 @@ import (
 
 func Test_GetEmptyConfig(t *testing.T) {
 
-	database, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
+	c, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
+	database := c.Database("cms")
 	assert.NoError(t, err)
-	r := NewConfigurationRepository(database)
+	r := NewConfigurationRepository(c)
 
 	seed := func(input SiteConfiguration) {
 		_, err := database.

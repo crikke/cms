@@ -16,7 +16,7 @@ import (
 
 type Server struct {
 	// Configuration config.SiteConfiguration
-	database   *mongo.Database
+	database   *mongo.Client
 	SiteConfig *siteconfiguration.SiteConfiguration
 }
 
@@ -24,13 +24,13 @@ func main() {
 
 	serverConfig := config.LoadServerConfiguration()
 
-	database, err := db.Connect(context.Background(), serverConfig.ConnectionString.Mongodb)
+	c, err := db.Connect(context.Background(), serverConfig.ConnectionString.Mongodb)
 
 	if err != nil {
 		panic(err)
 	}
 
-	configRepo := siteconfiguration.NewConfigurationRepository(database)
+	configRepo := siteconfiguration.NewConfigurationRepository(c)
 	siteConfig, err := configRepo.LoadConfiguration(context.Background())
 	if err != nil {
 		panic(err)
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	server := Server{
-		database:   database,
+		database:   c,
 		SiteConfig: siteConfig,
 	}
 
