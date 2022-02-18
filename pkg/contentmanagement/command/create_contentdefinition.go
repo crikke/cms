@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/google/uuid"
 )
 
 type CreateContentDefinition struct {
@@ -21,20 +22,22 @@ func (c CreateContentDefinition) Valid() error {
 }
 
 type CreateContentDefinitionHandler struct {
+	repo contentdefinition.ContentDefinitionRepository
 }
 
-func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateContentDefinition) (err error) {
+func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateContentDefinition) (id uuid.UUID, err error) {
 
 	defer func() {
 		// todo better logging
 		fmt.Println("CreateContentDefinitionHandler", cmd, err)
 	}()
 
-	_, err = contentdefinition.NewContentDefinition(cmd.Name, cmd.Description)
-
+	cd, err := contentdefinition.NewContentDefinition(cmd.Name, cmd.Description)
 	if err != nil {
 		return
 	}
 
-	return nil
+	id, err = c.repo.CreateContentDefinition(ctx, &cd)
+
+	return
 }

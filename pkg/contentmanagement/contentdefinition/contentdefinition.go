@@ -8,9 +8,9 @@ import (
 )
 
 type ContentDefinition struct {
-	ID          uuid.UUID
-	Name        string
-	Description string
+	ID          uuid.UUID `bson:"_id"`
+	Name        string    `bson:"name,omitempty"`
+	Description string    `bson:"description,omitempty"`
 	Created     time.Time
 }
 
