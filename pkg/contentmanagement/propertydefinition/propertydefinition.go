@@ -21,6 +21,21 @@ var propertydefinitionTypes = map[string]struct{}{
 	"bool":        {},
 }
 
+func NewPropertyDefinition(name, description, propertytype string) (PropertyDefinition, error) {
+
+	pd := PropertyDefinition{
+		Name:        name,
+		Description: description,
+		Type:        propertytype,
+	}
+
+	if err := pd.Valid(); err != nil {
+		return PropertyDefinition{}, err
+	}
+
+	return pd, nil
+}
+
 func (p PropertyDefinition) Valid() error {
 
 	if p.Name == "" {
