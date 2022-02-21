@@ -5,13 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PropertyDefinitionRepository interface {
 	CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error)
-	UpdatePropertyDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error
+	UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error
 	DeletePropertyDefinition(ctx context.Context, id uuid.UUID) error
 	GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error)
 }
@@ -46,14 +45,13 @@ func (r propertydefinition_repository) CreatePropertyDefinition(ctx context.Cont
 	return pd.ID, err
 }
 
-func (r propertydefinition_repository) UpdatePropertyDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error {
+func (r propertydefinition_repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error {
 
-	entry := &PropertyDefinition{}
-	err := r.database.Collection(collection).FindOne(ctx, primitive.M{"_id": id}).Decode(entry)
+	entry, err := r.GetPropertyDefinition(ctx, cid, pid)
 	if err != nil {
 		return err
 	}
-	e, err := updateFn(ctx, entry)
+	e, err := updateFn(ctx, &entry)
 	if err != nil {
 		return err
 	}
@@ -62,23 +60,14 @@ func (r propertydefinition_repository) UpdatePropertyDefinition(ctx context.Cont
 		Collection(collection).
 		UpdateOne(
 			ctx,
-			primitive.D{primitive.E{Key: "_id", Value: id}},
-			bson.M{"$set": e})
+			bson.D{
+				bson.E{Key: "_id", Value: cid},
+				bson.E{Key: "propertydefinitions.id", Value: pid}},
+			bson.M{"$set": bson.M{"propertydefinitions.$": e}})
 
 	if err != nil {
 		return err
 	}
-
-	// return session.CommitTransaction(sc)
-
-	// })
-
-	// if err != nil {
-	// 	if abortErr := session.AbortTransaction(ctx); abortErr != nil {
-	// 		return err
-	// 	}
-	// 	return err
-	// }
 
 	return nil
 }

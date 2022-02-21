@@ -33,3 +33,40 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 
 	return id, nil
 }
+
+type UpdatePropertyDefinition struct {
+	ContentDefinitionID  uuid.UUID
+	PropertyDefinitionID uuid.UUID
+	Name                 *string
+	Description          *string
+	Localized            *bool
+}
+
+type UpdatePropertyDefinitionHandler struct {
+	repo contentdefinition.PropertyDefinitionRepository
+}
+
+func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdatePropertyDefinition) error {
+
+	h.repo.UpdatePropertyDefinition(
+		ctx, cmd.ContentDefinitionID,
+		cmd.PropertyDefinitionID,
+		func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
+
+			if cmd.Description != nil {
+				pd.Description = *cmd.Description
+			}
+
+			if cmd.Name != nil {
+				pd.Name = *cmd.Name
+			}
+
+			if cmd.Localized != nil {
+				pd.Localized = *cmd.Localized
+			}
+
+			return pd, nil
+		})
+
+	return nil
+}
