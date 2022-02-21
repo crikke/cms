@@ -7,6 +7,7 @@ import (
 	"github.com/crikke/cms/pkg/contentdelivery/db"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func Test_CreatePropertyDefinition(t *testing.T) {
@@ -92,4 +93,47 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.Equal(t, str, actual.Description)
 	assert.Equal(t, createcmd.Type, actual.Type)
 	assert.Equal(t, b, actual.Localized)
+}
+
+func Test_DeletePropertyDefinition(t *testing.T) {
+	c, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
+	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+	assert.NoError(t, err)
+
+	// create contentdefinition
+	contentRepo := contentdefinition.NewContentDefinitionRepository(c)
+	cid, err := contentRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+		Name: "test",
+	})
+	assert.NoError(t, err)
+	propRepo := contentdefinition.NewPropertyDefinitionRepository(c)
+
+	// create propertydefinition
+	createhandler := CreatePropertyDefinitionHandler{repo: propRepo}
+	createcmd := CreatePropertyDefinition{
+		Name:                "pd1",
+		Description:         "pd2",
+		Type:                "text",
+		ContentDefinitionID: cid,
+	}
+
+	pid, err := createhandler.Handle(context.TODO(), createcmd)
+	assert.NoError(t, err)
+
+	// delete propertydefinition
+	deletehandler := DeletePropertyDefinitionHandler{
+		repo: propRepo,
+	}
+	deletecmd := DeletePropertyDefinition{
+		ContentDefinitionID:  cid,
+		PropertyDefinitionID: pid,
+	}
+
+	err = deletehandler.Handle(context.Background(), deletecmd)
+	assert.NoError(t, err)
+
+	// get propertydefiniton
+	_, err = propRepo.GetPropertyDefinition(context.TODO(), cid, pid)
+	assert.Error(t, err)
+	assert.Equal(t, err, mongo.ErrNoDocuments)
 }

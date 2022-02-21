@@ -11,7 +11,7 @@ import (
 type PropertyDefinitionRepository interface {
 	CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error)
 	UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error
-	DeletePropertyDefinition(ctx context.Context, id uuid.UUID) error
+	DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error
 	GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error)
 }
 
@@ -72,7 +72,19 @@ func (r propertydefinition_repository) UpdatePropertyDefinition(ctx context.Cont
 	return nil
 }
 
-func (r propertydefinition_repository) DeletePropertyDefinition(ctx context.Context, id uuid.UUID) error {
+func (r propertydefinition_repository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error {
+	_, err := r.database.
+		Collection(collection).
+		DeleteOne(
+			ctx,
+			bson.D{
+				bson.E{Key: "_id", Value: cid},
+				bson.E{Key: "propertydefinitions.id", Value: pid}})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

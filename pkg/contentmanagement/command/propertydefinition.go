@@ -70,3 +70,16 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 
 	return nil
 }
+
+type DeletePropertyDefinition struct {
+	ContentDefinitionID  uuid.UUID
+	PropertyDefinitionID uuid.UUID
+}
+
+type DeletePropertyDefinitionHandler struct {
+	repo contentdefinition.PropertyDefinitionRepository
+}
+
+func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeletePropertyDefinition) error {
+	return h.repo.DeletePropertyDefinition(ctx, cmd.ContentDefinitionID, cmd.PropertyDefinitionID)
+}
