@@ -1,4 +1,4 @@
-package propertydefinition
+package contentdefinition
 
 import (
 	"errors"
@@ -7,11 +7,11 @@ import (
 )
 
 type PropertyDefinition struct {
-	ID          uuid.UUID
-	Type        string
-	Name        string
-	Description string
-	Localized   bool
+	ID          uuid.UUID `bson:"id"`
+	Name        string    `bson:"name,omitempty"`
+	Description string    `bson:"description,omitempty"`
+	Type        string    `bson:"type,omitempty"`
+	Localized   bool      `bson:"localized,omitempty"`
 }
 
 var propertydefinitionTypes = map[string]struct{}{
@@ -21,7 +21,7 @@ var propertydefinitionTypes = map[string]struct{}{
 	"bool":        {},
 }
 
-func NewPropertyDefinition(name, description, propertytype string) (PropertyDefinition, error) {
+func NewPropertyDefinition(cid uuid.UUID, name, description, propertytype string) (PropertyDefinition, error) {
 
 	pd := PropertyDefinition{
 		Name:        name,

@@ -3,7 +3,7 @@
 
 
 # CMS [![Makefile CI](https://github.com/crikke/ffcms/actions/workflows/makefile.yml/badge.svg?branch=master)](https://github.com/crikke/ffcms/actions/workflows/makefile.yml)
-Roadmap to v1 can be found [here](https://github.com/crikke/ffcms/projects/1)
+V1 board can be found [here](https://github.com/crikke/ffcms/projects/1)
 ## Overview
 A headless CMS. 
 use chi instead of gin
@@ -15,13 +15,3 @@ Read optimized
 
 ### Content Management Api
 Responsible for creating content & ContentTypes
-
-## Choosing a Database
-Cassandra vs MongoDB
-Cassandra has multiple master nodes so write speeds are improved
-Mongodb has a single primary node that is used for writes and multiple secondary nodes which are used for read.
-
-> A good guess is that the CMS see more reads than write, so mongodb can work
-
-## Authorization
-

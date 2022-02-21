@@ -6,13 +6,12 @@ import (
 
 	"github.com/crikke/cms/pkg/contentdelivery/db"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_CreatePropertyDefinition(t *testing.T) {
 	c, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
-
+	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
 	assert.NoError(t, err)
 
 	contentRepo := contentdefinition.NewContentDefinitionRepository(c)
@@ -23,13 +22,13 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	handler := CreatePropertyDefinitionHandler{repo: repo}
 
 	testpd := CreatePropertyDefinition{
-		Name:                "Test",
-		Description:         "Test",
-		Type:                "Test",
+		Name:                "pd1",
+		Description:         "pd2",
+		Type:                "text",
 		ContentDefinitionID: cid,
 	}
 
@@ -37,10 +36,10 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	cd, err := repo.GetPropertyDefinition(context.TODO(), id)
+	actual, err := repo.GetPropertyDefinition(context.TODO(), cid, id)
 	assert.NoError(t, err)
 
-	assert.Equal(t, testpd.Name, cd.Name)
-	assert.Equal(t, testpd.Description, cd.Description)
-	assert.Equal(t, testpd.Type, cd.Type)
+	assert.Equal(t, testpd.Name, actual.Name)
+	assert.Equal(t, testpd.Description, actual.Description)
+	assert.Equal(t, testpd.Type, actual.Type)
 }

@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/google/uuid"
 )
 
@@ -15,18 +15,18 @@ type CreatePropertyDefinition struct {
 }
 
 type CreatePropertyDefinitionHandler struct {
-	repo propertydefinition.PropertyDefinitionRepository
+	repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreatePropertyDefinition) (uuid.UUID, error) {
 
-	pd, err := propertydefinition.NewPropertyDefinition(cmd.Name, cmd.Description, cmd.Type)
+	pd, err := contentdefinition.NewPropertyDefinition(cmd.ContentDefinitionID, cmd.Name, cmd.Description, cmd.Type)
 
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	id, err := h.repo.CreatePropertyDefinition(ctx, &pd)
+	id, err := h.repo.CreatePropertyDefinition(ctx, cmd.ContentDefinitionID, &pd)
 	if err != nil {
 		return uuid.UUID{}, err
 	}

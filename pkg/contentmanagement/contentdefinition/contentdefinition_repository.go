@@ -5,9 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+const collection = "contentdefinition"
 
 type ContentDefinitionRepository interface {
 	CreateContentDefinition(ctx context.Context, cd *ContentDefinition) (uuid.UUID, error)
@@ -31,7 +32,7 @@ func NewContentDefinitionRepository(client *mongo.Client) ContentDefinitionRepos
 
 func (r repository) CreateContentDefinition(ctx context.Context, cd *ContentDefinition) (uuid.UUID, error) {
 	cd.ID = uuid.New()
-	_, err := r.database.Collection("contentdefinition").InsertOne(ctx, cd)
+	_, err := r.database.Collection(collection).InsertOne(ctx, cd)
 
 	if err != nil {
 		return uuid.UUID{}, err
@@ -57,7 +58,7 @@ func (r repository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, u
 	// }
 
 	entry := &ContentDefinition{}
-	err := r.database.Collection("contentdefinition").FindOne(ctx, primitive.M{"_id": id}).Decode(entry)
+	err := r.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(entry)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (r repository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, u
 		Collection("contentdefinition").
 		UpdateOne(
 			ctx,
-			primitive.D{primitive.E{Key: "_id", Value: id}},
+			bson.D{bson.E{Key: "_id", Value: id}},
 			bson.M{"$set": e})
 
 	if err != nil {
@@ -98,7 +99,7 @@ func (r repository) DeleteContentDefinition(ctx context.Context, id uuid.UUID) e
 func (r repository) GetContentDefinition(ctx context.Context, id uuid.UUID) (ContentDefinition, error) {
 
 	res := &ContentDefinition{}
-	err := r.database.Collection("contentdefinition").FindOne(ctx, bson.D{bson.E{Key: "_id", Value: id}}).Decode(res)
+	err := r.database.Collection(collection).FindOne(ctx, bson.D{bson.E{Key: "_id", Value: id}}).Decode(res)
 	if err != nil {
 		return ContentDefinition{}, err
 	}
