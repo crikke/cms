@@ -8,11 +8,10 @@ import (
 )
 
 type ContentDefinition struct {
-	ID                  uuid.UUID `bson:"_id"`
-	Name                string    `bson:"name,omitempty"`
-	Description         string    `bson:"description,omitempty"`
-	Created             time.Time
-	PropertyDefinitions []PropertyDefinition `bson:"propertydefinitions,omitempty"`
+	ID          uuid.UUID `bson:"_id"`
+	Name        string    `bson:"name,omitempty"`
+	Description string    `bson:"description,omitempty"`
+	Created     time.Time
 }
 
 func NewContentDefinition(name, desc string) (ContentDefinition, error) {

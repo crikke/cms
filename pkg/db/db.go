@@ -24,10 +24,12 @@ var (
 			RegisterTypeDecoder(tUUID, bsoncodec.ValueDecoderFunc(decodeUUID)).
 			RegisterTypeEncoder(tTag, bsoncodec.ValueEncoderFunc(encodeTag)).
 			RegisterTypeDecoder(tTag, bsoncodec.ValueDecoderFunc(decodeTag)).
-			Build()
+		// todo move validator to its pacakge
+		Build()
 )
 
 func Connect(ctx context.Context, connectionstring string) (*mongo.Client, error) {
+
 	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(connectionstring))
 
 	// defer func() {

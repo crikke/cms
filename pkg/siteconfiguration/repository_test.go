@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/contentdelivery/db"
+	"github.com/crikke/cms/pkg/db"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/text/language"

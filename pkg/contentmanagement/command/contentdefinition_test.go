@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/contentdelivery/db"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/db"
 	"github.com/stretchr/testify/assert"
 )
 

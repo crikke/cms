@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/contentdelivery/db"
+	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

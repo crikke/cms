@@ -6,7 +6,7 @@ import (
 	contentapi "github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
 	"github.com/crikke/cms/pkg/contentdelivery/config"
 	"github.com/crikke/cms/pkg/contentdelivery/content"
-	"github.com/crikke/cms/pkg/contentdelivery/db"
+	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/crikke/cms/pkg/telemetry"
 	"github.com/gin-gonic/gin"

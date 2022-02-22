@@ -1,4 +1,4 @@
-package contentdefinition
+package propertydefinition
 
 import (
 	"errors"
@@ -12,6 +12,9 @@ type PropertyDefinition struct {
 	Description string    `bson:"description,omitempty"`
 	Type        string    `bson:"type,omitempty"`
 	Localized   bool      `bson:"localized,omitempty"`
+	// instead of using map[strin]validator.Validator, interface{} is used
+	// this wont be a problem becuase they will be translated to validator.Validator in GetValidatorQueury
+	Validators map[string]interface{} `bson:"validators,omitempty"`
 }
 
 var propertydefinitionTypes = map[string]struct{}{
@@ -29,6 +32,11 @@ func NewPropertyDefinition(cid uuid.UUID, name, description, propertytype string
 		Type:        propertytype,
 	}
 
+	pd.Validators = make(map[string]interface{})
+	pd.Name = name
+	pd.Description = description
+	pd.Type = propertytype
+
 	if err := pd.Valid(); err != nil {
 		return PropertyDefinition{}, err
 	}
@@ -36,6 +44,7 @@ func NewPropertyDefinition(cid uuid.UUID, name, description, propertytype string
 	return pd, nil
 }
 
+// Checks if PropertyDefinition is valid.
 func (p PropertyDefinition) Valid() error {
 
 	if p.Name == "" {

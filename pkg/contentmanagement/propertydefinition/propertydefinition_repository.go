@@ -1,4 +1,4 @@
-package contentdefinition
+package propertydefinition
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+const collection = "contentdefinition"
 
 type PropertyDefinitionRepository interface {
 	CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error)
@@ -89,8 +91,10 @@ func (r propertydefinition_repository) DeletePropertyDefinition(ctx context.Cont
 }
 
 func (r propertydefinition_repository) GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error) {
+	var res struct {
+		PropertyDefinitions []PropertyDefinition `bson:"propertydefinitions,omitempty"`
+	}
 
-	res := &ContentDefinition{}
 	err := r.database.
 		Collection(collection).
 		FindOne(
@@ -98,11 +102,11 @@ func (r propertydefinition_repository) GetPropertyDefinition(ctx context.Context
 			bson.D{
 				bson.E{Key: "_id", Value: cid},
 				bson.E{Key: "propertydefinitions.id", Value: pid}}).
-		Decode(res)
+		Decode(&res)
 
 	if err != nil {
-
 		return PropertyDefinition{}, err
 	}
+
 	return res.PropertyDefinitions[0], nil
 }
