@@ -139,7 +139,7 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 	assert.Equal(t, err, mongo.ErrNoDocuments)
 }
 
-func Test_AddRequiredValidation(t *testing.T) {
+func Test_AddValidation(t *testing.T) {
 	c, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
 	assert.NoError(t, err)
