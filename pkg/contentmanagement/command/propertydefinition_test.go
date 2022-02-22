@@ -173,7 +173,14 @@ func Test_AddRequiredValidation(t *testing.T) {
 	err = reqhandler.Handle(context.Background(), reqcmd2)
 	assert.NoError(t, err)
 
-	// assert.Equal(t, testpd.Name, actual.GetName())
-	// assert.Equal(t, testpd.Description, actual.GetDescription())
-	// assert.Equal(t, testpd.Type, actual.GetType())
+	pd, err := repo.GetPropertyDefinition(context.Background(), cid, pid)
+	assert.NoError(t, err)
+
+	req, ok := pd.Validators["required"]
+	assert.True(t, ok)
+	assert.True(t, req.(bool))
+
+	pattern, ok := pd.Validators["pattern"]
+	assert.True(t, ok)
+	assert.Equal(t, "^foo", pattern)
 }
