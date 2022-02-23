@@ -43,7 +43,7 @@ type CreatePropertyDefinition struct {
 }
 
 type CreatePropertyDefinitionHandler struct {
-	repo propertydefinition.PropertyDefinitionRepository
+	Repo propertydefinition.PropertyDefinitionRepository
 }
 
 func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreatePropertyDefinition) (uuid.UUID, error) {
@@ -54,7 +54,7 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 		return uuid.UUID{}, err
 	}
 
-	id, err := h.repo.CreatePropertyDefinition(ctx, cmd.ContentDefinitionID, &pd)
+	id, err := h.Repo.CreatePropertyDefinition(ctx, cmd.ContentDefinitionID, &pd)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -112,18 +112,18 @@ func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeleteP
 	return h.repo.DeletePropertyDefinition(ctx, cmd.ContentDefinitionID, cmd.PropertyDefinitionID)
 }
 
-type AddValidator struct {
+type UpdateValidator struct {
 	ContentDefinitionID  uuid.UUID
 	PropertyDefinitionID uuid.UUID
 	ValidatorName        string
 	Value                interface{}
 }
 
-type AddValidatorHandler struct {
-	repo propertydefinition.PropertyDefinitionRepository
+type UpdateValidatorHandler struct {
+	Repo propertydefinition.PropertyDefinitionRepository
 }
 
-func (h AddValidatorHandler) Handle(ctx context.Context, cmd AddValidator) error {
+func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator) error {
 
 	v, err := validator.Parse(cmd.ValidatorName, cmd.Value)
 
@@ -131,7 +131,7 @@ func (h AddValidatorHandler) Handle(ctx context.Context, cmd AddValidator) error
 		return err
 	}
 
-	return h.repo.UpdatePropertyDefinition(
+	return h.Repo.UpdatePropertyDefinition(
 		ctx,
 		cmd.ContentDefinitionID,
 		cmd.PropertyDefinitionID,

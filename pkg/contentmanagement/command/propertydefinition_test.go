@@ -25,7 +25,7 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	repo := propertydefinition.NewPropertyDefinitionRepository(c)
-	handler := CreatePropertyDefinitionHandler{repo: repo}
+	handler := CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := CreatePropertyDefinition{
 		Name:                "pd1",
@@ -60,7 +60,7 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	propRepo := propertydefinition.NewPropertyDefinitionRepository(c)
 
 	// create propertydefinition
-	createhandler := CreatePropertyDefinitionHandler{repo: propRepo}
+	createhandler := CreatePropertyDefinitionHandler{Repo: propRepo}
 	createcmd := CreatePropertyDefinition{
 		Name:                "pd1",
 		Description:         "pd2",
@@ -110,7 +110,7 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 	propRepo := propertydefinition.NewPropertyDefinitionRepository(c)
 
 	// create propertydefinition
-	createhandler := CreatePropertyDefinitionHandler{repo: propRepo}
+	createhandler := CreatePropertyDefinitionHandler{Repo: propRepo}
 	createcmd := CreatePropertyDefinition{
 		Name:                "pd1",
 		Description:         "pd2",
@@ -153,7 +153,7 @@ func Test_AddValidation(t *testing.T) {
 	assert.NoError(t, err)
 
 	repo := propertydefinition.NewPropertyDefinitionRepository(c)
-	handler := CreatePropertyDefinitionHandler{repo: repo}
+	handler := CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := CreatePropertyDefinition{
 		Name:                "pd1",
@@ -164,9 +164,9 @@ func Test_AddValidation(t *testing.T) {
 	pid, err := handler.Handle(context.TODO(), testpd)
 	assert.NoError(t, err)
 
-	reqcmd := AddValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
-	reqcmd2 := AddValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "pattern", Value: "^foo"}
-	reqhandler := AddValidatorHandler{repo: repo}
+	reqcmd := UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
+	reqcmd2 := UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "pattern", Value: "^foo"}
+	reqhandler := UpdateValidatorHandler{Repo: repo}
 
 	err = reqhandler.Handle(context.Background(), reqcmd)
 	assert.NoError(t, err)
