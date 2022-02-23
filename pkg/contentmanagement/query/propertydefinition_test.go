@@ -46,13 +46,13 @@ func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
 			reqhandler.Handle(context.Background(), test.createcmd)
 
 			// query validation rule
-			query := GetValidator{
+			query := GetValidatorForProperty{
 				ContentDefinitionID:  cid,
 				PropertyDefinitionID: pid,
 				ValidatorName:        test.createcmd.ValidatorName,
 			}
-			queryHandler := GetValidatorHandler{
-				repo: repo,
+			queryHandler := GetValidatorForPropertyHandler{
+				Repo: repo,
 			}
 
 			v, err := queryHandler.Handle(context.Background(), query)
@@ -71,13 +71,86 @@ func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
 	reqhandler.Handle(context.Background(), reqcmd)
 
 	// query validation rule
-	query := GetValidator{
+	query := GetValidatorForProperty{
 		ContentDefinitionID:  cid,
 		PropertyDefinitionID: pid,
 		ValidatorName:        "required",
 	}
-	queryHandler := GetValidatorHandler{
-		repo: repo,
+	queryHandler := GetValidatorForPropertyHandler{
+		Repo: repo,
+	}
+
+	v, err := queryHandler.Handle(context.Background(), query)
+	assert.NoError(t, err)
+
+	required, ok := v.(validator.RequiredRule)
+
+	assert.True(t, ok)
+	assert.True(t, bool(required))
+}
+
+func Test_GetAllPropertyDefinitionValidationRules(t *testing.T) {
+
+	tests := []struct {
+		name      string
+		createcmd []command.UpdateValidator
+	}{
+		{
+			name: "query RequiredRule",
+			createcmd: []command.UpdateValidator{
+				{ValidatorName: "required", Value: true},
+				{ValidatorName: "pattern", Value: "true"},
+			},
+		},
+	}
+	c, err := db.Connect(context.TODO(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cid, pid := createPropertyValidation(t, c)
+
+			repo := propertydefinition.NewPropertyDefinitionRepository(c)
+			for _, cmd := range test.createcmd {
+				reqhandler := command.UpdateValidatorHandler{Repo: repo}
+				cmd.PropertyDefinitionID = pid
+				cmd.ContentDefinitionID = cid
+
+				err := reqhandler.Handle(context.Background(), cmd)
+				assert.NoError(t, err)
+			}
+
+			// query validation rule
+			query := GetAllValidatorsForProperty{
+				ContentDefinitionID:  cid,
+				PropertyDefinitionID: pid,
+			}
+			queryHandler := GetAllValidatorsForPropertyHandler{
+				Repo: repo,
+			}
+
+			v, err := queryHandler.Handle(context.Background(), query)
+			assert.NoError(t, err)
+			assert.Len(t, v, len(test.createcmd))
+		})
+	}
+
+	cid, pid := createPropertyValidation(t, c)
+
+	// create validation rule
+	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	reqcmd := command.UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
+	reqhandler := command.UpdateValidatorHandler{Repo: repo}
+	reqhandler.Handle(context.Background(), reqcmd)
+
+	// query validation rule
+	query := GetValidatorForProperty{
+		ContentDefinitionID:  cid,
+		PropertyDefinitionID: pid,
+		ValidatorName:        "required",
+	}
+	queryHandler := GetValidatorForPropertyHandler{
+		Repo: repo,
 	}
 
 	v, err := queryHandler.Handle(context.Background(), query)
@@ -106,8 +179,8 @@ func createPropertyValidation(t *testing.T, c *mongo.Client) (cid, pid uuid.UUID
 	handler := command.CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := command.CreatePropertyDefinition{
-		Name:                "pd1",
-		Description:         "pd2",
+		Name:                "pd11",
+		Description:         "pd22",
 		Type:                "text",
 		ContentDefinitionID: cid,
 	}

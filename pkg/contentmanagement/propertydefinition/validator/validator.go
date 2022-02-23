@@ -45,6 +45,7 @@ func Parse(name string, val interface{}) (Validator, error) {
 		if str, ok := val.(string); ok {
 			return RegexRule(str), nil
 		}
+		return nil, errors.New("pattern is not of type string")
 	case "range":
 		if r, ok := val.(RangeRule); ok {
 			return r, nil

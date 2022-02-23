@@ -9,19 +9,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type GetValidator struct {
+type GetValidatorForProperty struct {
 	ContentDefinitionID  uuid.UUID
 	PropertyDefinitionID uuid.UUID
 	ValidatorName        string
 }
 
-type GetValidatorHandler struct {
-	repo propertydefinition.PropertyDefinitionRepository
+type GetValidatorForPropertyHandler struct {
+	Repo propertydefinition.PropertyDefinitionRepository
 }
 
-func (h GetValidatorHandler) Handle(ctx context.Context, query GetValidator) (validator.Validator, error) {
+func (h GetValidatorForPropertyHandler) Handle(ctx context.Context, query GetValidatorForProperty) (validator.Validator, error) {
 
-	pd, err := h.repo.GetPropertyDefinition(ctx, query.ContentDefinitionID, query.PropertyDefinitionID)
+	pd, err := h.Repo.GetPropertyDefinition(ctx, query.ContentDefinitionID, query.PropertyDefinitionID)
 
 	if err != nil {
 		return nil, err
@@ -39,4 +39,35 @@ func (h GetValidatorHandler) Handle(ctx context.Context, query GetValidator) (va
 		return nil, err
 	}
 	return val, nil
+}
+
+type GetAllValidatorsForProperty struct {
+	ContentDefinitionID  uuid.UUID
+	PropertyDefinitionID uuid.UUID
+}
+
+type GetAllValidatorsForPropertyHandler struct {
+	Repo propertydefinition.PropertyDefinitionRepository
+}
+
+func (h GetAllValidatorsForPropertyHandler) Handle(ctx context.Context, query GetAllValidatorsForProperty) ([]validator.Validator, error) {
+
+	pd, err := h.Repo.GetPropertyDefinition(ctx, query.ContentDefinitionID, query.PropertyDefinitionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := []validator.Validator{}
+
+	for name, v := range pd.Validators {
+		val, err := validator.Parse(name, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, val)
+	}
+	return result, nil
 }
