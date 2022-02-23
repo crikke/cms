@@ -3,7 +3,9 @@ package validator
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
+	"strconv"
 )
 
 /*
@@ -22,6 +24,10 @@ import (
 
 type RequiredRule bool
 type RegexRule string
+type RangeRule struct {
+	Min *float64 `bson:"min, omitempty"`
+	Max *float64 `bson:"max, omitempty"`
+}
 
 type Validator interface {
 	Validate(ctx context.Context, field interface{}) error
@@ -38,6 +44,10 @@ func Parse(name string, val interface{}) (Validator, error) {
 	case "pattern":
 		if str, ok := val.(string); ok {
 			return RegexRule(str), nil
+		}
+	case "range":
+		if r, ok := val.(RangeRule); ok {
+			return r, nil
 		}
 	}
 
@@ -72,5 +82,32 @@ func (r RegexRule) Validate(ctx context.Context, field interface{}) error {
 		return errors.New("pattern do not match")
 
 	}
+	return nil
+}
+
+func (r RangeRule) Validate(ctx context.Context, field interface{}) error {
+
+	ln := 0.0
+
+	// if field is string, then check character count
+	if str, ok := field.(string); ok {
+		ln = float64(len(str))
+	}
+
+	// if field is number, parse it and convert it to integer
+
+	str := fmt.Sprintf("%v", field)
+	if n, ok := strconv.ParseFloat(str, 32); ok == nil {
+		ln = n
+	}
+
+	if r.Max != nil && ln > *r.Max {
+		return errors.New("field greater than")
+	}
+
+	if r.Min != nil && ln < *r.Min {
+		return errors.New("field less than")
+	}
+
 	return nil
 }
