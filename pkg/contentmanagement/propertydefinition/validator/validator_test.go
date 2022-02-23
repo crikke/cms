@@ -77,7 +77,11 @@ func Test_RegexRule(t *testing.T) {
 			name:    `match ^(\d|\w)`,
 			pattern: `^(\d|\w)`,
 			inputs: map[interface{}]bool{
-				"!!foo": false,
+				"foobar": true,
+				3.14:     true,
+				"!!foo":  false,
+				"":       false,
+				nil:      false,
 			},
 		},
 	}
