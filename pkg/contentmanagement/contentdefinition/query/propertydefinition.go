@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition/validator"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/google/uuid"
 )
 
@@ -16,7 +16,7 @@ type GetValidatorForProperty struct {
 }
 
 type GetValidatorForPropertyHandler struct {
-	Repo propertydefinition.PropertyDefinitionRepository
+	Repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h GetValidatorForPropertyHandler) Handle(ctx context.Context, query GetValidatorForProperty) (validator.Validator, error) {
@@ -47,7 +47,7 @@ type GetAllValidatorsForProperty struct {
 }
 
 type GetAllValidatorsForPropertyHandler struct {
-	Repo propertydefinition.PropertyDefinitionRepository
+	Repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h GetAllValidatorsForPropertyHandler) Handle(ctx context.Context, query GetAllValidatorsForProperty) ([]validator.Validator, error) {

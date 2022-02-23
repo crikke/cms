@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/contentmanagement/command"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition/validator"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/command"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +40,7 @@ func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
 			test.createcmd.ContentDefinitionID = cid
 			test.createcmd.PropertyDefinitionID = pid
 
-			repo := propertydefinition.NewPropertyDefinitionRepository(c)
+			repo := contentdefinition.NewPropertyDefinitionRepository(c)
 			reqhandler := command.UpdateValidatorHandler{Repo: repo}
 			reqhandler.Handle(context.Background(), test.createcmd)
 
@@ -65,7 +64,7 @@ func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
 	cid, pid := createPropertyValidation(t, c)
 
 	// create validation rule
-	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	reqcmd := command.UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
 	reqhandler := command.UpdateValidatorHandler{Repo: repo}
 	reqhandler.Handle(context.Background(), reqcmd)
@@ -110,7 +109,7 @@ func Test_GetAllPropertyDefinitionValidationRules(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cid, pid := createPropertyValidation(t, c)
 
-			repo := propertydefinition.NewPropertyDefinitionRepository(c)
+			repo := contentdefinition.NewPropertyDefinitionRepository(c)
 			for _, cmd := range test.createcmd {
 				reqhandler := command.UpdateValidatorHandler{Repo: repo}
 				cmd.PropertyDefinitionID = pid
@@ -138,7 +137,7 @@ func Test_GetAllPropertyDefinitionValidationRules(t *testing.T) {
 	cid, pid := createPropertyValidation(t, c)
 
 	// create validation rule
-	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	reqcmd := command.UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
 	reqhandler := command.UpdateValidatorHandler{Repo: repo}
 	reqhandler.Handle(context.Background(), reqcmd)
@@ -175,7 +174,7 @@ func createPropertyValidation(t *testing.T, c *mongo.Client) (cid, pid uuid.UUID
 	assert.NoError(t, err)
 
 	// create propertydefinition
-	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	handler := command.CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := command.CreatePropertyDefinition{

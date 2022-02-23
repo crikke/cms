@@ -1,4 +1,4 @@
-package propertydefinition
+package contentdefinition
 
 import (
 	"context"
@@ -7,8 +7,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-const collection = "contentdefinition"
 
 type PropertyDefinitionRepository interface {
 	CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error)

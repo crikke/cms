@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition"
+
 	"github.com/crikke/cms/pkg/db"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +24,7 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	handler := CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := CreatePropertyDefinition{
@@ -57,7 +57,7 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 		Name: "test",
 	})
 	assert.NoError(t, err)
-	propRepo := propertydefinition.NewPropertyDefinitionRepository(c)
+	propRepo := contentdefinition.NewPropertyDefinitionRepository(c)
 
 	// create propertydefinition
 	createhandler := CreatePropertyDefinitionHandler{Repo: propRepo}
@@ -107,7 +107,7 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 		Name: "test",
 	})
 	assert.NoError(t, err)
-	propRepo := propertydefinition.NewPropertyDefinitionRepository(c)
+	propRepo := contentdefinition.NewPropertyDefinitionRepository(c)
 
 	// create propertydefinition
 	createhandler := CreatePropertyDefinitionHandler{Repo: propRepo}
@@ -152,7 +152,7 @@ func Test_AddValidation(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	repo := propertydefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	handler := CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := CreatePropertyDefinition{

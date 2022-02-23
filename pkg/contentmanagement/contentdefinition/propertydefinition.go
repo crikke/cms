@@ -1,4 +1,4 @@
-package propertydefinition
+package contentdefinition
 
 import (
 	"errors"

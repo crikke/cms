@@ -3,8 +3,8 @@ package command
 import (
 	"context"
 
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/propertydefinition/validator"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/google/uuid"
 )
 
@@ -43,12 +43,12 @@ type CreatePropertyDefinition struct {
 }
 
 type CreatePropertyDefinitionHandler struct {
-	Repo propertydefinition.PropertyDefinitionRepository
+	Repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreatePropertyDefinition) (uuid.UUID, error) {
 
-	pd, err := propertydefinition.NewPropertyDefinition(cmd.ContentDefinitionID, cmd.Name, cmd.Description, cmd.Type)
+	pd, err := contentdefinition.NewPropertyDefinition(cmd.ContentDefinitionID, cmd.Name, cmd.Description, cmd.Type)
 
 	if err != nil {
 		return uuid.UUID{}, err
@@ -71,7 +71,7 @@ type UpdatePropertyDefinition struct {
 }
 
 type UpdatePropertyDefinitionHandler struct {
-	repo propertydefinition.PropertyDefinitionRepository
+	repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdatePropertyDefinition) error {
@@ -79,7 +79,7 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 	h.repo.UpdatePropertyDefinition(
 		ctx, cmd.ContentDefinitionID,
 		cmd.PropertyDefinitionID,
-		func(ctx context.Context, pd *propertydefinition.PropertyDefinition) (*propertydefinition.PropertyDefinition, error) {
+		func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
 
 			if cmd.Description != nil {
 				pd.Description = *cmd.Description
@@ -105,7 +105,7 @@ type DeletePropertyDefinition struct {
 }
 
 type DeletePropertyDefinitionHandler struct {
-	repo propertydefinition.PropertyDefinitionRepository
+	repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeletePropertyDefinition) error {
@@ -120,7 +120,7 @@ type UpdateValidator struct {
 }
 
 type UpdateValidatorHandler struct {
-	Repo propertydefinition.PropertyDefinitionRepository
+	Repo contentdefinition.PropertyDefinitionRepository
 }
 
 func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator) error {
@@ -135,7 +135,7 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 		ctx,
 		cmd.ContentDefinitionID,
 		cmd.PropertyDefinitionID,
-		func(ctx context.Context, pd *propertydefinition.PropertyDefinition) (*propertydefinition.PropertyDefinition, error) {
+		func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
 			if pd.Validators == nil {
 				pd.Validators = make(map[string]interface{})
 			}
