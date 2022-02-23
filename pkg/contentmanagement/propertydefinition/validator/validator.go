@@ -65,14 +65,12 @@ func (r RequiredRule) Validate(ctx context.Context, field interface{}) error {
 
 func (r RegexRule) Validate(ctx context.Context, field interface{}) error {
 
-	str := string(r)
-	b, ok := field.([]byte)
-
-	if !ok {
-		return errors.New("cannot validate unknown field")
+	if field == nil {
+		return errors.New("pattern do not match")
 	}
+	str := fmt.Sprintf("%v", field)
 
-	match, err := regexp.Match(str, b)
+	match, err := regexp.MatchString(string(r), str)
 
 	if err != nil {
 		return err

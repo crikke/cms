@@ -16,7 +16,7 @@ func Test_RangeRule(t *testing.T) {
 		inputs map[interface{}]bool
 	}{
 		{
-			name: "max range set",
+			name: "max only",
 			rule: RangeRule{
 				Max: makeFloat64(10),
 			},
@@ -26,6 +26,23 @@ func Test_RangeRule(t *testing.T) {
 				9.11:    true,
 				11:      false,
 				10.1:    false,
+			},
+		},
+		{
+			name: "max & min set",
+			rule: RangeRule{
+				Max: makeFloat64(10),
+				Min: makeFloat64(5),
+			},
+			inputs: map[interface{}]bool{
+				10:      true,
+				"aaaa":  false,
+				9.11:    true,
+				"aaaaa": true,
+				3.14:    false,
+				3:       false,
+				nil:     false,
+				"":      false,
 			},
 		},
 	}
@@ -48,4 +65,37 @@ func Test_RangeRule(t *testing.T) {
 
 func makeFloat64(n float64) *float64 {
 	return &n
+}
+
+func Test_RegexRule(t *testing.T) {
+	tests := []struct {
+		name    string
+		pattern string
+		inputs  map[interface{}]bool
+	}{
+		{
+			name:    `match ^(\d|\w)`,
+			pattern: `^(\d|\w)`,
+			inputs: map[interface{}]bool{
+				"!!foo": false,
+			},
+		},
+	}
+
+	for _, test := range tests {
+
+		for input, expect := range test.inputs {
+
+			t.Run(fmt.Sprintf("%s_%v", test.name, input), func(t *testing.T) {
+				r := RegexRule(test.pattern)
+
+				err := r.Validate(context.Background(), input)
+				if expect {
+					assert.NoError(t, err)
+				} else {
+					assert.Error(t, err)
+				}
+			})
+		}
+	}
 }
