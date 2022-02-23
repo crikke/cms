@@ -34,16 +34,16 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 		ContentDefinitionID: cid,
 	}
 
-	_, err = handler.Handle(context.TODO(), testpd)
+	id, err := handler.Handle(context.TODO(), testpd)
 
 	assert.NoError(t, err)
 
-	// actual, err := repo.GetPropertyDefinition(context.TODO(), cid, id)
+	actual, err := repo.GetPropertyDefinition(context.TODO(), cid, id)
 	assert.NoError(t, err)
 
-	// assert.Equal(t, testpd.Name, actual.GetName())
-	// assert.Equal(t, testpd.Description, actual.GetDescription())
-	// assert.Equal(t, testpd.Type, actual.GetType())
+	assert.Equal(t, testpd.Name, actual.Name)
+	assert.Equal(t, testpd.Description, actual.Description)
+	assert.Equal(t, testpd.Type, actual.Type)
 }
 
 func Test_UpdatePropertyDefinition(t *testing.T) {
@@ -88,12 +88,12 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get propertydefiniton
-	// actual, err := propRepo.GetPropertyDefinition(context.TODO(), cid, pid)
+	actual, err := propRepo.GetPropertyDefinition(context.TODO(), cid, pid)
 	assert.NoError(t, err)
-	// assert.Equal(t, str, actual.GetName())
-	// assert.Equal(t, str, actual.GetDescription())
-	// // assert.Equal(t, createcmd.Type, actual.Type)
-	// assert.Equal(t, b, actual.GetLocalized())
+	assert.Equal(t, str, actual.Name)
+	assert.Equal(t, str, actual.Description)
+	assert.Equal(t, createcmd.Type, actual.Type)
+	assert.Equal(t, b, actual.Localized)
 }
 
 func Test_DeletePropertyDefinition(t *testing.T) {

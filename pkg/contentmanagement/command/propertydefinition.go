@@ -76,25 +76,25 @@ type UpdatePropertyDefinitionHandler struct {
 
 func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdatePropertyDefinition) error {
 
-	// h.repo.UpdatePropertyDefinition(
-	// 	ctx, cmd.ContentDefinitionID,
-	// 	cmd.PropertyDefinitionID,
-	// 	func(ctx context.Context, pd propertydefinition.PropertyDefinition) (propertydefinition.PropertyDefinition, error) {
+	h.repo.UpdatePropertyDefinition(
+		ctx, cmd.ContentDefinitionID,
+		cmd.PropertyDefinitionID,
+		func(ctx context.Context, pd *propertydefinition.PropertyDefinition) (*propertydefinition.PropertyDefinition, error) {
 
-	// 		if cmd.Description != nil {
-	// 			pd.SetDescription(*cmd.Description)
-	// 		}
+			if cmd.Description != nil {
+				pd.Description = *cmd.Description
+			}
 
-	// 		if cmd.Name != nil {
-	// 			pd.SetName(*cmd.Name)
-	// 		}
+			if cmd.Name != nil {
+				pd.Name = *cmd.Name
+			}
 
-	// 		if cmd.Localized != nil {
-	// 			pd.SetLocalized(*cmd.Localized)
-	// 		}
+			if cmd.Localized != nil {
+				pd.Localized = *cmd.Localized
+			}
 
-	// 		return pd, nil
-	// 	})
+			return pd, nil
+		})
 
 	return nil
 }
