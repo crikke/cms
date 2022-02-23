@@ -56,10 +56,23 @@ func Parse(name string, val interface{}) (Validator, error) {
 
 // Validators
 
+// 0 is a valid number so wont validate
 func (r RequiredRule) Validate(ctx context.Context, field interface{}) error {
-	if bool(r) && field == nil {
+
+	if !bool(r) {
+		return nil
+	}
+	// check for nil
+	if field == nil {
 		return errors.New("required")
 	}
+
+	// check for empty string
+
+	if str, ok := field.(string); ok && str == "" {
+		return errors.New("required")
+	}
+
 	return nil
 }
 

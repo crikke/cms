@@ -49,11 +49,11 @@ func Test_RangeRule(t *testing.T) {
 
 	for _, test := range tests {
 
-		for input, expect := range test.inputs {
+		for input, ok := range test.inputs {
 			t.Run(fmt.Sprintf("%s_%v", test.name, input), func(t *testing.T) {
 				err := test.rule.Validate(context.Background(), input)
 
-				if expect {
+				if ok {
 					assert.NoError(t, err)
 				} else {
 					assert.Error(t, err)
@@ -88,13 +88,59 @@ func Test_RegexRule(t *testing.T) {
 
 	for _, test := range tests {
 
-		for input, expect := range test.inputs {
+		for input, ok := range test.inputs {
 
 			t.Run(fmt.Sprintf("%s_%v", test.name, input), func(t *testing.T) {
 				r := RegexRule(test.pattern)
 
 				err := r.Validate(context.Background(), input)
-				if expect {
+				if ok {
+					assert.NoError(t, err)
+				} else {
+					assert.Error(t, err)
+				}
+			})
+		}
+	}
+}
+
+func Test_RequiredRule(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		required bool
+		inputs   map[interface{}]bool
+	}{
+		{
+			name:     "required",
+			required: true,
+			inputs: map[interface{}]bool{
+				"foo": true,
+				"":    false,
+				nil:   false,
+			},
+		},
+		{
+			name:     "not required",
+			required: false,
+			inputs: map[interface{}]bool{
+				"foo": true,
+				"":    true,
+				nil:   true,
+			},
+		},
+	}
+
+	for _, test := range tests {
+
+		for input, ok := range test.inputs {
+
+			t.Run(fmt.Sprintf("%s_%v", test.name, input), func(t *testing.T) {
+
+				r := RequiredRule(test.required)
+
+				err := r.Validate(context.Background(), input)
+				if ok {
 					assert.NoError(t, err)
 				} else {
 					assert.Error(t, err)
