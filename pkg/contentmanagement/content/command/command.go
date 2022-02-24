@@ -9,22 +9,32 @@ import (
 )
 
 type CreateContent struct {
-	ContentDefinitionType uuid.UUID
+	ContentDefinitionId uuid.UUID
 }
 
-type CreateCommandHandler struct {
+type CreateContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentRepository
 }
 
-func (h CreateCommandHandler) Handle(ctx context.Context, cmd CreateContent) (uuid.UUID, error) {
+func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uuid.UUID, error) {
 
-	_, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cmd.ContentDefinitionType)
+	cd, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cmd.ContentDefinitionId)
 
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	// _, err := h.ContentRepository.
-	return uuid.UUID{}, nil
+	c := content.Content{
+		ContentDefinitionID: cd.ID,
+		Status:              content.Draft,
+	}
+
+	id, err := h.ContentRepository.CreateContent(ctx, c)
+
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return id, nil
 }
