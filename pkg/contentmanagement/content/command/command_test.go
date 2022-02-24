@@ -18,7 +18,7 @@ func Test_CreateContent(t *testing.T) {
 	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
 
 	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-		Name: "test",
+		Name: "test2",
 	})
 	assert.NoError(t, err)
 
