@@ -311,9 +311,6 @@ func Test_UpdateContent(t *testing.T) {
 			},
 			expectedErr: content.ErrUnlocalizedPropLocalizedValue,
 		},
-		// {
-		// 	name: "field with wrong type should return error",
-		// },
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
@@ -364,11 +361,32 @@ func Test_UpdateContent(t *testing.T) {
 		})
 
 	}
+}
 
-	// assert.Equal(t, "name test", cont.Properties[cfg.Languages[0].String()][content.NameField])
-	// assert.Equal(t, "url-test", cont.Properties[cfg.Languages[0].String()][content.UrlSegmentField])
-	// assert.Equal(t, "name test", cont.Properties[cfg.Languages[1].String()][content.NameField])
-	// assert.Equal(t, "name-test", cont.Properties[cfg.Languages[1].String()][content.UrlSegmentField])
-	// assert.Equal(t, "testfield 123", cont.Properties[cfg.Languages[0].String()]["field_not_localized"])
-	// assert.Equal(t, nil, cont.Properties[cfg.Languages[1].String()]["field_not_localized"])
+func Test_ValidateContent(t *testing.T) {
+
+	// cfg := siteconfiguration.SiteConfiguration{
+	// 	Languages: []language.Tag{
+	// 		language.MustParse("sv-SE"),
+	// 		language.MustParse("en-US"),
+	// 	},
+	// }
+
+	tests := []struct {
+		name string
+		// 	contentdef *contentdefinition.ContentDefinition
+		// 	fields     []struct {
+		// 		Language string
+		// 		Field    string
+		// 		Value    interface{}
+		// 	}
+		// 	expectedErr    string
+		// 	expectedValues map[string]map[string]interface{}
+	}{}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+		})
+	}
 }

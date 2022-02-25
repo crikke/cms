@@ -7,6 +7,7 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )
@@ -127,7 +128,6 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				lang = f.Language
 			}
 
-			// todo: ensure field & property value is same type
 			c.Properties[lang][field] = f.Value
 		}
 
@@ -165,4 +165,82 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 		c.Version++
 		return c, nil
 	})
+}
+
+type ValidateContent struct {
+	ContentID uuid.UUID
+}
+
+type ValidateContentHandler struct {
+	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
+	ContentRepository           content.ContentRepository
+	SiteConfiguration           *siteconfiguration.SiteConfiguration
+}
+
+func (h ValidateContentHandler) Handle(ctx context.Context, cmd ValidateContent) error {
+
+	content, err := h.ContentRepository.GetContent(ctx, cmd.ContentID)
+
+	if err != nil {
+		return err
+	}
+
+	contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, content.ContentDefinitionID)
+
+	if err != nil {
+		return err
+	}
+
+	for _, pd := range contentDefinition.Propertydefinitions {
+
+		var propvalues []interface{}
+		var validators []validator.Validator
+
+		for typ, v := range pd.Validators {
+			val, err := validator.Parse(typ, v)
+
+			if err != nil {
+				return err
+			}
+
+			validators = append(validators, val)
+		}
+
+		if pd.Localized {
+
+			for _, l := range h.SiteConfiguration.Languages {
+
+				if p := getPropertyValue(content, pd.Name, l.String()); p != nil {
+					propvalues = append(propvalues, p)
+				}
+			}
+		} else {
+			if p := getPropertyValue(content, pd.Name, h.SiteConfiguration.Languages[0].String()); p != nil {
+				propvalues = append(propvalues, p)
+			}
+		}
+
+		for _, value := range propvalues {
+			for _, v := range validators {
+				err := v.Validate(ctx, value)
+
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func getPropertyValue(c content.Content, name, locale string) interface{} {
+
+	properties, ok := c.Properties[locale]
+
+	if !ok {
+		return nil
+	}
+
+	return properties[name]
 }
