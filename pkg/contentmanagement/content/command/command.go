@@ -102,8 +102,15 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 
 			lang := h.SiteConfiguration.Languages[0].String()
 
-			if f.Language != "" {
+			// if prop is not localized and
+			// field.language exist and is not default
+			if !pd.Localized {
+				if f.Language != "" && f.Language != h.SiteConfiguration.Languages[0].String() {
+					return nil, errors.New(content.ErrUnlocalizedPropLocalizedValue)
+				}
+			}
 
+			if f.Language != "" {
 				exists := false
 				for _, l := range h.SiteConfiguration.Languages {
 
@@ -114,14 +121,10 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				}
 
 				if !exists {
-					return nil, errors.New("language is not configured in siteconfiguration")
+					return nil, errors.New(content.ErrNotConfiguredLocale)
 				}
 
 				lang = f.Language
-			}
-
-			if !pd.Localized && lang != "" {
-				return nil, errors.New("cannot set localized value on unlocalized property")
 			}
 
 			// todo: ensure field & property value is same type
