@@ -43,7 +43,7 @@ type CreatePropertyDefinition struct {
 }
 
 type CreatePropertyDefinitionHandler struct {
-	Repo contentdefinition.PropertyDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreatePropertyDefinition) (uuid.UUID, error) {
@@ -71,7 +71,7 @@ type UpdatePropertyDefinition struct {
 }
 
 type UpdatePropertyDefinitionHandler struct {
-	repo contentdefinition.PropertyDefinitionRepository
+	repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdatePropertyDefinition) error {
@@ -105,7 +105,7 @@ type DeletePropertyDefinition struct {
 }
 
 type DeletePropertyDefinitionHandler struct {
-	repo contentdefinition.PropertyDefinitionRepository
+	repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeletePropertyDefinition) error {
@@ -120,7 +120,7 @@ type UpdateValidator struct {
 }
 
 type UpdateValidatorHandler struct {
-	Repo contentdefinition.PropertyDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator) error {

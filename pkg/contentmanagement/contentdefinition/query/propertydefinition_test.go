@@ -40,7 +40,7 @@ func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
 			test.createcmd.ContentDefinitionID = cid
 			test.createcmd.PropertyDefinitionID = pid
 
-			repo := contentdefinition.NewPropertyDefinitionRepository(c)
+			repo := contentdefinition.NewContentDefinitionRepository(c)
 			reqhandler := command.UpdateValidatorHandler{Repo: repo}
 			reqhandler.Handle(context.Background(), test.createcmd)
 
@@ -64,7 +64,7 @@ func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
 	cid, pid := createPropertyValidation(t, c)
 
 	// create validation rule
-	repo := contentdefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewContentDefinitionRepository(c)
 	reqcmd := command.UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
 	reqhandler := command.UpdateValidatorHandler{Repo: repo}
 	reqhandler.Handle(context.Background(), reqcmd)
@@ -109,7 +109,7 @@ func Test_GetAllPropertyDefinitionValidationRules(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cid, pid := createPropertyValidation(t, c)
 
-			repo := contentdefinition.NewPropertyDefinitionRepository(c)
+			repo := contentdefinition.NewContentDefinitionRepository(c)
 			for _, cmd := range test.createcmd {
 				reqhandler := command.UpdateValidatorHandler{Repo: repo}
 				cmd.PropertyDefinitionID = pid
@@ -137,7 +137,7 @@ func Test_GetAllPropertyDefinitionValidationRules(t *testing.T) {
 	cid, pid := createPropertyValidation(t, c)
 
 	// create validation rule
-	repo := contentdefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewContentDefinitionRepository(c)
 	reqcmd := command.UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
 	reqhandler := command.UpdateValidatorHandler{Repo: repo}
 	reqhandler.Handle(context.Background(), reqcmd)
@@ -174,7 +174,7 @@ func createPropertyValidation(t *testing.T, c *mongo.Client) (cid, pid uuid.UUID
 	assert.NoError(t, err)
 
 	// create propertydefinition
-	repo := contentdefinition.NewPropertyDefinitionRepository(c)
+	repo := contentdefinition.NewContentDefinitionRepository(c)
 	handler := command.CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := command.CreatePropertyDefinition{

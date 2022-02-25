@@ -16,7 +16,6 @@ func Test_CreateContent(t *testing.T) {
 	assert.NoError(t, err)
 
 	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
-
 	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test2",
 	})
@@ -48,4 +47,26 @@ func Test_CreateContent_Empty_ContentDefinition(t *testing.T) {
 	contentId, err := handler.Handle(context.Background(), cmd)
 	assert.Error(t, err)
 	assert.Equal(t, uuid.UUID{}, contentId)
+}
+
+func Test_UpdateContent(t *testing.T) {
+	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
+
+	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
+	cdid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+		Name: "test2",
+	})
+	assert.NoError(t, err)
+
+	contentRepo := content.NewContentRepository(c)
+	contentId, err := contentRepo.CreateContent(context.Background(), content.Content{
+		ContentDefinitionID: cdid,
+	})
+	assert.NoError(t, err)
+
+	content, err := contentRepo.GetContent(context.Background(), contentId)
+	assert.NoError(t, err)
+	assert.Zero(t, content.Version)
+
 }

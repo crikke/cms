@@ -16,15 +16,13 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
 	assert.NoError(t, err)
 
-	contentRepo := contentdefinition.NewContentDefinitionRepository(c)
-
-	cid, err := contentRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+	repo := contentdefinition.NewContentDefinitionRepository(c)
+	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test",
 	})
 
 	assert.NoError(t, err)
 
-	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	handler := CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := CreatePropertyDefinition{
@@ -52,15 +50,14 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create contentdefinition
-	contentRepo := contentdefinition.NewContentDefinitionRepository(c)
-	cid, err := contentRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+	repo := contentdefinition.NewContentDefinitionRepository(c)
+	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test",
 	})
 	assert.NoError(t, err)
-	propRepo := contentdefinition.NewPropertyDefinitionRepository(c)
 
 	// create propertydefinition
-	createhandler := CreatePropertyDefinitionHandler{Repo: propRepo}
+	createhandler := CreatePropertyDefinitionHandler{Repo: repo}
 	createcmd := CreatePropertyDefinition{
 		Name:                "pd1",
 		Description:         "pd2",
@@ -72,7 +69,7 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// update propertydefiniton
-	updatehandler := UpdatePropertyDefinitionHandler{repo: propRepo}
+	updatehandler := UpdatePropertyDefinitionHandler{repo: repo}
 
 	str := "updated"
 	b := true
@@ -88,7 +85,7 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get propertydefiniton
-	actual, err := propRepo.GetPropertyDefinition(context.TODO(), cid, pid)
+	actual, err := repo.GetPropertyDefinition(context.TODO(), cid, pid)
 	assert.NoError(t, err)
 	assert.Equal(t, str, actual.Name)
 	assert.Equal(t, str, actual.Description)
@@ -102,15 +99,14 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create contentdefinition
-	contentRepo := contentdefinition.NewContentDefinitionRepository(c)
-	cid, err := contentRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+	repo := contentdefinition.NewContentDefinitionRepository(c)
+	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test",
 	})
 	assert.NoError(t, err)
-	propRepo := contentdefinition.NewPropertyDefinitionRepository(c)
 
 	// create propertydefinition
-	createhandler := CreatePropertyDefinitionHandler{Repo: propRepo}
+	createhandler := CreatePropertyDefinitionHandler{Repo: repo}
 	createcmd := CreatePropertyDefinition{
 		Name:                "pd1",
 		Description:         "pd2",
@@ -123,7 +119,7 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 
 	// delete propertydefinition
 	deletehandler := DeletePropertyDefinitionHandler{
-		repo: propRepo,
+		repo: repo,
 	}
 	deletecmd := DeletePropertyDefinition{
 		ContentDefinitionID:  cid,
@@ -134,7 +130,7 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get propertydefiniton
-	_, err = propRepo.GetPropertyDefinition(context.TODO(), cid, pid)
+	_, err = repo.GetPropertyDefinition(context.TODO(), cid, pid)
 	assert.Error(t, err)
 	assert.Equal(t, err, mongo.ErrNoDocuments)
 }
@@ -144,15 +140,13 @@ func Test_AddValidation(t *testing.T) {
 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
 	assert.NoError(t, err)
 
-	contentRepo := contentdefinition.NewContentDefinitionRepository(c)
-
-	cid, err := contentRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+	repo := contentdefinition.NewContentDefinitionRepository(c)
+	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test",
 	})
 
 	assert.NoError(t, err)
 
-	repo := contentdefinition.NewPropertyDefinitionRepository(c)
 	handler := CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := CreatePropertyDefinition{

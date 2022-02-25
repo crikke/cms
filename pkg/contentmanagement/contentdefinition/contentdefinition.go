@@ -12,6 +12,8 @@ type ContentDefinition struct {
 	Name        string    `bson:"name,omitempty"`
 	Description string    `bson:"description,omitempty"`
 	Created     time.Time
+	// todo: ensure name is unique
+	Properties []PropertyDefinition
 }
 
 func NewContentDefinition(name, desc string) (ContentDefinition, error) {

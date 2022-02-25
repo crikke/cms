@@ -15,6 +15,11 @@ type ContentDefinitionRepository interface {
 	UpdateContentDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error
 	DeleteContentDefinition(ctx context.Context, id uuid.UUID) error
 	GetContentDefinition(ctx context.Context, id uuid.UUID) (ContentDefinition, error)
+
+	CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error)
+	UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error
+	DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error
+	GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error)
 }
 
 type repository struct {
@@ -44,19 +49,6 @@ func (r repository) CreateContentDefinition(ctx context.Context, cd *ContentDefi
 func (r repository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error {
 
 	// TODO: Write/Read concern
-	// wc := writeconcern.WMajority()
-	// rc := readconcern.Majority()
-	// session, err := r.client.StartSession()
-	// if err != nil {
-	// 	return err
-	// }
-	// defer session.EndSession(ctx)
-
-	// err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
-	// if err != session.StartTransaction() {
-	// 	return err
-	// }
-
 	entry := &ContentDefinition{}
 	err := r.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(entry)
 	if err != nil {
@@ -78,17 +70,6 @@ func (r repository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, u
 		return err
 	}
 
-	// return session.CommitTransaction(sc)
-
-	// })
-
-	// if err != nil {
-	// 	if abortErr := session.AbortTransaction(ctx); abortErr != nil {
-	// 		return err
-	// 	}
-	// 	return err
-	// }
-
 	return nil
 }
 
@@ -104,4 +85,85 @@ func (r repository) GetContentDefinition(ctx context.Context, id uuid.UUID) (Con
 		return ContentDefinition{}, err
 	}
 	return *res, nil
+}
+
+func (r repository) CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error) {
+	pd.ID = uuid.New()
+
+	_, err := r.database.
+		Collection(collection).
+		UpdateOne(
+			ctx,
+			bson.D{bson.E{Key: "_id", Value: cid}},
+			bson.M{"$push": bson.M{"propertydefinitions": pd}})
+
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return pd.ID, err
+}
+
+func (r repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error {
+
+	entry, err := r.GetPropertyDefinition(ctx, cid, pid)
+	if err != nil {
+		return err
+	}
+	e, err := updateFn(ctx, &entry)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.database.
+		Collection(collection).
+		UpdateOne(
+			ctx,
+			bson.D{
+				bson.E{Key: "_id", Value: cid},
+				bson.E{Key: "propertydefinitions.id", Value: pid}},
+			bson.M{"$set": bson.M{"propertydefinitions.$": e}})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r repository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error {
+	_, err := r.database.
+		Collection(collection).
+		DeleteOne(
+			ctx,
+			bson.D{
+				bson.E{Key: "_id", Value: cid},
+				bson.E{Key: "propertydefinitions.id", Value: pid}})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r repository) GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error) {
+	var res struct {
+		PropertyDefinitions []PropertyDefinition `bson:"propertydefinitions,omitempty"`
+	}
+
+	err := r.database.
+		Collection(collection).
+		FindOne(
+			ctx,
+			bson.D{
+				bson.E{Key: "_id", Value: cid},
+				bson.E{Key: "propertydefinitions.id", Value: pid}}).
+		Decode(&res)
+
+	if err != nil {
+		return PropertyDefinition{}, err
+	}
+
+	return res.PropertyDefinitions[0], nil
 }

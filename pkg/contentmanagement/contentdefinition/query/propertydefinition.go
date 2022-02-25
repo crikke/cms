@@ -16,7 +16,7 @@ type GetValidatorForProperty struct {
 }
 
 type GetValidatorForPropertyHandler struct {
-	Repo contentdefinition.PropertyDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h GetValidatorForPropertyHandler) Handle(ctx context.Context, query GetValidatorForProperty) (validator.Validator, error) {
@@ -47,7 +47,7 @@ type GetAllValidatorsForProperty struct {
 }
 
 type GetAllValidatorsForPropertyHandler struct {
-	Repo contentdefinition.PropertyDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h GetAllValidatorsForPropertyHandler) Handle(ctx context.Context, query GetAllValidatorsForProperty) ([]validator.Validator, error) {

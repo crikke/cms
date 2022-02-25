@@ -50,6 +50,6 @@ type Content struct {
 	ID                  uuid.UUID
 	ContentDefinitionID uuid.UUID
 	Version             int
-	Name                map[language.Tag]string
+	Properties          map[language.Tag]map[string]interface{}
 	Status              SaveStatus
 }
