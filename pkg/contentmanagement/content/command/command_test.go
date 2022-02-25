@@ -108,6 +108,8 @@ func Test_UpdateContent(t *testing.T) {
 	cont, err := contentRepo.GetContent(context.Background(), contentId)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, cont.Version)
-	assert.Equal(t, cmd.Fields[0].Value, cont.Properties[cfg.Languages[0].String()][content.NameField])
-	assert.Equal(t, cmd.Fields[1].Value, cont.Properties[cfg.Languages[0].String()][content.UrlSegmentField])
+	assert.Equal(t, "name test", cont.Properties[cfg.Languages[0].String()][content.NameField])
+	assert.Equal(t, "url-test", cont.Properties[cfg.Languages[0].String()][content.UrlSegmentField])
+	assert.Equal(t, "name test", cont.Properties[cfg.Languages[1].String()][content.NameField])
+	assert.Equal(t, "name-test", cont.Properties[cfg.Languages[1].String()][content.UrlSegmentField])
 }
