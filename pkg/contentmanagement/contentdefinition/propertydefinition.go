@@ -24,7 +24,7 @@ var propertydefinitionTypes = map[string]struct{}{
 	"bool":        {},
 }
 
-func NewPropertyDefinition(cid uuid.UUID, name, description, propertytype string) (PropertyDefinition, error) {
+func NewPropertyDefinition(name, description, propertytype string) (PropertyDefinition, error) {
 
 	pd := PropertyDefinition{
 		Name:        name,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -42,9 +43,41 @@ func (c contentrepository) CreateContent(ctx context.Context, content Content) (
 
 func (c contentrepository) GetContent(ctx context.Context, id uuid.UUID) (Content, error) {
 
-	return Content{}, nil
+	content := &Content{}
+	err := c.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
+
+	if err != nil {
+		return Content{}, err
+	}
+
+	return *content, nil
 }
 
 func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error {
+
+	content := &Content{}
+	err := c.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
+
+	if err != nil {
+		return err
+	}
+
+	updated, err := updateFn(ctx, content)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = c.database.
+		Collection(collection).
+		UpdateOne(
+			ctx,
+			bson.D{bson.E{Key: "_id", Value: id}},
+			bson.M{"$set": updated})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

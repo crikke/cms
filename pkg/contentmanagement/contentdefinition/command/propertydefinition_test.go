@@ -158,16 +158,25 @@ func Test_AddValidation(t *testing.T) {
 	pid, err := handler.Handle(context.TODO(), testpd)
 	assert.NoError(t, err)
 
-	reqcmd := UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
-	reqcmd2 := UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "pattern", Value: "^foo"}
-	reqhandler := UpdateValidatorHandler{Repo: repo}
+	cmd1 := UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "required", Value: true}
+	cmd2 := UpdateValidator{ContentDefinitionID: cid, PropertyDefinitionID: pid, ValidatorName: "pattern", Value: "^foo"}
+	validationhandler := UpdateValidatorHandler{Repo: repo}
 
-	err = reqhandler.Handle(context.Background(), reqcmd)
+	err = validationhandler.Handle(context.Background(), cmd1)
 	assert.NoError(t, err)
-	err = reqhandler.Handle(context.Background(), reqcmd2)
+	err = validationhandler.Handle(context.Background(), cmd2)
 	assert.NoError(t, err)
 
-	pd, err := repo.GetPropertyDefinition(context.Background(), cid, pid)
+	cd, err := repo.GetContentDefinition(context.Background(), cid)
+
+	pd := contentdefinition.PropertyDefinition{}
+	for _, p := range cd.Propertydefinitions {
+		if p.ID == pid {
+			pd = p
+			break
+		}
+	}
+
 	assert.NoError(t, err)
 
 	req, ok := pd.Validators["required"]

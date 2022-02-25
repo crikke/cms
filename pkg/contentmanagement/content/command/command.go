@@ -7,6 +7,7 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 	"golang.org/x/text/language"
 )
@@ -54,6 +55,7 @@ type UpdateContent struct {
 type UpdateContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentRepository
+	SiteConfiguration           *siteconfiguration.SiteConfiguration
 }
 
 func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) error {
@@ -67,7 +69,7 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 
 		properties := make(map[string]contentdefinition.PropertyDefinition)
 
-		for _, pd := range cd.Properties {
+		for _, pd := range cd.Propertydefinitions {
 			properties[strings.ToLower(pd.Name)] = pd
 		}
 
@@ -84,15 +86,65 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				return nil, errors.New("property does not exist on propertydefinition")
 			}
 
-			// todo set to default language
-			lang := f.Language
-			// if propertydefinition is not localized, field language should be undefinied
+			lang := h.SiteConfiguration.Languages[0]
+
+			if f.Language != language.Und {
+
+				exists := false
+				for _, l := range h.SiteConfiguration.Languages {
+
+					if l == f.Language {
+						exists = true
+						break
+					}
+				}
+
+				if !exists {
+					return nil, errors.New("language is not configured in siteconfiguration")
+				}
+
+				lang = f.Language
+			}
+
 			if !pd.Localized && lang != language.Und {
 				return nil, errors.New("cannot set localized value on unlocalized property")
 			}
 
 			// todo: ensure field & property value is same type
 			c.Properties[lang][field] = f.Value
+
+			// also validate urlsegment
+
+			// ensure that content name is set for at least default language
+			// if not set for other languages, it is set to default language
+			// todo validate name
+			defaultName, ok := c.Properties[h.SiteConfiguration.Languages[0]][content.NameField]
+			if !ok {
+				return nil, errors.New("content name cannot be empty for configured default language")
+			}
+
+			for _, l := range h.SiteConfiguration.Languages[1:] {
+				_, ok := c.Properties[l][content.NameField]
+
+				if !ok {
+					c.Properties[l][content.NameField] = defaultName
+				}
+			}
+
+			for _, l := range h.SiteConfiguration.Languages {
+				url, ok := c.Properties[l][content.UrlSegmentField]
+
+				if !ok {
+					url = c.Properties[l][content.NameField]
+				}
+
+				str, ok := url.(string)
+				if !ok {
+					return nil, errors.New("urlsegment is not of type string")
+				}
+				str = strings.Replace(str, " ", "-", -1)
+				c.Properties[l][content.UrlSegmentField] = str
+			}
 		}
 
 		return c, nil

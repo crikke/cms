@@ -16,9 +16,6 @@ type ContentDefinitionRepository interface {
 	DeleteContentDefinition(ctx context.Context, id uuid.UUID) error
 	GetContentDefinition(ctx context.Context, id uuid.UUID) (ContentDefinition, error)
 
-	CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error)
-	UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error
-	DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error
 	GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error)
 }
 

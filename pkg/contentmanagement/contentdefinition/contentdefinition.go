@@ -13,7 +13,7 @@ type ContentDefinition struct {
 	Description string    `bson:"description,omitempty"`
 	Created     time.Time
 	// todo: ensure name is unique
-	Properties []PropertyDefinition
+	Propertydefinitions []PropertyDefinition
 }
 
 func NewContentDefinition(name, desc string) (ContentDefinition, error) {

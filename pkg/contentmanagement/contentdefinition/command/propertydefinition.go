@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
@@ -48,18 +49,31 @@ type CreatePropertyDefinitionHandler struct {
 
 func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreatePropertyDefinition) (uuid.UUID, error) {
 
-	pd, err := contentdefinition.NewPropertyDefinition(cmd.ContentDefinitionID, cmd.Name, cmd.Description, cmd.Type)
+	if cmd.ContentDefinitionID == (uuid.UUID{}) {
+		return uuid.UUID{}, errors.New("empty contentdefinition id")
+	}
+
+	pd, err := contentdefinition.NewPropertyDefinition(cmd.Name, cmd.Description, cmd.Type)
 
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	id, err := h.Repo.CreatePropertyDefinition(ctx, cmd.ContentDefinitionID, &pd)
+	pd.ID = uuid.New()
+	err = h.Repo.UpdateContentDefinition(
+		ctx,
+		cmd.ContentDefinitionID,
+		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+
+			cd.Propertydefinitions = append(cd.Propertydefinitions, pd)
+			return cd, nil
+		})
+
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return id, nil
+	return pd.ID, nil
 }
 
 type UpdatePropertyDefinition struct {
@@ -76,16 +90,36 @@ type UpdatePropertyDefinitionHandler struct {
 
 func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdatePropertyDefinition) error {
 
-	h.repo.UpdatePropertyDefinition(
+	if cmd.ContentDefinitionID == (uuid.UUID{}) {
+		return errors.New("empty contentdefinition id")
+	}
+
+	if cmd.PropertyDefinitionID == (uuid.UUID{}) {
+		return errors.New("empty propertydefinition id")
+	}
+
+	return h.repo.UpdateContentDefinition(
 		ctx, cmd.ContentDefinitionID,
-		cmd.PropertyDefinitionID,
-		func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
+		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+
+			pd := contentdefinition.PropertyDefinition{}
+			idx := -1
+			for i, p := range cd.Propertydefinitions {
+				if p.ID == cmd.PropertyDefinitionID {
+					pd = p
+					idx = i
+					break
+				}
+			}
+			if idx == -1 {
+				return nil, errors.New("propertydefinition not found")
+			}
 
 			if cmd.Description != nil {
 				pd.Description = *cmd.Description
 			}
 
-			if cmd.Name != nil {
+			if cmd.Name != nil && *cmd.Name != "" {
 				pd.Name = *cmd.Name
 			}
 
@@ -93,10 +127,9 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 				pd.Localized = *cmd.Localized
 			}
 
-			return pd, nil
+			cd.Propertydefinitions[idx] = pd
+			return cd, nil
 		})
-
-	return nil
 }
 
 type DeletePropertyDefinition struct {
@@ -109,7 +142,37 @@ type DeletePropertyDefinitionHandler struct {
 }
 
 func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeletePropertyDefinition) error {
-	return h.repo.DeletePropertyDefinition(ctx, cmd.ContentDefinitionID, cmd.PropertyDefinitionID)
+
+	if cmd.ContentDefinitionID == (uuid.UUID{}) {
+		return errors.New("empty contentdefinition id")
+	}
+
+	if cmd.PropertyDefinitionID == (uuid.UUID{}) {
+		return errors.New("empty propertydefinition id")
+	}
+
+	return h.repo.UpdateContentDefinition(
+		ctx, cmd.ContentDefinitionID,
+		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+
+			idx := -1
+			for i, p := range cd.Propertydefinitions {
+				if p.ID == cmd.PropertyDefinitionID {
+					idx = i
+					break
+				}
+			}
+			if idx == -1 {
+				return nil, errors.New("propertydefinition not found")
+			}
+
+			arr := cd.Propertydefinitions
+			arr[idx] = arr[len(arr)-1]
+			arr = arr[:len(arr)-1]
+
+			cd.Propertydefinitions = arr
+			return cd, nil
+		})
 }
 
 type UpdateValidator struct {
@@ -131,16 +194,44 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 		return err
 	}
 
-	return h.Repo.UpdatePropertyDefinition(
-		ctx,
+	return h.Repo.UpdateContentDefinition(ctx,
 		cmd.ContentDefinitionID,
-		cmd.PropertyDefinitionID,
-		func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
+		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+
+			idx := 0
+			pd := contentdefinition.PropertyDefinition{}
+			for i, p := range cd.Propertydefinitions {
+
+				if p.ID == cmd.PropertyDefinitionID {
+					pd = p
+					idx = i
+					break
+				}
+			}
+
+			if pd.ID == (uuid.UUID{}) {
+				return nil, errors.New("propertydefinition not found")
+			}
+
 			if pd.Validators == nil {
 				pd.Validators = make(map[string]interface{})
 			}
 
 			pd.Validators[cmd.ValidatorName] = v
-			return pd, nil
+			cd.Propertydefinitions[idx] = pd
+			return cd, nil
 		})
+
+	// return h.Repo.UpdatePropertyDefinition(
+	// 	ctx,
+	// 	cmd.ContentDefinitionID,
+	// 	cmd.PropertyDefinitionID,
+	// 	func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
+	// 		if pd.Validators == nil {
+	// 			pd.Validators = make(map[string]interface{})
+	// 		}
+
+	// 		pd.Validators[cmd.ValidatorName] = v
+	// 		return pd, nil
+	// 	})
 }

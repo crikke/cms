@@ -33,6 +33,11 @@ HTTP PUT contentmanagement/content/{contentID}
 
 */
 
+const (
+	NameField       = "name"
+	UrlSegmentField = "url"
+)
+
 type SaveStatus int64
 
 const (
