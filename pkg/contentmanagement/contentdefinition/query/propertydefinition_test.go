@@ -178,8 +178,8 @@ func createPropertyValidation(t *testing.T, c *mongo.Client) (cid, pid uuid.UUID
 	handler := command.CreatePropertyDefinitionHandler{Repo: repo}
 
 	testpd := command.CreatePropertyDefinition{
-		Name:                "pd11",
-		Description:         "pd22",
+		Name:                "pd111",
+		Description:         "pd222",
 		Type:                "text",
 		ContentDefinitionID: cid,
 	}
