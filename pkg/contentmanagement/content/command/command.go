@@ -9,7 +9,6 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
-	"golang.org/x/text/language"
 )
 
 type CreateContent struct {
@@ -46,7 +45,7 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 type UpdateContent struct {
 	Id     uuid.UUID
 	Fields []struct {
-		Language language.Tag
+		Language string
 		Field    string
 		Value    interface{}
 	}
@@ -68,15 +67,30 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 		}
 
 		properties := make(map[string]contentdefinition.PropertyDefinition)
-
 		for _, pd := range cd.Propertydefinitions {
 			properties[strings.ToLower(pd.Name)] = pd
+		}
+
+		if c.Properties == nil {
+			c.Properties = make(map[string]map[string]interface{})
+		}
+
+		for _, configuredLanguage := range h.SiteConfiguration.Languages {
+
+			c.Properties[configuredLanguage.String()] = make(map[string]interface{})
 		}
 
 		// check if field exists in contentdefinition
 		for _, f := range cmd.Fields {
 
 			field := strings.ToLower(f.Field)
+			// name & urlsegment is not handled here, they are handled separately
+			if field == content.NameField || field == content.UrlSegmentField {
+
+				c.Properties[f.Language][field] = f.Value
+				continue
+			}
+
 			if f.Field == "" {
 				return nil, errors.New("property with empty name")
 			}
@@ -86,14 +100,14 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				return nil, errors.New("property does not exist on propertydefinition")
 			}
 
-			lang := h.SiteConfiguration.Languages[0]
+			lang := h.SiteConfiguration.Languages[0].String()
 
-			if f.Language != language.Und {
+			if f.Language != "" {
 
 				exists := false
 				for _, l := range h.SiteConfiguration.Languages {
 
-					if l == f.Language {
+					if l.String() == f.Language {
 						exists = true
 						break
 					}
@@ -106,47 +120,46 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				lang = f.Language
 			}
 
-			if !pd.Localized && lang != language.Und {
+			if !pd.Localized && lang != "" {
 				return nil, errors.New("cannot set localized value on unlocalized property")
 			}
 
 			// todo: ensure field & property value is same type
 			c.Properties[lang][field] = f.Value
+		}
 
-			// also validate urlsegment
+		// ensure that content name is set for at least default language
+		// if not set for other languages, it is set to default language
+		// todo validate name
+		defaultName, ok := c.Properties[h.SiteConfiguration.Languages[0].String()][content.NameField]
+		if !ok {
+			return nil, errors.New("content name cannot be empty for configured default language")
+		}
 
-			// ensure that content name is set for at least default language
-			// if not set for other languages, it is set to default language
-			// todo validate name
-			defaultName, ok := c.Properties[h.SiteConfiguration.Languages[0]][content.NameField]
+		for _, l := range h.SiteConfiguration.Languages[1:] {
+			_, ok := c.Properties[l.String()][content.NameField]
+
 			if !ok {
-				return nil, errors.New("content name cannot be empty for configured default language")
-			}
-
-			for _, l := range h.SiteConfiguration.Languages[1:] {
-				_, ok := c.Properties[l][content.NameField]
-
-				if !ok {
-					c.Properties[l][content.NameField] = defaultName
-				}
-			}
-
-			for _, l := range h.SiteConfiguration.Languages {
-				url, ok := c.Properties[l][content.UrlSegmentField]
-
-				if !ok {
-					url = c.Properties[l][content.NameField]
-				}
-
-				str, ok := url.(string)
-				if !ok {
-					return nil, errors.New("urlsegment is not of type string")
-				}
-				str = strings.Replace(str, " ", "-", -1)
-				c.Properties[l][content.UrlSegmentField] = str
+				c.Properties[l.String()][content.NameField] = defaultName
 			}
 		}
 
+		for _, l := range h.SiteConfiguration.Languages {
+			url, ok := c.Properties[l.String()][content.UrlSegmentField]
+
+			if !ok {
+				url = c.Properties[l.String()][content.NameField]
+			}
+
+			str, ok := url.(string)
+			if !ok {
+				return nil, errors.New("urlsegment is not of type string")
+			}
+			str = strings.Replace(str, " ", "-", -1)
+			c.Properties[l.String()][content.UrlSegmentField] = str
+		}
+
+		c.Version++
 		return c, nil
 	})
 }

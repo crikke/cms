@@ -24,8 +24,7 @@ var (
 			RegisterTypeDecoder(tUUID, bsoncodec.ValueDecoderFunc(decodeUUID)).
 			RegisterTypeEncoder(tTag, bsoncodec.ValueEncoderFunc(encodeTag)).
 			RegisterTypeDecoder(tTag, bsoncodec.ValueDecoderFunc(decodeTag)).
-		// todo move validator to its pacakge
-		Build()
+			Build()
 )
 
 func Connect(ctx context.Context, connectionstring string) (*mongo.Client, error) {
@@ -98,20 +97,7 @@ func decodeTag(dc bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Va
 		return bsoncodec.ValueDecoderError{Name: "decodeTag", Types: []reflect.Type{tTag}, Received: val}
 	}
 
-	var str string
-	var err error
-
-	switch vrType := vr.Type(); vrType {
-	case bsontype.String:
-		str, err = vr.ReadString()
-	case bsontype.Null:
-		err = vr.ReadNull()
-	case bsontype.Undefined:
-		err = vr.ReadUndefined()
-	default:
-		return fmt.Errorf("cannot decode %v into a UUID", vrType)
-	}
-
+	str, err := vr.ReadString()
 	if err != nil {
 		return err
 	}

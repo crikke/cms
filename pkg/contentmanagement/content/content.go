@@ -2,7 +2,6 @@ package content
 
 import (
 	"github.com/google/uuid"
-	"golang.org/x/text/language"
 )
 
 /*
@@ -52,9 +51,9 @@ const (
 )
 
 type Content struct {
-	ID                  uuid.UUID
-	ContentDefinitionID uuid.UUID
-	Version             int
-	Properties          map[language.Tag]map[string]interface{}
-	Status              SaveStatus
+	ID                  uuid.UUID                         `bson:"_id"`
+	ContentDefinitionID uuid.UUID                         `bson:"contentdefinition_id"`
+	Version             int                               `bson:"version"`
+	Properties          map[string]map[string]interface{} `bson:"properties"`
+	Status              SaveStatus                        `bson:"status"`
 }

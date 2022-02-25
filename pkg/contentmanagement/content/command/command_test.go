@@ -74,27 +74,27 @@ func Test_UpdateContent(t *testing.T) {
 	cmd := UpdateContent{
 		Id: contentId,
 		Fields: []struct {
-			Language language.Tag
+			Language string
 			Field    string
 			Value    interface{}
 		}{
 			{
-				Language: language.MustParse("sv_SE"),
+				Language: "sv-SE",
 				Field:    content.NameField,
-				Value:    "name sv",
+				Value:    "name test",
 			},
 			{
-				Language: language.MustParse("sv_SE"),
-				Field:    "urlsegment",
-				Value:    "url-sv",
+				Language: "sv-SE",
+				Field:    content.UrlSegmentField,
+				Value:    "url test",
 			},
 		},
 	}
 
 	cfg := siteconfiguration.SiteConfiguration{
 		Languages: []language.Tag{
-			language.MustParse("sv_SE"),
-			language.MustParse("en_US"),
+			language.MustParse("sv-SE"),
+			language.MustParse("en-US"),
 		},
 	}
 	handler := UpdateContentHandler{
@@ -107,7 +107,7 @@ func Test_UpdateContent(t *testing.T) {
 	assert.NoError(t, err)
 	cont, err := contentRepo.GetContent(context.Background(), contentId)
 	assert.NoError(t, err)
-	assert.Zero(t, cont.Version)
-	assert.Equal(t, cmd.Fields[0].Value, cont.Properties[cfg.Languages[0]][content.NameField])
-	assert.Equal(t, cmd.Fields[1].Value, cont.Properties[cfg.Languages[0]][content.UrlSegmentField])
+	assert.Equal(t, 1, cont.Version)
+	assert.Equal(t, cmd.Fields[0].Value, cont.Properties[cfg.Languages[0].String()][content.NameField])
+	assert.Equal(t, cmd.Fields[1].Value, cont.Properties[cfg.Languages[0].String()][content.UrlSegmentField])
 }
