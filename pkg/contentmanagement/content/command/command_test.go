@@ -1,3 +1,10 @@
+/*
+	Test TODOS:
+
+	Tests involving version & status.
+	Publish new version previous version should be set to  unpublished
+	Updating a published version, the new version should be status draft
+*/
 package command
 
 import (
@@ -363,7 +370,7 @@ func Test_UpdateContent(t *testing.T) {
 	}
 }
 
-func Test_ValidateContent(t *testing.T) {
+func Test_PublishContent(t *testing.T) {
 
 	cfg := &siteconfiguration.SiteConfiguration{
 		Languages: []language.Tag{
@@ -380,7 +387,8 @@ func Test_ValidateContent(t *testing.T) {
 			Field    string
 			Value    interface{}
 		}
-		expectedErr string
+		expectedErr    string
+		expectedStatus content.SaveStatus
 	}{
 		{
 			name: "required field not set should return error",
@@ -409,11 +417,44 @@ func Test_ValidateContent(t *testing.T) {
 					Value:    "name sv",
 				},
 			},
-			expectedErr: "required",
+			expectedErr:    "required",
+			expectedStatus: content.Draft,
 		},
-		// {
-		// 	name: "required field set should return ok",
-		// },
+		{
+			name: "required field set should return ok",
+			contentdef: &contentdefinition.ContentDefinition{
+				Name: "test",
+				ID:   uuid.New(),
+				Propertydefinitions: []contentdefinition.PropertyDefinition{
+					{
+						ID:   uuid.New(),
+						Name: "required_field",
+						Type: "text",
+						Validators: map[string]interface{}{
+							"required": true,
+						},
+					},
+				},
+			},
+			fields: []struct {
+				Language string
+				Field    string
+				Value    interface{}
+			}{
+				{
+					Language: "sv-SE",
+					Field:    content.NameField,
+					Value:    "name sv",
+				},
+				{
+					Language: "sv-SE",
+					Field:    "required_field",
+					Value:    "ok",
+				},
+			},
+			expectedErr:    "",
+			expectedStatus: content.Published,
+		},
 		// {
 		// 	name: "text field regex should return ok ",
 		// },
@@ -440,6 +481,7 @@ func Test_ValidateContent(t *testing.T) {
 			cn := content.Content{
 				ContentDefinitionID: contentdefinitionId,
 				Properties:          make(map[string]map[string]interface{}),
+				Status:              content.Draft,
 			}
 
 			for _, field := range test.fields {
@@ -455,11 +497,11 @@ func Test_ValidateContent(t *testing.T) {
 			id, err := contentRepo.CreateContent(context.Background(), cn)
 			assert.NoError(t, err)
 
-			cmd := ValidateContent{
+			cmd := PublishContent{
 				ContentID: id,
 			}
 
-			handler := ValidateContentHandler{
+			handler := PublishContentHandler{
 				ContentDefinitionRepository: cdRepo,
 				ContentRepository:           contentRepo,
 				SiteConfiguration:           cfg,

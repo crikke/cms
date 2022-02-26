@@ -167,25 +167,25 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 	})
 }
 
-type ValidateContent struct {
+type PublishContent struct {
 	ContentID uuid.UUID
 }
 
-type ValidateContentHandler struct {
+type PublishContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentRepository
 	SiteConfiguration           *siteconfiguration.SiteConfiguration
 }
 
-func (h ValidateContentHandler) Handle(ctx context.Context, cmd ValidateContent) error {
+func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) error {
 
-	content, err := h.ContentRepository.GetContent(ctx, cmd.ContentID)
+	cont, err := h.ContentRepository.GetContent(ctx, cmd.ContentID)
 
 	if err != nil {
 		return err
 	}
 
-	contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, content.ContentDefinitionID)
+	contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cont.ContentDefinitionID)
 
 	if err != nil {
 		return err
@@ -210,11 +210,11 @@ func (h ValidateContentHandler) Handle(ctx context.Context, cmd ValidateContent)
 
 			for _, l := range h.SiteConfiguration.Languages {
 
-				p := getPropertyValue(content, pd.Name, l.String())
+				p := getPropertyValue(cont, pd.Name, l.String())
 				propvalues = append(propvalues, p)
 			}
 		} else {
-			p := getPropertyValue(content, pd.Name, h.SiteConfiguration.Languages[0].String())
+			p := getPropertyValue(cont, pd.Name, h.SiteConfiguration.Languages[0].String())
 			propvalues = append(propvalues, p)
 
 		}
@@ -230,7 +230,10 @@ func (h ValidateContentHandler) Handle(ctx context.Context, cmd ValidateContent)
 		}
 	}
 
-	return nil
+	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
+		c.Status = content.Published
+		return c, nil
+	})
 }
 
 func getPropertyValue(c content.Content, name, locale string) interface{} {

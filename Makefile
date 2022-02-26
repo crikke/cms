@@ -8,7 +8,7 @@ all: test vet
 
 .PHONY: test
 test: db-seed
-	go test ./... 
+	go test ./... -cover 
 
 .PHONY: vet
 vet:
