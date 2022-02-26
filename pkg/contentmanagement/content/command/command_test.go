@@ -397,14 +397,9 @@ func Test_PublishContent(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		contentdef *contentdefinition.ContentDefinition
-		content    content.Content
-		// fields     []struct {
-		// 	Language string
-		// 	Field    string
-		// 	Value    interface{}
-		// }
+		name           string
+		contentdef     *contentdefinition.ContentDefinition
+		content        content.Content
 		expectedErr    string
 		expectedStatus content.SaveStatus
 	}{
@@ -426,10 +421,10 @@ func Test_PublishContent(t *testing.T) {
 			},
 			content: content.Content{
 				Version: map[int]content.ContentVersion{
-					0: content.ContentVersion{
+					0: {
 						Status: content.Draft,
 						Properties: map[string]map[string]interface{}{
-							"sv-SE": map[string]interface{}{
+							"sv-SE": {
 								content.NameField: "name sv",
 							},
 						},
@@ -440,47 +435,37 @@ func Test_PublishContent(t *testing.T) {
 			expectedErr:    "required",
 			expectedStatus: content.Draft,
 		},
-		// {
-		// 	name: "required field set should return ok",
-		// 	contentdef: &contentdefinition.ContentDefinition{
-		// 		Name: "test",
-		// 		ID:   uuid.New(),
-		// 		Propertydefinitions: []contentdefinition.PropertyDefinition{
-		// 			{
-		// 				ID:   uuid.New(),
-		// 				Name: "required_field",
-		// 				Type: "text",
-		// 				Validators: map[string]interface{}{
-		// 					"required": true,
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	fields: []struct {
-		// 		Language string
-		// 		Field    string
-		// 		Value    interface{}
-		// 	}{
-		// 		{
-		// 			Language: "sv-SE",
-		// 			Field:    content.NameField,
-		// 			Value:    "name sv",
-		// 		},
-		// 		{
-		// 			Language: "sv-SE",
-		// 			Field:    "required_field",
-		// 			Value:    "ok",
-		// 		},
-		// 	},
-		// 	expectedErr:    "",
-		// 	expectedStatus: content.Published,
-		// },
-		// // {
-		// // 	name: "text field regex should return ok ",
-		// // },
-		// // {
-		// // 	name: "text field regex should return error",
-		// // },
+		{
+			name: "required field set should return ok",
+			contentdef: &contentdefinition.ContentDefinition{
+				Name: "test",
+				ID:   uuid.New(),
+				Propertydefinitions: []contentdefinition.PropertyDefinition{
+					{
+						ID:   uuid.New(),
+						Name: "required_field",
+						Type: "text",
+						Validators: map[string]interface{}{
+							"required": true,
+						},
+					},
+				},
+			},
+			content: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField: "name sv",
+								"required_field":  "ok",
+							},
+						},
+					},
+				},
+			},
+			expectedErr:    "",
+			expectedStatus: content.Published,
+		},
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
