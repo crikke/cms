@@ -365,28 +365,111 @@ func Test_UpdateContent(t *testing.T) {
 
 func Test_ValidateContent(t *testing.T) {
 
-	// cfg := siteconfiguration.SiteConfiguration{
-	// 	Languages: []language.Tag{
-	// 		language.MustParse("sv-SE"),
-	// 		language.MustParse("en-US"),
-	// 	},
-	// }
+	cfg := &siteconfiguration.SiteConfiguration{
+		Languages: []language.Tag{
+			language.MustParse("sv-SE"),
+			language.MustParse("en-US"),
+		},
+	}
 
 	tests := []struct {
-		name string
-		// 	contentdef *contentdefinition.ContentDefinition
-		// 	fields     []struct {
-		// 		Language string
-		// 		Field    string
-		// 		Value    interface{}
-		// 	}
-		// 	expectedErr    string
-		// 	expectedValues map[string]map[string]interface{}
-	}{}
+		name       string
+		contentdef *contentdefinition.ContentDefinition
+		fields     []struct {
+			Language string
+			Field    string
+			Value    interface{}
+		}
+		expectedErr string
+	}{
+		{
+			name: "required field not set should return error",
+			contentdef: &contentdefinition.ContentDefinition{
+				Name: "test",
+				ID:   uuid.New(),
+				Propertydefinitions: []contentdefinition.PropertyDefinition{
+					{
+						ID:   uuid.New(),
+						Name: "required_field",
+						Type: "text",
+						Validators: map[string]interface{}{
+							"required": true,
+						},
+					},
+				},
+			},
+			fields: []struct {
+				Language string
+				Field    string
+				Value    interface{}
+			}{
+				{
+					Language: "sv-SE",
+					Field:    content.NameField,
+					Value:    "name sv",
+				},
+			},
+			expectedErr: "required",
+		},
+		// {
+		// 	name: "required field set should return ok",
+		// },
+		// {
+		// 	name: "text field regex should return ok ",
+		// },
+		// {
+		// 	name: "text field regex should return error",
+		// },
+	}
+
+	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
 
+		t.Run(test.name, func(t *testing.T) {
+			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+			c.Database("cms").Collection("content").Drop(context.Background())
+
+			cdRepo := contentdefinition.NewContentDefinitionRepository(c)
+			contentdefinitionId, err := cdRepo.CreateContentDefinition(context.Background(), test.contentdef)
+			assert.NoError(t, err)
+
+			contentRepo := content.NewContentRepository(c)
+
+			cn := content.Content{
+				ContentDefinitionID: contentdefinitionId,
+				Properties:          make(map[string]map[string]interface{}),
+			}
+
+			for _, field := range test.fields {
+				_, ok := cn.Properties[field.Language]
+
+				if !ok {
+					cn.Properties[field.Language] = make(map[string]interface{})
+				}
+
+				cn.Properties[field.Language][field.Field] = field.Value
+			}
+
+			id, err := contentRepo.CreateContent(context.Background(), cn)
+			assert.NoError(t, err)
+
+			cmd := ValidateContent{
+				ContentID: id,
+			}
+
+			handler := ValidateContentHandler{
+				ContentDefinitionRepository: cdRepo,
+				ContentRepository:           contentRepo,
+				SiteConfiguration:           cfg,
+			}
+
+			err = handler.Handle(context.Background(), cmd)
+
+			if test.expectedErr != "" {
+				assert.Equal(t, test.expectedErr, err.Error())
+			}
 		})
 	}
 }

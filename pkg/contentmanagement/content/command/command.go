@@ -210,14 +210,13 @@ func (h ValidateContentHandler) Handle(ctx context.Context, cmd ValidateContent)
 
 			for _, l := range h.SiteConfiguration.Languages {
 
-				if p := getPropertyValue(content, pd.Name, l.String()); p != nil {
-					propvalues = append(propvalues, p)
-				}
-			}
-		} else {
-			if p := getPropertyValue(content, pd.Name, h.SiteConfiguration.Languages[0].String()); p != nil {
+				p := getPropertyValue(content, pd.Name, l.String())
 				propvalues = append(propvalues, p)
 			}
+		} else {
+			p := getPropertyValue(content, pd.Name, h.SiteConfiguration.Languages[0].String())
+			propvalues = append(propvalues, p)
+
 		}
 
 		for _, value := range propvalues {
