@@ -31,7 +31,11 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 
 	c := content.Content{
 		ContentDefinitionID: cd.ID,
-		Status:              content.Draft,
+		Version: map[int]content.ContentVersion{
+			0: {
+				Status: content.Draft,
+			},
+		},
 	}
 
 	id, err := h.ContentRepository.CreateContent(ctx, c)
@@ -44,8 +48,9 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 }
 
 type UpdateContent struct {
-	Id     uuid.UUID
-	Fields []struct {
+	Id      uuid.UUID
+	Version int
+	Fields  []struct {
 		Language string
 		Field    string
 		Value    interface{}
@@ -72,13 +77,20 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 			properties[strings.ToLower(pd.Name)] = pd
 		}
 
-		if c.Properties == nil {
-			c.Properties = make(map[string]map[string]interface{})
+		// get the version of which the update should be based on
+		contentVer, ok := c.Version[cmd.Version]
+		if !ok {
+			return nil, errors.New(content.ErrVersionNotExists)
+		}
+		contentVer.Status = content.Draft
+
+		if contentVer.Properties == nil {
+			contentVer.Properties = make(map[string]map[string]interface{})
 		}
 
 		for _, configuredLanguage := range h.SiteConfiguration.Languages {
 
-			c.Properties[configuredLanguage.String()] = make(map[string]interface{})
+			contentVer.Properties[configuredLanguage.String()] = make(map[string]interface{})
 		}
 
 		// check if field exists in contentdefinition
@@ -88,7 +100,7 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 			// name & urlsegment is not handled here, they are handled separately
 			if field == content.NameField || field == content.UrlSegmentField {
 
-				c.Properties[f.Language][field] = f.Value
+				contentVer.Properties[f.Language][field] = f.Value
 				continue
 			}
 
@@ -128,30 +140,30 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				lang = f.Language
 			}
 
-			c.Properties[lang][field] = f.Value
+			contentVer.Properties[lang][field] = f.Value
 		}
 
 		// ensure that content name is set for at least default language
 		// if not set for other languages, it is set to default language
 		// todo validate name
-		defaultName, ok := c.Properties[h.SiteConfiguration.Languages[0].String()][content.NameField]
+		defaultName, ok := contentVer.Properties[h.SiteConfiguration.Languages[0].String()][content.NameField]
 		if !ok {
 			return nil, errors.New("content name cannot be empty for configured default language")
 		}
 
 		for _, l := range h.SiteConfiguration.Languages[1:] {
-			_, ok := c.Properties[l.String()][content.NameField]
+			_, ok := contentVer.Properties[l.String()][content.NameField]
 
 			if !ok {
-				c.Properties[l.String()][content.NameField] = defaultName
+				contentVer.Properties[l.String()][content.NameField] = defaultName
 			}
 		}
 
 		for _, l := range h.SiteConfiguration.Languages {
-			url, ok := c.Properties[l.String()][content.UrlSegmentField]
+			url, ok := contentVer.Properties[l.String()][content.UrlSegmentField]
 
 			if !ok {
-				url = c.Properties[l.String()][content.NameField]
+				url = contentVer.Properties[l.String()][content.NameField]
 			}
 
 			str, ok := url.(string)
@@ -159,16 +171,23 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 				return nil, errors.New("urlsegment is not of type string")
 			}
 			str = strings.Replace(str, " ", "-", -1)
-			c.Properties[l.String()][content.UrlSegmentField] = str
+			contentVer.Properties[l.String()][content.UrlSegmentField] = str
 		}
 
-		c.Version++
+		if contentVer.Status == content.Draft {
+			c.Version[cmd.Version] = contentVer
+		} else {
+			nextver := len(c.Version)
+			c.Version[nextver] = contentVer
+		}
+
 		return c, nil
 	})
 }
 
 type PublishContent struct {
 	ContentID uuid.UUID
+	Version   int
 }
 
 type PublishContentHandler struct {
@@ -191,6 +210,11 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 		return err
 	}
 
+	contentver, ok := cont.Version[cmd.Version]
+	if !ok {
+		return errors.New(content.ErrVersionNotExists)
+	}
+
 	for _, pd := range contentDefinition.Propertydefinitions {
 
 		var propvalues []interface{}
@@ -210,11 +234,11 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 
 			for _, l := range h.SiteConfiguration.Languages {
 
-				p := getPropertyValue(cont, pd.Name, l.String())
+				p := getPropertyValue(contentver, pd.Name, l.String())
 				propvalues = append(propvalues, p)
 			}
 		} else {
-			p := getPropertyValue(cont, pd.Name, h.SiteConfiguration.Languages[0].String())
+			p := getPropertyValue(contentver, pd.Name, h.SiteConfiguration.Languages[0].String())
 			propvalues = append(propvalues, p)
 
 		}
@@ -231,12 +255,20 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 	}
 
 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
-		c.Status = content.Published
+
+		// todo use ptr
+		current := c.Version[c.PublishedVersion]
+		current.Status = content.PreviouslyPublished
+		c.Version[c.PublishedVersion] = current
+
+		contentver.Status = content.Published
+		c.PublishedVersion = cmd.Version
+		c.Version[cmd.Version] = contentver
 		return c, nil
 	})
 }
 
-func getPropertyValue(c content.Content, name, locale string) interface{} {
+func getPropertyValue(c content.ContentVersion, name, locale string) interface{} {
 
 	properties, ok := c.Properties[locale]
 

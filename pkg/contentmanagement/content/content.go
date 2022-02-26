@@ -44,16 +44,20 @@ const (
 	// Status is Draft when the content is saved but the version of given content has not previously been published
 	Draft SaveStatus = iota
 	// Indicates that there is a newer version available
-	Unpublished
+	PreviouslyPublished
 	Published
 	// When content is archived, it wont be available for consumers.
 	Archived
 )
 
 type Content struct {
-	ID                  uuid.UUID                         `bson:"_id"`
-	ContentDefinitionID uuid.UUID                         `bson:"contentdefinition_id"`
-	Version             int                               `bson:"version"`
-	Properties          map[string]map[string]interface{} `bson:"properties"`
-	Status              SaveStatus                        `bson:"status"`
+	ID                  uuid.UUID `bson:"_id"`
+	ContentDefinitionID uuid.UUID `bson:"contentdefinition_id"`
+	PublishedVersion    int
+	Version             map[int]ContentVersion `bson:"version"`
+}
+
+type ContentVersion struct {
+	Properties map[string]map[string]interface{} `bson:"properties"`
+	Status     SaveStatus                        `bson:"status"`
 }

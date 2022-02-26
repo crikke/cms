@@ -23,8 +23,12 @@ import (
 func Test_CreateContent(t *testing.T) {
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
 	assert.NoError(t, err)
+	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+	c.Database("cms").Collection("content").Drop(context.Background())
 
 	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
+	contentRepo := content.NewContentRepository(c)
+
 	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test2",
 	})
@@ -40,7 +44,12 @@ func Test_CreateContent(t *testing.T) {
 
 	contentId, err := handler.Handle(context.Background(), cmd)
 	assert.NoError(t, err)
+	actual, err := contentRepo.GetContent(context.Background(), contentId)
+
+	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.UUID{}, contentId)
+	_, ok := actual.Version[0]
+	assert.True(t, ok)
 }
 
 func Test_CreateContent_Empty_ContentDefinition(t *testing.T) {
@@ -49,13 +58,15 @@ func Test_CreateContent_Empty_ContentDefinition(t *testing.T) {
 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
 	c.Database("cms").Collection("content").Drop(context.Background())
 
+	contentRepo := content.NewContentRepository(c)
 	cmd := CreateContent{}
 	handler := CreateContentHandler{
 		ContentDefinitionRepository: contentdefinition.NewContentDefinitionRepository(c),
-		ContentRepository:           content.NewContentRepository(c),
+		ContentRepository:           contentRepo,
 	}
 
 	contentId, err := handler.Handle(context.Background(), cmd)
+
 	assert.Error(t, err)
 	assert.Equal(t, uuid.UUID{}, contentId)
 }
@@ -336,12 +347,18 @@ func Test_UpdateContent(t *testing.T) {
 
 			contentId, err := contentRepo.CreateContent(context.Background(), content.Content{
 				ContentDefinitionID: contentdefinitionId,
+				Version: map[int]content.ContentVersion{
+					0: {
+						Status: content.Draft,
+					},
+				},
 			})
 			assert.NoError(t, err)
 
 			cmd := UpdateContent{
-				Id:     contentId,
-				Fields: test.fields,
+				Id:      contentId,
+				Fields:  test.fields,
+				Version: 0,
 			}
 
 			handler := UpdateContentHandler{
@@ -362,7 +379,7 @@ func Test_UpdateContent(t *testing.T) {
 
 				for field, value := range fields {
 
-					assert.Equal(t, value, cont.Properties[lang][field], value)
+					assert.Equal(t, value, cont.Version[0].Properties[lang][field], value)
 				}
 			}
 		})
@@ -382,11 +399,12 @@ func Test_PublishContent(t *testing.T) {
 	tests := []struct {
 		name       string
 		contentdef *contentdefinition.ContentDefinition
-		fields     []struct {
-			Language string
-			Field    string
-			Value    interface{}
-		}
+		content    content.Content
+		// fields     []struct {
+		// 	Language string
+		// 	Field    string
+		// 	Value    interface{}
+		// }
 		expectedErr    string
 		expectedStatus content.SaveStatus
 	}{
@@ -406,61 +424,63 @@ func Test_PublishContent(t *testing.T) {
 					},
 				},
 			},
-			fields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "name sv",
-				},
-			},
-			expectedErr:    "required",
-			expectedStatus: content.Draft,
-		},
-		{
-			name: "required field set should return ok",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:   uuid.New(),
-						Name: "required_field",
-						Type: "text",
-						Validators: map[string]interface{}{
-							"required": true,
+			content: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: content.ContentVersion{
+						Status: content.Draft,
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": map[string]interface{}{
+								content.NameField: "name sv",
+							},
 						},
 					},
 				},
 			},
-			fields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "name sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    "required_field",
-					Value:    "ok",
-				},
-			},
-			expectedErr:    "",
-			expectedStatus: content.Published,
+
+			expectedErr:    "required",
+			expectedStatus: content.Draft,
 		},
 		// {
-		// 	name: "text field regex should return ok ",
+		// 	name: "required field set should return ok",
+		// 	contentdef: &contentdefinition.ContentDefinition{
+		// 		Name: "test",
+		// 		ID:   uuid.New(),
+		// 		Propertydefinitions: []contentdefinition.PropertyDefinition{
+		// 			{
+		// 				ID:   uuid.New(),
+		// 				Name: "required_field",
+		// 				Type: "text",
+		// 				Validators: map[string]interface{}{
+		// 					"required": true,
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	fields: []struct {
+		// 		Language string
+		// 		Field    string
+		// 		Value    interface{}
+		// 	}{
+		// 		{
+		// 			Language: "sv-SE",
+		// 			Field:    content.NameField,
+		// 			Value:    "name sv",
+		// 		},
+		// 		{
+		// 			Language: "sv-SE",
+		// 			Field:    "required_field",
+		// 			Value:    "ok",
+		// 		},
+		// 	},
+		// 	expectedErr:    "",
+		// 	expectedStatus: content.Published,
 		// },
-		// {
-		// 	name: "text field regex should return error",
-		// },
+		// // {
+		// // 	name: "text field regex should return ok ",
+		// // },
+		// // {
+		// // 	name: "text field regex should return error",
+		// // },
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
@@ -477,24 +497,8 @@ func Test_PublishContent(t *testing.T) {
 			assert.NoError(t, err)
 
 			contentRepo := content.NewContentRepository(c)
-
-			cn := content.Content{
-				ContentDefinitionID: contentdefinitionId,
-				Properties:          make(map[string]map[string]interface{}),
-				Status:              content.Draft,
-			}
-
-			for _, field := range test.fields {
-				_, ok := cn.Properties[field.Language]
-
-				if !ok {
-					cn.Properties[field.Language] = make(map[string]interface{})
-				}
-
-				cn.Properties[field.Language][field.Field] = field.Value
-			}
-
-			id, err := contentRepo.CreateContent(context.Background(), cn)
+			test.content.ContentDefinitionID = contentdefinitionId
+			id, err := contentRepo.CreateContent(context.Background(), test.content)
 			assert.NoError(t, err)
 
 			cmd := PublishContent{
