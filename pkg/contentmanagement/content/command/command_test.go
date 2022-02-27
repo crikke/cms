@@ -552,8 +552,10 @@ func Test_PublishContent(t *testing.T) {
 
 			assert.Equal(t, test.expected.PublishedVersion, actual.PublishedVersion)
 
+			if test.expectedErr != "" {
+				assert.Equal(t, test.publishVer, actual.PublishedVersion)
+			}
 			for v, contentver := range test.expected.Version {
-				// assert.Equal(t, actual.Version[v].Status, contentver.Status, "status")
 
 				for lang, fields := range contentver.Properties {
 					for field, value := range fields {
