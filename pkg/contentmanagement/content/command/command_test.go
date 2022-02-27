@@ -397,11 +397,11 @@ func Test_PublishContent(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		contentdef     *contentdefinition.ContentDefinition
-		content        content.Content
-		expectedErr    string
-		expectedStatus content.SaveStatus
+		name        string
+		contentdef  *contentdefinition.ContentDefinition
+		content     content.Content
+		expectedErr string
+		expected    content.Content
 	}{
 		{
 			name: "required field not set should return error",
@@ -432,8 +432,7 @@ func Test_PublishContent(t *testing.T) {
 				},
 			},
 
-			expectedErr:    "required",
-			expectedStatus: content.Draft,
+			expectedErr: "required",
 		},
 		{
 			name: "required field set should return ok",
@@ -463,9 +462,66 @@ func Test_PublishContent(t *testing.T) {
 					},
 				},
 			},
-			expectedErr:    "",
-			expectedStatus: content.Published,
+			expected: content.Content{
+				PublishedVersion: 0,
+				Version: map[int]content.ContentVersion{
+					0: {
+						Status: content.Published,
+					},
+				},
+			},
 		},
+		// {
+		// 	name: "new version is published",
+		// 	contentdef: &contentdefinition.ContentDefinition{
+		// 		Name: "test",
+		// 		ID:   uuid.New(),
+		// 		Propertydefinitions: []contentdefinition.PropertyDefinition{
+		// 			{
+		// 				ID:   uuid.New(),
+		// 				Name: "required_field",
+		// 				Type: "text",
+		// 				Validators: map[string]interface{}{
+		// 					"required": true,
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	content: content.Content{
+		// 		PublishedVersion: 0,
+		// 		Version: map[int]content.ContentVersion{
+		// 			0: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 						"required_field":  "ok",
+		// 					},
+		// 				},
+		// 				Status: content.Published,
+		// 			},
+		// 			1: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 						"required_field":  "updated",
+		// 					},
+		// 				},
+		// 				Status: content.Draft,
+		// 			},
+		// 		},
+		// 	},
+		// 	expected: content.Content{
+		// 		PublishedVersion: 1,
+		// 		Version: map[int]content.ContentVersion{
+		// 			0: {
+		// 				Status: content.PreviouslyPublished,
+		// 			},
+		// 			1: {
+		// 				Status: content.Published,
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
@@ -497,9 +553,22 @@ func Test_PublishContent(t *testing.T) {
 			}
 
 			err = handler.Handle(context.Background(), cmd)
-
 			if test.expectedErr != "" {
 				assert.Equal(t, test.expectedErr, err.Error())
+			}
+			actual, err := contentRepo.GetContent(context.Background(), id)
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expected.PublishedVersion, actual.PublishedVersion)
+
+			for v, contentver := range test.expected.Version {
+				assert.Equal(t, actual.Version[v].Status, contentver.Status, "status")
+
+				for lang, fields := range contentver.Properties {
+					for field, value := range fields {
+						assert.Equal(t, value, actual.Version[v].Properties[lang][field], v, lang, field)
+					}
+				}
 			}
 		})
 	}
