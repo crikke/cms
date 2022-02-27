@@ -10,6 +10,7 @@ package command
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
@@ -349,7 +350,7 @@ func Test_UpdateContent(t *testing.T) {
 				ContentDefinitionID: contentdefinitionId,
 				Version: map[int]content.ContentVersion{
 					0: {
-						Status: content.Draft,
+						Created: time.Now().UTC(),
 					},
 				},
 			})
@@ -400,6 +401,7 @@ func Test_PublishContent(t *testing.T) {
 		name        string
 		contentdef  *contentdefinition.ContentDefinition
 		content     content.Content
+		publishVer  int
 		expectedErr string
 		expected    content.Content
 	}{
@@ -422,7 +424,6 @@ func Test_PublishContent(t *testing.T) {
 			content: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
-						Status: content.Draft,
 						Properties: map[string]map[string]interface{}{
 							"sv-SE": {
 								content.NameField: "name sv",
@@ -465,63 +466,52 @@ func Test_PublishContent(t *testing.T) {
 			expected: content.Content{
 				PublishedVersion: 0,
 				Version: map[int]content.ContentVersion{
-					0: {
-						Status: content.Published,
-					},
+					0: {},
 				},
 			},
 		},
-		// {
-		// 	name: "new version is published",
-		// 	contentdef: &contentdefinition.ContentDefinition{
-		// 		Name: "test",
-		// 		ID:   uuid.New(),
-		// 		Propertydefinitions: []contentdefinition.PropertyDefinition{
-		// 			{
-		// 				ID:   uuid.New(),
-		// 				Name: "required_field",
-		// 				Type: "text",
-		// 				Validators: map[string]interface{}{
-		// 					"required": true,
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	content: content.Content{
-		// 		PublishedVersion: 0,
-		// 		Version: map[int]content.ContentVersion{
-		// 			0: {
-		// 				Properties: map[string]map[string]interface{}{
-		// 					"sv-SE": {
-		// 						content.NameField: "name sv",
-		// 						"required_field":  "ok",
-		// 					},
-		// 				},
-		// 				Status: content.Published,
-		// 			},
-		// 			1: {
-		// 				Properties: map[string]map[string]interface{}{
-		// 					"sv-SE": {
-		// 						content.NameField: "name sv",
-		// 						"required_field":  "updated",
-		// 					},
-		// 				},
-		// 				Status: content.Draft,
-		// 			},
-		// 		},
-		// 	},
-		// 	expected: content.Content{
-		// 		PublishedVersion: 1,
-		// 		Version: map[int]content.ContentVersion{
-		// 			0: {
-		// 				Status: content.PreviouslyPublished,
-		// 			},
-		// 			1: {
-		// 				Status: content.Published,
-		// 			},
-		// 		},
-		// 	},
-		// },
+		{
+			name: "new version is published",
+			contentdef: &contentdefinition.ContentDefinition{
+				Name: "test",
+				ID:   uuid.New(),
+				Propertydefinitions: []contentdefinition.PropertyDefinition{
+					{
+						ID:   uuid.New(),
+						Name: "required_field",
+						Type: "text",
+						Validators: map[string]interface{}{
+							"required": true,
+						},
+					},
+				},
+			},
+			content: content.Content{
+				PublishedVersion: 0,
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField: "name sv",
+								"required_field":  "ok",
+							},
+						},
+					},
+					1: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField: "name sv",
+								"required_field":  "updated",
+							},
+						},
+					},
+				},
+			},
+			publishVer: 1,
+			expected: content.Content{
+				PublishedVersion: 1,
+			},
+		},
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
@@ -544,6 +534,7 @@ func Test_PublishContent(t *testing.T) {
 
 			cmd := PublishContent{
 				ContentID: id,
+				Version:   test.publishVer,
 			}
 
 			handler := PublishContentHandler{
@@ -562,7 +553,7 @@ func Test_PublishContent(t *testing.T) {
 			assert.Equal(t, test.expected.PublishedVersion, actual.PublishedVersion)
 
 			for v, contentver := range test.expected.Version {
-				assert.Equal(t, actual.Version[v].Status, contentver.Status, "status")
+				// assert.Equal(t, actual.Version[v].Status, contentver.Status, "status")
 
 				for lang, fields := range contentver.Properties {
 					for field, value := range fields {

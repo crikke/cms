@@ -1,6 +1,8 @@
 package content
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -41,10 +43,8 @@ type SaveStatus int64
 
 const (
 
-	// Status is Draft when the content is saved but the version of given content has not previously been published
+	// Status is Draft when the content is saved but never has been published
 	Draft SaveStatus = iota
-	// Indicates that there is a newer version available
-	PreviouslyPublished
 	Published
 	// When content is archived, it wont be available for consumers.
 	Archived
@@ -55,9 +55,10 @@ type Content struct {
 	ContentDefinitionID uuid.UUID `bson:"contentdefinition_id"`
 	PublishedVersion    int
 	Version             map[int]ContentVersion `bson:"version"`
+	Status              SaveStatus             `bson:"status"`
 }
 
 type ContentVersion struct {
 	Properties map[string]map[string]interface{} `bson:"properties"`
-	Status     SaveStatus                        `bson:"status"`
+	Created    time.Time
 }

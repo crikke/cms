@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
@@ -33,7 +34,7 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 		ContentDefinitionID: cd.ID,
 		Version: map[int]content.ContentVersion{
 			0: {
-				Status: content.Draft,
+				Created: time.Now().UTC(),
 			},
 		},
 	}
@@ -82,7 +83,6 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 		if !ok {
 			return nil, errors.New(content.ErrVersionNotExists)
 		}
-		contentVer.Status = content.Draft
 
 		if contentVer.Properties == nil {
 			contentVer.Properties = make(map[string]map[string]interface{})
@@ -174,11 +174,12 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 			contentVer.Properties[l.String()][content.UrlSegmentField] = str
 		}
 
-		if contentVer.Status == content.Draft {
-			c.Version[cmd.Version] = contentVer
-		} else {
+		if cmd.Version == c.PublishedVersion && c.Status == content.Published {
 			nextver := len(c.Version)
+			contentVer.Created = time.Now().UTC()
 			c.Version[nextver] = contentVer
+		} else {
+			c.Version[cmd.Version] = contentVer
 		}
 
 		return c, nil
@@ -258,10 +259,10 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 
 		// todo use ptr
 		current := c.Version[c.PublishedVersion]
-		current.Status = content.PreviouslyPublished
+		// current.Status = content.PreviouslyPublished
 		c.Version[c.PublishedVersion] = current
 
-		contentver.Status = content.Published
+		// contentver.Status = content.Published
 		c.PublishedVersion = cmd.Version
 		c.Version[cmd.Version] = contentver
 		return c, nil
