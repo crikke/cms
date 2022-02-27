@@ -78,9 +78,21 @@ func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) err
 			properties[strings.ToLower(pd.Name)] = pd
 		}
 
+		contentVer := content.ContentVersion{}
 		// get the version of which the update should be based on
-		contentVer, ok := c.Version[cmd.Version]
-		if !ok {
+		if cv, ok := c.Version[cmd.Version]; ok {
+
+			// this is necessary to dereference contentver
+			contentVer.Created = cv.Created
+			contentVer.Properties = make(map[string]map[string]interface{})
+			for lng, fields := range cv.Properties {
+				contentVer.Properties[lng] = make(map[string]interface{})
+				for field, val := range fields {
+					contentVer.Properties[lng][field] = val
+				}
+			}
+
+		} else {
 			return nil, errors.New(content.ErrVersionNotExists)
 		}
 

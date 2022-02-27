@@ -21,6 +21,37 @@ import (
 	"golang.org/x/text/language"
 )
 
+var (
+	emptyContentDef contentdefinition.ContentDefinition = contentdefinition.ContentDefinition{
+		Name:                "test",
+		ID:                  uuid.New(),
+		Propertydefinitions: []contentdefinition.PropertyDefinition{},
+	}
+
+	reqfieldContentDef contentdefinition.ContentDefinition = contentdefinition.ContentDefinition{
+		Name: "test",
+		ID:   uuid.New(),
+		Propertydefinitions: []contentdefinition.PropertyDefinition{
+			{
+				ID:   uuid.New(),
+				Name: "required_field",
+				Type: "text",
+				Validators: map[string]interface{}{
+					"required": true,
+				},
+			},
+		},
+	}
+
+	emptyContent content.Content = content.Content{
+		Version: map[int]content.ContentVersion{
+			0: {
+				Created: time.Now().UTC(),
+			},
+		},
+	}
+)
+
 func Test_CreateContent(t *testing.T) {
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
 	assert.NoError(t, err)
@@ -82,24 +113,23 @@ func Test_UpdateContent(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		contentdef *contentdefinition.ContentDefinition
-		fields     []struct {
+		name         string
+		contentdef   *contentdefinition.ContentDefinition
+		existing     content.Content
+		updatefields []struct {
 			Language string
 			Field    string
 			Value    interface{}
 		}
-		expectedErr    string
-		expectedValues map[string]map[string]interface{}
+		version     int
+		expectedErr string
+		expected    content.Content
 	}{
 		{
-			name: "common fields only all configured languages",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name:                "test",
-				ID:                  uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{},
-			},
-			fields: []struct {
+			name:       "common fields only all configured languages",
+			contentdef: &emptyContentDef,
+			existing:   emptyContent,
+			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
@@ -125,25 +155,28 @@ func Test_UpdateContent(t *testing.T) {
 					Value:    "url en",
 				},
 			},
-			expectedValues: map[string]map[string]interface{}{
-				"sv-SE": {
-					content.NameField:       "name sv",
-					content.UrlSegmentField: "url-sv",
-				},
-				"en-US": {
-					content.NameField:       "name en",
-					content.UrlSegmentField: "url-en",
+			expected: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField:       "name sv",
+								content.UrlSegmentField: "url-sv",
+							},
+							"en-US": {
+								content.NameField:       "name en",
+								content.UrlSegmentField: "url-en",
+							},
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "common fields only default language",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name:                "test",
-				ID:                  uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{},
-			},
-			fields: []struct {
+			name:       "common fields only default language",
+			contentdef: &emptyContentDef,
+			existing:   emptyContent,
+			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
@@ -159,14 +192,20 @@ func Test_UpdateContent(t *testing.T) {
 					Value:    "url sv",
 				},
 			},
-			expectedValues: map[string]map[string]interface{}{
-				"sv-SE": {
-					content.NameField:       "name sv",
-					content.UrlSegmentField: "url-sv",
-				},
-				"en-US": {
-					content.NameField:       "name sv",
-					content.UrlSegmentField: "name-sv",
+			expected: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField:       "name sv",
+								content.UrlSegmentField: "url-sv",
+							},
+							"en-US": {
+								content.NameField:       "name sv",
+								content.UrlSegmentField: "name-sv",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -184,7 +223,8 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			fields: []struct {
+			existing: emptyContent,
+			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
@@ -205,12 +245,18 @@ func Test_UpdateContent(t *testing.T) {
 					Value:    "ok",
 				},
 			},
-			expectedValues: map[string]map[string]interface{}{
-				"sv-SE": {
-					"not_localized": "ok",
-				},
-				"en-US": {
-					"not_localized": nil,
+			expected: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								"not_localized": "ok",
+							},
+							"en-US": {
+								"not_localized": nil,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -228,7 +274,8 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			fields: []struct {
+			existing: emptyContent,
+			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
@@ -265,7 +312,8 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			fields: []struct {
+			existing: emptyContent,
+			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
@@ -286,13 +334,18 @@ func Test_UpdateContent(t *testing.T) {
 					Value:    "ok",
 				},
 			},
-			expectedValues: map[string]map[string]interface{}{
-				"en-US": {
-					"localized_field": "ok",
+			expected: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: map[string]map[string]interface{}{
+							"en-US": {
+								"localized_field": "ok",
+							},
+						},
+					},
 				},
 			},
 		},
-
 		{
 			name: "not localized field with not default language should return error",
 			contentdef: &contentdefinition.ContentDefinition{
@@ -307,7 +360,8 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			fields: []struct {
+			existing: emptyContent,
+			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
@@ -330,6 +384,59 @@ func Test_UpdateContent(t *testing.T) {
 			},
 			expectedErr: content.ErrUnlocalizedPropLocalizedValue,
 		},
+		{
+			name:       "update published content",
+			contentdef: &emptyContentDef,
+			existing: content.Content{
+				PublishedVersion: 1,
+				Status:           content.Published,
+				Version: map[int]content.ContentVersion{
+					0: {
+						Created: time.Now().Add(time.Hour * -1),
+					},
+					1: {
+						Created: time.Now(),
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField: "v1",
+							},
+						},
+					},
+				},
+			},
+			updatefields: []struct {
+				Language string
+				Field    string
+				Value    interface{}
+			}{
+				{
+					Language: "sv-SE",
+					Field:    content.NameField,
+					Value:    "v2",
+				},
+			},
+			expected: content.Content{
+				PublishedVersion: 1,
+				Status:           content.Published,
+				Version: map[int]content.ContentVersion{
+					1: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField: "v1",
+							},
+						},
+					},
+					2: {
+						Properties: map[string]map[string]interface{}{
+							"sv-SE": {
+								content.NameField: "v2",
+							},
+						},
+					},
+				},
+			},
+			version: 1,
+		},
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
@@ -346,20 +453,14 @@ func Test_UpdateContent(t *testing.T) {
 
 			contentRepo := content.NewContentRepository(c)
 
-			contentId, err := contentRepo.CreateContent(context.Background(), content.Content{
-				ContentDefinitionID: contentdefinitionId,
-				Version: map[int]content.ContentVersion{
-					0: {
-						Created: time.Now().UTC(),
-					},
-				},
-			})
+			test.existing.ContentDefinitionID = contentdefinitionId
+			contentId, err := contentRepo.CreateContent(context.Background(), test.existing)
 			assert.NoError(t, err)
 
 			cmd := UpdateContent{
 				Id:      contentId,
-				Fields:  test.fields,
-				Version: 0,
+				Fields:  test.updatefields,
+				Version: test.version,
 			}
 
 			handler := UpdateContentHandler{
@@ -373,14 +474,16 @@ func Test_UpdateContent(t *testing.T) {
 				assert.Equal(t, test.expectedErr, err.Error())
 			}
 
-			cont, err := contentRepo.GetContent(context.Background(), contentId)
+			actual, err := contentRepo.GetContent(context.Background(), contentId)
 			assert.NoError(t, err)
 
-			for lang, fields := range test.expectedValues {
+			for version, contentver := range test.expected.Version {
 
-				for field, value := range fields {
+				for lang, fields := range contentver.Properties {
 
-					assert.Equal(t, value, cont.Version[0].Properties[lang][field], value)
+					for field, value := range fields {
+						assert.Equal(t, value, actual.Version[version].Properties[lang][field], value, version, lang, field)
+					}
 				}
 			}
 		})
@@ -406,21 +509,8 @@ func Test_PublishContent(t *testing.T) {
 		expected    content.Content
 	}{
 		{
-			name: "required field not set should return error",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:   uuid.New(),
-						Name: "required_field",
-						Type: "text",
-						Validators: map[string]interface{}{
-							"required": true,
-						},
-					},
-				},
-			},
+			name:       "required field not set should return error",
+			contentdef: &reqfieldContentDef,
 			content: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
@@ -436,21 +526,8 @@ func Test_PublishContent(t *testing.T) {
 			expectedErr: "required",
 		},
 		{
-			name: "required field set should return ok",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:   uuid.New(),
-						Name: "required_field",
-						Type: "text",
-						Validators: map[string]interface{}{
-							"required": true,
-						},
-					},
-				},
-			},
+			name:       "required field set should return ok",
+			contentdef: &reqfieldContentDef,
 			content: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
@@ -471,21 +548,8 @@ func Test_PublishContent(t *testing.T) {
 			},
 		},
 		{
-			name: "new version is published",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:   uuid.New(),
-						Name: "required_field",
-						Type: "text",
-						Validators: map[string]interface{}{
-							"required": true,
-						},
-					},
-				},
-			},
+			name:       "new version is published",
+			contentdef: &emptyContentDef,
 			content: content.Content{
 				PublishedVersion: 0,
 				Version: map[int]content.ContentVersion{
@@ -493,7 +557,6 @@ func Test_PublishContent(t *testing.T) {
 						Properties: map[string]map[string]interface{}{
 							"sv-SE": {
 								content.NameField: "name sv",
-								"required_field":  "ok",
 							},
 						},
 					},
@@ -501,7 +564,6 @@ func Test_PublishContent(t *testing.T) {
 						Properties: map[string]map[string]interface{}{
 							"sv-SE": {
 								content.NameField: "name sv",
-								"required_field":  "updated",
 							},
 						},
 					},
