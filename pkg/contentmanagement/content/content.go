@@ -53,6 +53,7 @@ const (
 type Content struct {
 	ID                  uuid.UUID `bson:"_id"`
 	ContentDefinitionID uuid.UUID `bson:"contentdefinition_id"`
+	ParentID            uuid.UUID `bson:"parentid"`
 	PublishedVersion    int
 	Version             map[int]ContentVersion `bson:"version"`
 	Status              SaveStatus             `bson:"status"`

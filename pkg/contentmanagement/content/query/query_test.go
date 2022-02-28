@@ -7,7 +7,10 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/db"
+	"github.com/crikke/cms/pkg/siteconfiguration"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/text/language"
 )
 
 func Test_GetContent(t *testing.T) {
@@ -149,6 +152,131 @@ func Test_GetContent(t *testing.T) {
 			assert.Equal(t, test.expect.Status, actual.Status)
 			eq := reflect.DeepEqual(test.expect.Properties, actual.Properties)
 			assert.True(t, eq)
+		})
+	}
+}
+
+func Test_ListChildContent(t *testing.T) {
+
+	uuids := []uuid.UUID{
+		uuid.New(),
+		uuid.New(),
+		uuid.New(),
+		uuid.New(),
+		uuid.New(),
+	}
+
+	tests := []struct {
+		name   string
+		items  []content.Content
+		id     uuid.UUID
+		expect []ContentListReadModel
+	}{
+		{
+			name: "get root children",
+			items: []content.Content{
+				{
+					ID:               uuids[0],
+					PublishedVersion: 0,
+					Status:           content.Published,
+					Version: map[int]content.ContentVersion{
+						0: {
+							Properties: map[string]map[string]interface{}{
+								"sv-SE": {
+									content.NameField: "root",
+								},
+							},
+						},
+					},
+				},
+				{
+					ID:               uuids[1],
+					ParentID:         uuids[0],
+					PublishedVersion: 0,
+					Status:           content.Published,
+					Version: map[int]content.ContentVersion{
+						0: {
+							Properties: map[string]map[string]interface{}{
+								"sv-SE": {
+									content.NameField: "page 1",
+								},
+							},
+						},
+					},
+				},
+				{
+					ID:               uuids[2],
+					ParentID:         uuids[0],
+					PublishedVersion: 0,
+					Status:           content.Published,
+					Version: map[int]content.ContentVersion{
+						0: {
+							Properties: map[string]map[string]interface{}{
+								"sv-SE": {
+									content.NameField: "page 2",
+								},
+							},
+						},
+					},
+				},
+			},
+			id: uuids[0],
+			expect: []ContentListReadModel{
+				{
+					ID:   uuids[1],
+					Name: "page 1",
+				},
+				{
+					ID:   uuids[2],
+					Name: "page 2",
+				},
+			},
+		},
+	}
+
+	cfg := &siteconfiguration.SiteConfiguration{
+		Languages: []language.Tag{
+			language.MustParse("sv-SE"),
+		},
+	}
+	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+			c.Database("cms").Collection("content").Drop(context.Background())
+
+			repo := content.NewContentRepository(c)
+			for _, cnt := range test.items {
+				repo.CreateContent(context.Background(), cnt)
+			}
+
+			query := ListChildContent{
+				ID: test.id,
+			}
+			handler := ListChildContentHandler{
+				Repo: repo,
+				Cfg:  cfg,
+			}
+
+			children, err := handler.Handle(context.Background(), query)
+			assert.NoError(t, err)
+
+			assert.Equal(t, len(test.expect), len(children))
+			for _, ch := range children {
+
+				ok := false
+
+				for _, expect := range test.expect {
+					if ch.ID == expect.ID {
+						ok = true
+						assert.Equal(t, expect.Name, ch.Name)
+					}
+				}
+
+				assert.True(t, ok)
+			}
 		})
 	}
 }

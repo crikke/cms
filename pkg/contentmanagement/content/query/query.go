@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )
 
@@ -53,4 +54,40 @@ func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (Conten
 	}
 
 	return rm, nil
+}
+
+type ContentListReadModel struct {
+	ID   uuid.UUID
+	Name string
+}
+
+type ListChildContent struct {
+	ID uuid.UUID
+}
+
+type ListChildContentHandler struct {
+	Repo content.ContentRepository
+	Cfg  *siteconfiguration.SiteConfiguration
+}
+
+func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildContent) ([]ContentListReadModel, error) {
+
+	children, err := h.Repo.ListContent(ctx, query.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := []ContentListReadModel{}
+
+	for _, ch := range children {
+
+		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][content.NameField]
+		result = append(result, ContentListReadModel{
+			ID:   ch.ID,
+			Name: name.(string),
+		})
+	}
+
+	return result, nil
 }
