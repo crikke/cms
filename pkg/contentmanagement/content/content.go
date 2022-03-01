@@ -39,15 +39,13 @@ const (
 	UrlSegmentField = "url"
 )
 
-type SaveStatus int64
+// swagger:enum PublishStatus
+type PublishStatus string
 
 const (
-
-	// Status is Draft when the content is saved but never has been published
-	Draft SaveStatus = iota
-	Published
-	// When content is archived, it wont be available for consumers.
-	Archived
+	Draft     PublishStatus = "draft"
+	Published PublishStatus = "published"
+	Archived  PublishStatus = "archived"
 )
 
 type Content struct {
@@ -56,7 +54,7 @@ type Content struct {
 	ParentID            uuid.UUID `bson:"parentid"`
 	PublishedVersion    int
 	Version             map[int]ContentVersion `bson:"version"`
-	Status              SaveStatus             `bson:"status"`
+	Status              PublishStatus          `bson:"status"`
 }
 
 type ContentVersion struct {

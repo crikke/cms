@@ -9,11 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// swagger:model contentresponse
 type ContentReadModel struct {
 	ID                  uuid.UUID
-	ContentDefinitionID uuid.UUID                         `bson:"contentdefinition_id"`
-	Status              content.SaveStatus                `bson:"status"`
-	Properties          map[string]map[string]interface{} `bson:"properties"`
+	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
+	Status              content.PublishStatus `bson:"publishstatus"`
+	// properties for the content
+	Properties map[string]map[string]interface{} `bson:"properties"`
 }
 
 // In contentmanagement, all languages should be retrived for content of given version

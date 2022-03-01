@@ -1,0 +1,75 @@
+{
+  "swagger": "2.0",
+  "paths": {
+    "/content": {
+      "get": {
+        "description": "Gets content by Id.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "pets",
+          "users"
+        ],
+        "summary": "Get content by id and optionally version",
+        "operationId": "listPets",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "UUID": {
+      "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8"
+      },
+      "x-go-package": "github.com/google/uuid"
+    },
+    "contentresponse": {
+      "type": "object",
+      "properties": {
+        "ContentDefinitionID": {
+          "$ref": "#/definitions/UUID"
+        },
+        "ID": {
+          "$ref": "#/definitions/UUID"
+        },
+        "Properties": {
+          "description": "properties for the content",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          }
+        },
+        "Status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "published",
+            "archived"
+          ],
+          "x-go-enum-desc": "draft Draft\npublished Published\narchived Archived"
+        }
+      },
+      "x-go-name": "ContentReadModel",
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content/query"
+    }
+  },
+  "responses": {
+    "contentResponse": {
+      "description": "ContentResponse is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
+      "schema": {
+        "$ref": "#/definitions/contentresponse"
+      }
+    }
+  }
+}

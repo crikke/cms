@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/crikke/cms/pkg/contentdelivery/config"
 	"github.com/crikke/cms/pkg/contentmanagement"
@@ -81,5 +82,17 @@ func (s Server) Start() error {
 
 	ep.RegisterEndpoints(router)
 
+	router.Get("/swagger", func(rw http.ResponseWriter, r *http.Request) {
+		dat, err := os.ReadFile("./swagger.json")
+		if err != nil {
+			rw.Write([]byte(err.Error()))
+			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		rw.Write(dat)
+	})
 	return http.ListenAndServe(":8080", router)
 }

@@ -39,3 +39,5 @@ db-seed: db-up
 
 	# docker run --rm $(IMAGE_NAME):$(IMAGE_TAG)
 
+# todo
+# docker run -p 8081:8080 -e SWAGGER_JSON=/swagger.json -v $(pwd)/swagger.json:/swagger.json swaggerapi/swagger-ui

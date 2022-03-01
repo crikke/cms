@@ -19,13 +19,28 @@ func NewContentEndpoint(app contentmanagement.App) contentEndpoint {
 	return contentEndpoint{app}
 }
 func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
+
 	router.Route("/content", func(r chi.Router) {
+
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", c.GetContent())
 		})
 	})
 }
 
+// swagger:route GET /content pets users listPets
+//
+// Get content by id and optionally version
+//
+// Gets content by Id.
+//
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: contentResponse
+//       404
 func (c contentEndpoint) GetContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
@@ -68,7 +83,8 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 			return
 		}
 
-		data, err := json.Marshal(&res)
+		response := &ContentResponse{Body: res}
+		data, err := json.Marshal(response)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write([]byte(err.Error()))
@@ -77,4 +93,13 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 
 		rw.Write(data)
 	}
+}
+
+// ContentResponse is the representation of the content for the Content management API
+// It contains all information of given content for every configured language.
+//
+// swagger:response contentResponse
+type ContentResponse struct {
+	// in: body
+	Body query.ContentReadModel
 }
