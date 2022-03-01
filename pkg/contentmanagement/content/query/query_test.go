@@ -232,6 +232,62 @@ func Test_ListChildContent(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "get children",
+			items: []content.Content{
+				{
+					ID:               uuids[0],
+					PublishedVersion: 0,
+					Status:           content.Published,
+					Version: map[int]content.ContentVersion{
+						0: {
+							Properties: map[string]map[string]interface{}{
+								"sv-SE": {
+									content.NameField: "root",
+								},
+							},
+						},
+					},
+				},
+				{
+					ID:               uuids[1],
+					ParentID:         uuids[0],
+					PublishedVersion: 0,
+					Status:           content.Published,
+					Version: map[int]content.ContentVersion{
+						0: {
+							Properties: map[string]map[string]interface{}{
+								"sv-SE": {
+									content.NameField: "page 1",
+								},
+							},
+						},
+					},
+				},
+				{
+					ID:               uuids[2],
+					ParentID:         uuids[1],
+					PublishedVersion: 0,
+					Status:           content.Published,
+					Version: map[int]content.ContentVersion{
+						0: {
+							Properties: map[string]map[string]interface{}{
+								"sv-SE": {
+									content.NameField: "page 2",
+								},
+							},
+						},
+					},
+				},
+			},
+			id: uuids[1],
+			expect: []ContentListReadModel{
+				{
+					ID:   uuids[2],
+					Name: "page 2",
+				},
+			},
+		},
 	}
 
 	cfg := &siteconfiguration.SiteConfiguration{
