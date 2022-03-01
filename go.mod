@@ -66,6 +66,7 @@ require (
 require (
 	github.com/casbin/mongodb-adapter/v3 v3.2.1
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-chi/chi v1.5.4
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/prometheus/client_golang v1.12.1
