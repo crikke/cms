@@ -44,7 +44,6 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 	return id, nil
 }
 
-// Todo refactor this to update single field at a time.
 type UpdateField struct {
 	Id       uuid.UUID
 	Version  int

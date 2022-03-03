@@ -280,14 +280,14 @@ func Test_UpdateField(t *testing.T) {
 								"foo": ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
-									Localized: true,
+									Localized: false,
 								},
 							},
 							"sv-SE": ContentFields{
 								"foo": ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
-									Localized: true,
+									Localized: false,
 								},
 							},
 						},

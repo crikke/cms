@@ -27,7 +27,7 @@ func NewContentDefinitionRepository(client *mongo.Client) ContentDefinitionRepos
 
 	db := client.Database("cms")
 	r := &repository{client: client, database: db}
-
+	r.collection = "contentdefinition"
 	return *r
 }
 

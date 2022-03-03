@@ -207,7 +207,7 @@ func (f Factory) SetField(cv *ContentVersion, lang, fieldname string, value inte
 		return errors.New(ErrMissingField)
 	}
 
-	if field.Localized {
+	if !field.Localized {
 		if lang != f.getDefaultLanguage() {
 			return errors.New(ErrUnlocalizedPropLocalizedValue)
 		}
