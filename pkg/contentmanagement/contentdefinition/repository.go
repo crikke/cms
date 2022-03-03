@@ -44,7 +44,6 @@ func (r repository) CreateContentDefinition(ctx context.Context, cd *ContentDefi
 
 func (r repository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error {
 
-	// TODO: Write/Read concern
 	entry := &ContentDefinition{}
 	err := r.database.Collection(r.collection).FindOne(ctx, bson.M{"_id": id}).Decode(entry)
 	if err != nil {
