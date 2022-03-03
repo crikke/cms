@@ -14,6 +14,7 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
@@ -53,56 +54,69 @@ var (
 	}
 )
 
-// func Test_CreateContent(t *testing.T) {
-// 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-// 	assert.NoError(t, err)
-// 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-// 	c.Database("cms").Collection("content").Drop(context.Background())
+func Test_CreateContent(t *testing.T) {
+	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
+	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+	c.Database("cms").Collection("content").Drop(context.Background())
 
-// 	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
-// 	contentRepo := content.NewContentRepository(c)
+	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
+	contentRepo := content.NewContentRepository(c)
 
-// 	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-// 		Name: "test2",
-// 	})
-// 	assert.NoError(t, err)
+	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
+		Name: "test2",
+		Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
+			content.NameField: {
+				ID:          uuid.New(),
+				Description: "Content name",
+				Type:        "text",
+				Localized:   true,
+				Validators: map[string]interface{}{
+					"required": validator.RequiredRule(true),
+				},
+			},
+		},
+	})
 
-// 	cmd := CreateContent{
-// 		ContentDefinitionId: cid,
-// 	}
-// 	handler := CreateContentHandler{
-// 		ContentDefinitionRepository: cdRepo,
-// 		ContentRepository:           content.NewContentRepository(c),
-// 	}
+	assert.NoError(t, err)
 
-// 	contentId, err := handler.Handle(context.Background(), cmd)
-// 	assert.NoError(t, err)
-// 	actual, err := contentRepo.GetContent(context.Background(), contentId)
+	cmd := CreateContent{
+		ContentDefinitionId: cid,
+	}
+	handler := CreateContentHandler{
+		ContentDefinitionRepository: cdRepo,
+		ContentRepository:           content.NewContentRepository(c),
+		Factory:                     content.Factory{Cfg: &siteconfiguration.SiteConfiguration{Languages: []language.Tag{language.MustParse("sv-SE")}}},
+	}
 
-// 	assert.NoError(t, err)
-// 	assert.NotEqual(t, uuid.UUID{}, contentId)
-// 	_, ok := actual.Version[0]
-// 	assert.True(t, ok)
-// }
+	contentId, err := handler.Handle(context.Background(), cmd)
+	assert.NoError(t, err)
+	actual, err := contentRepo.GetContent(context.Background(), contentId)
 
-// func Test_CreateContent_Empty_ContentDefinition(t *testing.T) {
-// 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-// 	assert.NoError(t, err)
-// 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-// 	c.Database("cms").Collection("content").Drop(context.Background())
+	assert.NoError(t, err)
+	assert.NotEqual(t, uuid.UUID{}, contentId)
+	_, ok := actual.Version[0]
+	assert.True(t, ok)
+}
 
-// 	contentRepo := content.NewContentRepository(c)
-// 	cmd := CreateContent{}
-// 	handler := CreateContentHandler{
-// 		ContentDefinitionRepository: contentdefinition.NewContentDefinitionRepository(c),
-// 		ContentRepository:           contentRepo,
-// 	}
+func Test_CreateContent_Empty_ContentDefinition(t *testing.T) {
+	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
+	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+	c.Database("cms").Collection("content").Drop(context.Background())
 
-// 	contentId, err := handler.Handle(context.Background(), cmd)
+	contentRepo := content.NewContentRepository(c)
+	cmd := CreateContent{}
+	handler := CreateContentHandler{
+		ContentDefinitionRepository: contentdefinition.NewContentDefinitionRepository(c),
+		ContentRepository:           contentRepo,
+	}
 
-// 	assert.Error(t, err)
-// 	assert.Equal(t, uuid.UUID{}, contentId)
-// }
+	contentId, err := handler.Handle(context.Background(), cmd)
+
+	assert.Error(t, err)
+	assert.Equal(t, uuid.UUID{}, contentId)
+}
 
 func Test_UpdateContent(t *testing.T) {
 

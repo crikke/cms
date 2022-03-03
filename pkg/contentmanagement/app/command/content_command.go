@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"time"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
@@ -16,32 +15,22 @@ type CreateContent struct {
 type CreateContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentRepository
+	Factory                     content.Factory
 }
 
 func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uuid.UUID, error) {
 
 	cd, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cmd.ContentDefinitionId)
-
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	c := content.Content{
-		ContentDefinitionID: cd.ID,
-		Version: map[int]content.ContentVersion{
-			0: {
-				Created: time.Now().UTC(),
-			},
-		},
-	}
-
-	id, err := h.ContentRepository.CreateContent(ctx, c)
-
+	c, err := h.Factory.NewContent(cd)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return id, nil
+	return h.ContentRepository.CreateContent(ctx, c)
 }
 
 type UpdateField struct {
