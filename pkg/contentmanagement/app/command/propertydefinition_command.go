@@ -197,10 +197,12 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 
 			// idx := 0
 			pd := contentdefinition.PropertyDefinition{}
-			for _, p := range cd.Propertydefinitions {
+			name := ""
+			for n, p := range cd.Propertydefinitions {
 
 				if p.ID == cmd.PropertyDefinitionID {
 					pd = p
+					name = n
 					break
 				}
 			}
@@ -214,20 +216,7 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 			}
 
 			pd.Validators[cmd.ValidatorName] = v
-			// cd.Propertydefinitions[idx] = pd
+			cd.Propertydefinitions[name] = pd
 			return cd, nil
 		})
-
-	// return h.Repo.UpdatePropertyDefinition(
-	// 	ctx,
-	// 	cmd.ContentDefinitionID,
-	// 	cmd.PropertyDefinitionID,
-	// 	func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
-	// 		if pd.Validators == nil {
-	// 			pd.Validators = make(map[string]interface{})
-	// 		}
-
-	// 		pd.Validators[cmd.ValidatorName] = v
-	// 		return pd, nil
-	// 	})
 }
