@@ -1,21 +1,18 @@
 package content
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/crikke/cms/pkg/contentmanagement"
-	"github.com/crikke/cms/pkg/contentmanagement/content/query"
+	"github.com/crikke/cms/pkg/contentmanagement/app"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
 )
 
 type contentEndpoint struct {
-	app contentmanagement.App
+	app app.App
 }
 
-func NewContentEndpoint(app contentmanagement.App) contentEndpoint {
+func NewContentEndpoint(app app.App) contentEndpoint {
 	return contentEndpoint{app}
 }
 func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
@@ -44,54 +41,54 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 func (c contentEndpoint) GetContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		var uid uuid.UUID
-		var err error
-		var ver *int
-		if id := chi.URLParam(r, "id"); id != "" {
-			uid, err = uuid.Parse(id)
+		// var uid uuid.UUID
+		// var err error
+		// var ver *int
+		// if id := chi.URLParam(r, "id"); id != "" {
+		// 	uid, err = uuid.Parse(id)
 
-			if err != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				rw.Write([]byte("bad formatted id"))
-				return
-			}
-		}
+		// 	if err != nil {
+		// 		rw.WriteHeader(http.StatusBadRequest)
+		// 		rw.Write([]byte("bad formatted id"))
+		// 		return
+		// 	}
+		// }
 
-		if v := r.URL.Query().Get("v"); v != "" {
+		// if v := r.URL.Query().Get("v"); v != "" {
 
-			i, err := strconv.Atoi(v)
+		// 	i, err := strconv.Atoi(v)
 
-			if err != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				rw.Write([]byte("bad formatted version"))
-				return
-			}
+		// 	if err != nil {
+		// 		rw.WriteHeader(http.StatusBadRequest)
+		// 		rw.Write([]byte("bad formatted version"))
+		// 		return
+		// 	}
 
-			ver = &i
-		}
+		// 	ver = &i
+		// }
 
-		q := query.GetContent{
-			Id:      uid,
-			Version: ver,
-		}
+		// q := query.GetContent{
+		// 	Id:      uid,
+		// 	Version: ver,
+		// }
 
-		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
+		// res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
 
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte(err.Error()))
-			return
-		}
+		// if err != nil {
+		// 	rw.WriteHeader(http.StatusBadRequest)
+		// 	rw.Write([]byte(err.Error()))
+		// 	return
+		// }
 
-		response := &ContentResponse{Body: res}
-		data, err := json.Marshal(response)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte(err.Error()))
-			return
-		}
+		// response := &ContentResponse{Body: res}
+		// data, err := json.Marshal(response)
+		// if err != nil {
+		// 	rw.WriteHeader(http.StatusBadRequest)
+		// 	rw.Write([]byte(err.Error()))
+		// 	return
+		// }
 
-		rw.Write(data)
+		// rw.Write(data)
 	}
 }
 

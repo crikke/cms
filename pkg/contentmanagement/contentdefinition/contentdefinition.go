@@ -13,7 +13,7 @@ type ContentDefinition struct {
 	Description string    `bson:"description,omitempty"`
 	Created     time.Time
 	// todo: ensure name is unique
-	Propertydefinitions []PropertyDefinition
+	Propertydefinitions map[string]PropertyDefinition
 }
 
 func NewContentDefinition(name, desc string) (ContentDefinition, error) {
@@ -23,4 +23,18 @@ func NewContentDefinition(name, desc string) (ContentDefinition, error) {
 	}
 
 	return ContentDefinition{Name: name, Description: desc}, nil
+}
+
+func (cd ContentDefinition) PropertyValid(field, lang string, value interface{}) error {
+
+	pd, ok := cd.Propertydefinitions[field]
+
+	if !ok {
+		return errors.New("property does not exist")
+	}
+
+	if !pd.Localized && lang != "" {
+		return errors.New("content.ErrUnlocalizedPropLocalizedValue")
+	}
+	return nil
 }
