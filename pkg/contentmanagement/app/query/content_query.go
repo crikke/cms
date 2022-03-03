@@ -1,18 +1,13 @@
 package query
 
 import (
+	"context"
+	"errors"
+
 	"github.com/crikke/cms/pkg/contentmanagement/content"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )
-
-// import (
-// 	"context"
-// 	"errors"
-
-// 	"github.com/crikke/cms/pkg/contentmanagement/content"
-// 	"github.com/crikke/cms/pkg/siteconfiguration"
-// 	"github.com/google/uuid"
-// )
 
 // swagger:model contentresponse
 type ContentReadModel struct {
@@ -20,150 +15,84 @@ type ContentReadModel struct {
 	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
 	Status              content.PublishStatus `bson:"publishstatus"`
 	// properties for the content
-	Properties map[string]map[string]interface{} `bson:"properties"`
+	Properties content.ContentLanguage `bson:"properties"`
 }
 
-// // In contentmanagement, all languages should be retrived for content of given version
-// // If Version is nil, return publishedversion
-// type GetContent struct {
-// 	Id      uuid.UUID
-// 	Version *intpackage query
+// In contentmanagement, all languages should be retrived for content of given version
+// If Version is nil, return publishedversion
+type GetContent struct {
+	Id      uuid.UUID
+	Version *int
+}
 
-// import (
-// 	"context"
-// 	"errors"
+type ListChildContentHandler struct {
+	Repo content.ContentRepository
+	Cfg  *siteconfiguration.SiteConfiguration
+}
 
-// 	"github.com/crikke/cms/pkg/contentmanagement/content"
-// 	"github.com/crikke/cms/pkg/siteconfiguration"
-// 	"github.com/google/uuid"
-// )
+func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildContent) ([]ContentListReadModel, error) {
 
-// // swagger:model contentresponse
-// type ContentReadModel struct {
-// 	ID                  uuid.UUID
-// 	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
-// 	Status              content.PublishStatus `bson:"publishstatus"`
-// 	// properties for the content
-// 	Properties map[string]map[string]interface{} `bson:"properties"`
-// }
+	children, err := h.Repo.ListContent(ctx, query.ID)
 
-// // In contentmanagement, all languages should be retrived for content of given version
-// // If Version is nil, return publishedversion
-// type GetContent struct {
-// 	Id      uuid.UUID
-// 	Version *int
-// }
+	if err != nil {
+		return nil, err
+	}
 
-// type GetContentHandler struct {
-// 	Repo content.ContentRepository
-// }
+	result := []ContentListReadModel{}
 
-// func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (ContentReadModel, error) {
+	for _, ch := range children {
 
-// 	c, err := q.Repo.GetContent(ctx, query.Id)
+		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][content.NameField].Value
+		result = append(result, ContentListReadModel{
+			ID:   ch.ID,
+			Name: name.(string),
+		})
+	}
 
-// 	if err != nil {
-// 		return ContentReadModel{}, err
-// 	}
-// 	v := c.PublishedVersion
+	return result, nil
+}
 
-// 	if query.Version != nil {
-// 		v = *query.Version
-// 	}
+type GetContentHandler struct {
+	Repo content.ContentRepository
+}
 
-// 	contentVer, ok := c.Version[v]
+func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (ContentReadModel, error) {
 
-// 	if !ok {
-// 		return ContentReadModel{}, errors.New(content.ErrVersionNotExists)
-// 	}
+	c, err := q.Repo.GetContent(ctx, query.Id)
 
-// 	rm := ContentReadModel{
-// 		ID:                  c.ID,
-// 		ContentDefinitionID: c.ContentDefinitionID,
-// 		Status:              c.Status,
-// 		Properties:          contentVer.Properties,
-// 	}
+	if err != nil {
+		return ContentReadModel{}, err
+	}
+	v := c.PublishedVersion
 
-// 	return rm, nil
-// }
+	if query.Version != nil {
+		v = *query.Version
+	}
 
-// type ContentListReadModel struct {
-// 	ID   uuid.UUID
-// 	Name string
-// }
+	contentVer, ok := c.Version[v]
 
-// type ListChildContent struct {
-// 	ID uuid.UUID
-// }
+	if !ok {
+		return ContentReadModel{}, errors.New(content.ErrMissingVersion)
+	}
 
-// type ListChildContentHandler struct {
-// 	Repo content.ContentRepository
-// 	Cfg  *siteconfiguration.SiteConfiguration
-// }
+	rm := ContentReadModel{
+		ID:                  c.ID,
+		ContentDefinitionID: c.ContentDefinitionID,
+		Status:              c.Status,
+		Properties:          contentVer.Properties,
+	}
 
-// func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildContent) ([]ContentListReadModel, error) {
+	return rm, nil
+}
 
-// 	children, err := h.Repo.ListContent(ctx, query.ID)
+type ContentListReadModel struct {
+	ID   uuid.UUID
+	Name string
+}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	result := []ContentListReadModel{}
-
-// 	for _, ch := range children {
-
-// 		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][content.NameField]
-// 		result = append(result, ContentListReadModel{
-// 			ID:   ch.ID,
-// 			Name: name.(string),
-// 		})
-// 	}
-
-// 	return result, nil
-// }
-
-// type GetContentHandler struct {
-// 	Repo content.ContentRepository
-// }
-
-// func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (ContentReadModel, error) {
-
-// 	c, err := q.Repo.GetContent(ctx, query.Id)
-
-// 	if err != nil {
-// 		return ContentReadModel{}, err
-// 	}
-// 	v := c.PublishedVersion
-
-// 	if query.Version != nil {
-// 		v = *query.Version
-// 	}
-
-// 	contentVer, ok := c.Version[v]
-
-// 	if !ok {
-// 		return ContentReadModel{}, errors.New(content.ErrVersionNotExists)
-// 	}
-
-// 	rm := ContentReadModel{
-// 		ID:                  c.ID,
-// 		ContentDefinitionID: c.ContentDefinitionID,
-// 		Status:              c.Status,
-// 		Properties:          contentVer.Properties,
-// 	}
-
-// 	return rm, nil
-// }
-
-// type ContentListReadModel struct {
-// 	ID   uuid.UUID
-// 	Name string
-// }
-
-// type ListChildContent struct {
-// 	ID uuid.UUID
-// }
+type ListChildContent struct {
+	ID uuid.UUID
+}
 
 // type ListChildContentHandler struct {
 // 	Repo content.ContentRepository

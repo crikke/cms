@@ -26,6 +26,7 @@ type PropertyDefinition struct {
 	Validators map[string]interface{} `bson:"validators,omitempty"`
 }
 
+// todo this can be done better
 var propertydefinitionTypes = map[string]struct{}{
 	"text":        {},
 	"shortstring": {},
