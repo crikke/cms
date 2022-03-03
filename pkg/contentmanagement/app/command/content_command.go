@@ -2,9 +2,12 @@ package command
 
 import (
 	"context"
+	"errors"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
+	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )
 
@@ -62,246 +65,96 @@ func (h UpdateFieldHandler) Handle(ctx context.Context, cmd UpdateField) error {
 	})
 }
 
-// type UpdateContent struct {
-// 	Id      uuid.UUID
-// 	Version int
-// 	Fields  []struct {
-// 		Language string
-// 		Field    string
-// 		Value    interface{}
-// 	}
-// }
+type PublishContent struct {
+	ContentID uuid.UUID
+	Version   int
+}
 
-// type UpdateContentHandler struct {
-// 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
-// 	ContentRepository           content.ContentRepository
-// 	SiteConfiguration           *siteconfiguration.SiteConfiguration
-// }
+type PublishContentHandler struct {
+	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
+	ContentRepository           content.ContentRepository
+	SiteConfiguration           *siteconfiguration.SiteConfiguration
+}
 
-// func (h UpdateContentHandler) Handle(ctx context.Context, cmd UpdateContent) error {
+func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) error {
 
-// 	return h.ContentRepository.UpdateContent(ctx, cmd.Id, func(ctx context.Context, c *content.Content) (*content.Content, error) {
-// 		cd, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, c.ContentDefinitionID)
+	cont, err := h.ContentRepository.GetContent(ctx, cmd.ContentID)
 
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	if err != nil {
+		return err
+	}
 
-// 		properties := make(map[string]contentdefinition.PropertyDefinition)
-// 		for _, pd := range cd.Propertydefinitions {
-// 			properties[strings.ToLower(pd.Name)] = pd
-// 		}
+	contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cont.ContentDefinitionID)
 
-// 		contentVer := content.ContentVersion{}
-// 		// get the version of which the update should be based on
-// 		if cv, ok := c.Version[cmd.Version]; ok {
+	if err != nil {
+		return err
+	}
 
-// 			// this is necessary to dereference contentver
-// 			contentVer.Created = cv.Created
-// 			contentVer.Properties = make(map[string]map[string]interface{})
-// 			for lng, fields := range cv.Properties {
-// 				contentVer.Properties[lng] = make(map[string]interface{})
-// 				for field, val := range fields {
-// 					contentVer.Properties[lng][field] = val
-// 				}
-// 			}
+	contentver, ok := cont.Version[cmd.Version]
+	if !ok {
+		return errors.New(content.ErrMissingVersion)
+	}
 
-// 		} else {
-// 			return nil, errors.New(content.ErrVersionNotExists)
-// 		}
+	for propName, pd := range contentDefinition.Propertydefinitions {
 
-// 		if contentVer.Properties == nil {
-// 			contentVer.Properties = make(map[string]map[string]interface{})
-// 		}
+		var propvalues []interface{}
+		var validators []validator.Validator
 
-// 		for _, configuredLanguage := range h.SiteConfiguration.Languages {
+		for typ, v := range pd.Validators {
+			val, err := validator.Parse(typ, v)
 
-// 			contentVer.Properties[configuredLanguage.String()] = make(map[string]interface{})
-// 		}
+			if err != nil {
+				return err
+			}
 
-// 		// check if field exists in contentdefinition
-// 		for _, f := range cmd.Fields {
+			validators = append(validators, val)
+		}
 
-// 			field := strings.ToLower(f.Field)
-// 			// name & urlsegment is not handled here, they are handled separately
-// 			if field == content.NameField || field == content.UrlSegmentField {
+		if pd.Localized {
 
-// 				contentVer.Properties[f.Language][field] = f.Value
-// 				continue
-// 			}
+			for _, l := range h.SiteConfiguration.Languages {
 
-// 			if f.Field == "" {
-// 				return nil, errors.New("property with empty name")
-// 			}
+				p := getPropertyValue(contentver, propName, l.String())
+				propvalues = append(propvalues, p)
+			}
+		} else {
+			p := getPropertyValue(contentver, propName, h.SiteConfiguration.Languages[0].String())
+			propvalues = append(propvalues, p)
 
-// 			pd, ok := properties[field]
-// 			if !ok {
-// 				return nil, errors.New("property does not exist on propertydefinition")
-// 			}
+		}
 
-// 			lang := h.SiteConfiguration.Languages[0].String()
+		for _, value := range propvalues {
+			for _, v := range validators {
+				err := v.Validate(ctx, value)
 
-// 			// if prop is not localized and
-// 			// field.language exist and is not default
-// 			if !pd.Localized {
-// 				if f.Language != "" && f.Language != h.SiteConfiguration.Languages[0].String() {
-// 					return nil, errors.New(content.ErrUnlocalizedPropLocalizedValue)
-// 				}
-// 			}
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 
-// 			if f.Language != "" {
-// 				exists := false
-// 				for _, l := range h.SiteConfiguration.Languages {
+	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 
-// 					if l.String() == f.Language {
-// 						exists = true
-// 						break
-// 					}
-// 				}
+		// todo use ptr
+		current := c.Version[c.PublishedVersion]
+		// current.Status = content.PreviouslyPublished
+		c.Version[c.PublishedVersion] = current
 
-// 				if !exists {
-// 					return nil, errors.New(content.ErrNotConfiguredLocale)
-// 				}
+		// contentver.Status = content.Published
+		c.PublishedVersion = cmd.Version
+		c.Version[cmd.Version] = contentver
+		return c, nil
+	})
+}
 
-// 				lang = f.Language
-// 			}
+func getPropertyValue(c content.ContentVersion, name, locale string) interface{} {
 
-// 			contentVer.Properties[lang][field] = f.Value
-// 		}
+	properties, ok := c.Properties[locale]
 
-// 		// ensure that content name is set for at least default language
-// 		// if not set for other languages, it is set to default language
-// 		// todo validate name
-// 		defaultName, ok := contentVer.Properties[h.SiteConfiguration.Languages[0].String()][content.NameField]
-// 		if !ok {
-// 			return nil, errors.New("content name cannot be empty for configured default language")
-// 		}
+	if !ok {
+		return nil
+	}
 
-// 		for _, l := range h.SiteConfiguration.Languages[1:] {
-// 			_, ok := contentVer.Properties[l.String()][content.NameField]
-
-// 			if !ok {
-// 				contentVer.Properties[l.String()][content.NameField] = defaultName
-// 			}
-// 		}
-
-// 		for _, l := range h.SiteConfiguration.Languages {
-// 			url, ok := contentVer.Properties[l.String()][content.UrlSegmentField]
-
-// 			if !ok {
-// 				url = contentVer.Properties[l.String()][content.NameField]
-// 			}
-
-// 			str, ok := url.(string)
-// 			if !ok {
-// 				return nil, errors.New("urlsegment is not of type string")
-// 			}
-// 			str = strings.Replace(str, " ", "-", -1)
-// 			contentVer.Properties[l.String()][content.UrlSegmentField] = str
-// 		}
-
-// 		if cmd.Version == c.PublishedVersion && c.Status == content.Published {
-// 			nextver := len(c.Version)
-// 			contentVer.Created = time.Now().UTC()
-// 			c.Version[nextver] = contentVer
-// 		} else {
-// 			c.Version[cmd.Version] = contentVer
-// 		}
-
-// 		return c, nil
-// 	})
-// }
-
-// type PublishContent struct {
-// 	ContentID uuid.UUID
-// 	Version   int
-// }
-
-// type PublishContentHandler struct {
-// 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
-// 	ContentRepository           content.ContentRepository
-// 	SiteConfiguration           *siteconfiguration.SiteConfiguration
-// }
-
-// func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) error {
-
-// 	cont, err := h.ContentRepository.GetContent(ctx, cmd.ContentID)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cont.ContentDefinitionID)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	contentver, ok := cont.Version[cmd.Version]
-// 	if !ok {
-// 		return errors.New(content.ErrVersionNotExists)
-// 	}
-
-// 	for _, pd := range contentDefinition.Propertydefinitions {
-
-// 		var propvalues []interface{}
-// 		var validators []validator.Validator
-
-// 		for typ, v := range pd.Validators {
-// 			val, err := validator.Parse(typ, v)
-
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			validators = append(validators, val)
-// 		}
-
-// 		if pd.Localized {
-
-// 			for _, l := range h.SiteConfiguration.Languages {
-
-// 				p := getPropertyValue(contentver, pd.Name, l.String())
-// 				propvalues = append(propvalues, p)
-// 			}
-// 		} else {
-// 			p := getPropertyValue(contentver, pd.Name, h.SiteConfiguration.Languages[0].String())
-// 			propvalues = append(propvalues, p)
-
-// 		}
-
-// 		for _, value := range propvalues {
-// 			for _, v := range validators {
-// 				err := v.Validate(ctx, value)
-
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
-
-// 		// todo use ptr
-// 		current := c.Version[c.PublishedVersion]
-// 		// current.Status = content.PreviouslyPublished
-// 		c.Version[c.PublishedVersion] = current
-
-// 		// contentver.Status = content.Published
-// 		c.PublishedVersion = cmd.Version
-// 		c.Version[cmd.Version] = contentver
-// 		return c, nil
-// 	})
-// }
-
-// func getPropertyValue(c content.ContentVersion, name, locale string) interface{} {
-
-// 	properties, ok := c.Properties[locale]
-
-// 	if !ok {
-// 		return nil
-// 	}
-
-// 	return properties[name]
-// }
+	return properties[name].Value
+}

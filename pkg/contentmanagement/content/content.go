@@ -2,6 +2,7 @@ package content
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
@@ -188,6 +189,7 @@ func (c ContentVersion) CanEdit() bool {
 
 func (f Factory) SetField(cv *ContentVersion, lang, fieldname string, value interface{}) error {
 
+	normalizedFieldname := strings.ToLower(fieldname)
 	if !cv.CanEdit() {
 		return errors.New(ErrNotDraft)
 	}
@@ -201,7 +203,7 @@ func (f Factory) SetField(cv *ContentVersion, lang, fieldname string, value inte
 		return errors.New(ErrMissingLanguage)
 	}
 
-	field, ok := cf[fieldname]
+	field, ok := cf[normalizedFieldname]
 
 	if !ok {
 		return errors.New(ErrMissingField)
@@ -214,7 +216,7 @@ func (f Factory) SetField(cv *ContentVersion, lang, fieldname string, value inte
 	}
 
 	field.Value = value
-	cf[fieldname] = field
+	cf[normalizedFieldname] = field
 
 	return nil
 }

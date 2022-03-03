@@ -382,140 +382,140 @@ func Test_UpdateContent(t *testing.T) {
 	}
 }
 
-// func Test_PublishContent(t *testing.T) {
+func Test_PublishContent(t *testing.T) {
 
-// 	cfg := &siteconfiguration.SiteConfiguration{
-// 		Languages: []language.Tag{
-// 			language.MustParse("sv-SE"),
-// 			language.MustParse("en-US"),
-// 		},
-// 	}
+	cfg := &siteconfiguration.SiteConfiguration{
+		Languages: []language.Tag{
+			language.MustParse("sv-SE"),
+			language.MustParse("en-US"),
+		},
+	}
 
-// 	tests := []struct {
-// 		name        string
-// 		contentdef  *contentdefinition.ContentDefinition
-// 		content     content.Content
-// 		publishVer  int
-// 		expectedErr string
-// 		expected    content.Content
-// 	}{
-// 		{
-// 			name:       "required field not set should return error",
-// 			contentdef: &reqfieldContentDef,
-// 			content: content.Content{
-// 				Version: map[int]content.ContentVersion{
-// 					0: {
-// 						Properties: map[string]map[string]interface{}{
-// 							"sv-SE": {
-// 								content.NameField: "name sv",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
+	tests := []struct {
+		name        string
+		contentdef  *contentdefinition.ContentDefinition
+		content     content.Content
+		publishVer  int
+		expectedErr string
+		expected    content.Content
+	}{
+		{
+			name:       "required field not set should return error",
+			contentdef: &reqfieldContentDef,
+			content: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: content.ContentLanguage{
+							"sv-SE": {},
+						},
+					},
+				},
+			},
 
-// 			expectedErr: "required",
-// 		},
-// 		{
-// 			name:       "required field set should return ok",
-// 			contentdef: &reqfieldContentDef,
-// 			content: content.Content{
-// 				Version: map[int]content.ContentVersion{
-// 					0: {
-// 						Properties: map[string]map[string]interface{}{
-// 							"sv-SE": {
-// 								content.NameField: "name sv",
-// 								"required_field":  "ok",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			expected: content.Content{
-// 				PublishedVersion: 0,
-// 				Version: map[int]content.ContentVersion{
-// 					0: {},
-// 				},
-// 			},
-// 		},
-// 		{
-// 			name:       "new version is published",
-// 			contentdef: &emptyContentDef,
-// 			content: content.Content{
-// 				PublishedVersion: 0,
-// 				Version: map[int]content.ContentVersion{
-// 					0: {
-// 						Properties: map[string]map[string]interface{}{
-// 							"sv-SE": {
-// 								content.NameField: "name sv",
-// 							},
-// 						},
-// 					},
-// 					1: {
-// 						Properties: map[string]map[string]interface{}{
-// 							"sv-SE": {
-// 								content.NameField: "name sv",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			publishVer: 1,
-// 			expected: content.Content{
-// 				PublishedVersion: 1,
-// 			},
-// 		},
-// 	}
+			expectedErr: "required",
+		},
+		// {
+		// 	name:       "required field set should return ok",
+		// 	contentdef: &reqfieldContentDef,
+		// 	content: content.Content{
+		// 		Version: map[int]content.ContentVersion{
+		// 			0: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 						"required_field":  "ok",
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	expected: content.Content{
+		// 		PublishedVersion: 0,
+		// 		Version: map[int]content.ContentVersion{
+		// 			0: {},
+		// 		},
+		// 	},
+		// },
+		// {
+		// 	name:       "new version is published",
+		// 	contentdef: &emptyContentDef,
+		// 	content: content.Content{
+		// 		PublishedVersion: 0,
+		// 		Version: map[int]content.ContentVersion{
+		// 			0: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 					},
+		// 				},
+		// 			},
+		// 			1: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	publishVer: 1,
+		// 	expected: content.Content{
+		// 		PublishedVersion: 1,
+		// 	},
+		// },
+	}
 
-// 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-// 	assert.NoError(t, err)
+	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+	assert.NoError(t, err)
 
-// 	for _, test := range tests {
+	for _, test := range tests {
 
-// 		t.Run(test.name, func(t *testing.T) {
-// 			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-// 			c.Database("cms").Collection("content").Drop(context.Background())
+		t.Run(test.name, func(t *testing.T) {
+			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
+			c.Database("cms").Collection("content").Drop(context.Background())
 
-// 			cdRepo := contentdefinition.NewContentDefinitionRepository(c)
-// 			contentdefinitionId, err := cdRepo.CreateContentDefinition(context.Background(), test.contentdef)
-// 			assert.NoError(t, err)
+			cdRepo := contentdefinition.NewContentDefinitionRepository(c)
+			contentdefinitionId, err := cdRepo.CreateContentDefinition(context.Background(), test.contentdef)
+			assert.NoError(t, err)
 
-// 			contentRepo := content.NewContentRepository(c)
-// 			test.content.ContentDefinitionID = contentdefinitionId
-// 			id, err := contentRepo.CreateContent(context.Background(), test.content)
-// 			assert.NoError(t, err)
+			contentRepo := content.NewContentRepository(c)
+			test.content.ContentDefinitionID = contentdefinitionId
+			id, err := contentRepo.CreateContent(context.Background(), test.content)
+			assert.NoError(t, err)
 
-// 			cmd := PublishContent{
-// 				ContentID: id,
-// 				Version:   test.publishVer,
-// 			}
+			cmd := PublishContent{
+				ContentID: id,
+				Version:   test.publishVer,
+			}
 
-// 			handler := PublishContentHandler{
-// 				ContentDefinitionRepository: cdRepo,
-// 				ContentRepository:           contentRepo,
-// 				SiteConfiguration:           cfg,
-// 			}
+			handler := PublishContentHandler{
+				ContentDefinitionRepository: cdRepo,
+				ContentRepository:           contentRepo,
+				SiteConfiguration:           cfg,
+			}
 
-// 			err = handler.Handle(context.Background(), cmd)
-// 			if test.expectedErr != "" {
-// 				assert.Equal(t, test.expectedErr, err.Error())
-// 			}
-// 			actual, err := contentRepo.GetContent(context.Background(), id)
-// 			assert.NoError(t, err)
+			err = handler.Handle(context.Background(), cmd)
+			if test.expectedErr != "" {
+				if assert.Error(t, err) {
+					assert.Equal(t, test.expectedErr, err.Error())
+				}
+			}
+			actual, err := contentRepo.GetContent(context.Background(), id)
+			assert.NoError(t, err)
 
-// 			assert.Equal(t, test.expected.PublishedVersion, actual.PublishedVersion)
+			assert.Equal(t, test.expected.PublishedVersion, actual.PublishedVersion)
 
-// 			if test.expectedErr != "" {
-// 				assert.Equal(t, test.publishVer, actual.PublishedVersion)
-// 			}
-// 			for v, contentver := range test.expected.Version {
+			if test.expectedErr != "" {
+				assert.Equal(t, test.publishVer, actual.PublishedVersion)
+			}
+			for v, contentver := range test.expected.Version {
 
-// 				for lang, fields := range contentver.Properties {
-// 					for field, value := range fields {
-// 						assert.Equal(t, value, actual.Version[v].Properties[lang][field], v, lang, field)
-// 					}
-// 				}
-// 			}
-// 		})
-// 	}
-// }
+				for lang, fields := range contentver.Properties {
+					for field, value := range fields {
+						assert.Equal(t, value, actual.Version[v].Properties[lang][field], v, lang, field)
+					}
+				}
+			}
+		})
+	}
+}
