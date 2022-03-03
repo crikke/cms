@@ -136,12 +136,11 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 
 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 
-		// todo use ptr
 		current := c.Version[c.PublishedVersion]
-		// current.Status = content.PreviouslyPublished
+		current.Status = content.Archived
 		c.Version[c.PublishedVersion] = current
 
-		// contentver.Status = content.Published
+		contentver.Status = content.Published
 		c.PublishedVersion = cmd.Version
 		c.Version[cmd.Version] = contentver
 		return c, nil

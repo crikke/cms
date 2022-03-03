@@ -414,28 +414,38 @@ func Test_PublishContent(t *testing.T) {
 
 			expectedErr: "required",
 		},
-		// {
-		// 	name:       "required field set should return ok",
-		// 	contentdef: &reqfieldContentDef,
-		// 	content: content.Content{
-		// 		Version: map[int]content.ContentVersion{
-		// 			0: {
-		// 				Properties: map[string]map[string]interface{}{
-		// 					"sv-SE": {
-		// 						content.NameField: "name sv",
-		// 						"required_field":  "ok",
-		// 					},
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	expected: content.Content{
-		// 		PublishedVersion: 0,
-		// 		Version: map[int]content.ContentVersion{
-		// 			0: {},
-		// 		},
-		// 	},
-		// },
+		{
+			name:       "required field set should return ok",
+			contentdef: &reqfieldContentDef,
+			content: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Properties: content.ContentLanguage{
+							"sv-SE": {
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "name sv",
+								},
+								"required_field": content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: false,
+									Value:     "ok",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: content.Content{
+				PublishedVersion: 0,
+				Version: map[int]content.ContentVersion{
+					0: {},
+				},
+			},
+		},
 		// {
 		// 	name:       "new version is published",
 		// 	contentdef: &emptyContentDef,
@@ -499,6 +509,9 @@ func Test_PublishContent(t *testing.T) {
 				if assert.Error(t, err) {
 					assert.Equal(t, test.expectedErr, err.Error())
 				}
+			} else {
+				assert.NoError(t, err)
+
 			}
 			actual, err := contentRepo.GetContent(context.Background(), id)
 			assert.NoError(t, err)

@@ -2,6 +2,7 @@ package app
 
 import (
 	contentcmd "github.com/crikke/cms/pkg/contentmanagement/app/command"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 )
 
 type App struct {
@@ -10,8 +11,8 @@ type App struct {
 }
 
 type Queries struct {
-	// GetContent  query.GetContentHandler
-	// ListContent query.ListChildContentHandler
+	GetContent  query.GetContentHandler
+	ListContent query.ListChildContentHandler
 }
 type Commands struct {
 	CreateContent contentcmd.CreateContentHandler
