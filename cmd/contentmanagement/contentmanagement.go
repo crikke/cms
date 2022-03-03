@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/crikke/cms/pkg/contentdelivery/config"
 	contentapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
@@ -83,7 +83,7 @@ func (s Server) Start() error {
 	ep.RegisterEndpoints(router)
 
 	router.Get("/swagger", func(rw http.ResponseWriter, r *http.Request) {
-		dat, err := os.ReadFile("./swagger.json")
+		dat, err := ioutil.ReadFile("./swagger.json")
 		if err != nil {
 			rw.Write([]byte(err.Error()))
 			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
