@@ -53,19 +53,18 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 		return uuid.UUID{}, errors.New("empty contentdefinition id")
 	}
 
-	pd, err := contentdefinition.NewPropertyDefinition(cmd.Name, cmd.Description, cmd.Type)
-
-	if err != nil {
-		return uuid.UUID{}, err
-	}
-
-	pd.ID = uuid.New()
-	err = h.Repo.UpdateContentDefinition(
+	var id uuid.UUID
+	err := h.Repo.UpdateContentDefinition(
 		ctx,
 		cmd.ContentDefinitionID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+			pd, err := contentdefinition.NewPropertyDefinition(cd, cmd.Name, cmd.Description, cmd.Type)
+			if err != nil {
+				return nil, err
+			}
 
-			cd.Propertydefinitions = append(cd.Propertydefinitions, pd)
+			id = pd.ID
+
 			return cd, nil
 		})
 
@@ -73,7 +72,7 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 		return uuid.UUID{}, err
 	}
 
-	return pd.ID, nil
+	return id, nil
 }
 
 type UpdatePropertyDefinition struct {
@@ -103,15 +102,16 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 			pd := contentdefinition.PropertyDefinition{}
-			idx := -1
-			for i, p := range cd.Propertydefinitions {
+			pdName := ""
+			for n, p := range cd.Propertydefinitions {
 				if p.ID == cmd.PropertyDefinitionID {
 					pd = p
-					idx = i
+					pdName = n
 					break
 				}
 			}
-			if idx == -1 {
+
+			if pd.ID == (uuid.UUID{}) {
 				return nil, errors.New("propertydefinition not found")
 			}
 
@@ -119,15 +119,16 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 				pd.Description = *cmd.Description
 			}
 
-			if cmd.Name != nil && *cmd.Name != "" {
-				pd.Name = *cmd.Name
+			if cmd.Name != nil && *cmd.Name != "" && *cmd.Name != pdName {
+
+				delete(cd.Propertydefinitions, pdName)
+				pdName = *cmd.Name
 			}
 
 			if cmd.Localized != nil {
 				pd.Localized = *cmd.Localized
 			}
-
-			cd.Propertydefinitions[idx] = pd
+			cd.Propertydefinitions[pdName] = pd
 			return cd, nil
 		})
 }
@@ -155,22 +156,18 @@ func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeleteP
 		ctx, cmd.ContentDefinitionID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
-			idx := -1
-			for i, p := range cd.Propertydefinitions {
+			name := ""
+			for n, p := range cd.Propertydefinitions {
 				if p.ID == cmd.PropertyDefinitionID {
-					idx = i
+					name = n
 					break
 				}
 			}
-			if idx == -1 {
+			if name == "" {
 				return nil, errors.New("propertydefinition not found")
 			}
 
-			arr := cd.Propertydefinitions
-			arr[idx] = arr[len(arr)-1]
-			arr = arr[:len(arr)-1]
-
-			cd.Propertydefinitions = arr
+			delete(cd.Propertydefinitions, name)
 			return cd, nil
 		})
 }
@@ -198,13 +195,14 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 		cmd.ContentDefinitionID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
-			idx := 0
+			// idx := 0
 			pd := contentdefinition.PropertyDefinition{}
-			for i, p := range cd.Propertydefinitions {
+			name := ""
+			for n, p := range cd.Propertydefinitions {
 
 				if p.ID == cmd.PropertyDefinitionID {
 					pd = p
-					idx = i
+					name = n
 					break
 				}
 			}
@@ -218,20 +216,7 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 			}
 
 			pd.Validators[cmd.ValidatorName] = v
-			cd.Propertydefinitions[idx] = pd
+			cd.Propertydefinitions[name] = pd
 			return cd, nil
 		})
-
-	// return h.Repo.UpdatePropertyDefinition(
-	// 	ctx,
-	// 	cmd.ContentDefinitionID,
-	// 	cmd.PropertyDefinitionID,
-	// 	func(ctx context.Context, pd *contentdefinition.PropertyDefinition) (*contentdefinition.PropertyDefinition, error) {
-	// 		if pd.Validators == nil {
-	// 			pd.Validators = make(map[string]interface{})
-	// 		}
-
-	// 		pd.Validators[cmd.ValidatorName] = v
-	// 		return pd, nil
-	// 	})
 }

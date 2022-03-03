@@ -28,9 +28,11 @@ func Test_GetContent(t *testing.T) {
 				Status:           content.Published,
 				Version: map[int]content.ContentVersion{
 					1: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"foo": {
-								"bar": "baz",
+								"bar": content.ContentField{
+									Value: "baz",
+								},
 							},
 						},
 					},
@@ -39,9 +41,11 @@ func Test_GetContent(t *testing.T) {
 			query: GetContent{},
 			expect: ContentReadModel{
 				Status: content.Published,
-				Properties: map[string]map[string]interface{}{
+				Properties: content.ContentLanguage{
 					"foo": {
-						"bar": "baz",
+						"bar": content.ContentField{
+							Value: "baz",
+						},
 					},
 				},
 			},
@@ -53,23 +57,29 @@ func Test_GetContent(t *testing.T) {
 				Status:           content.Published,
 				Version: map[int]content.ContentVersion{
 					1: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"foo": {
-								"bar": "1",
+								"bar": content.ContentField{
+									Value: "1",
+								},
 							},
 						},
 					},
 					2: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"foo": {
-								"bar": "2",
+								"bar": content.ContentField{
+									Value: "2",
+								},
 							},
 						},
 					},
 					3: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"foo": {
-								"bar": "3",
+								"bar": content.ContentField{
+									Value: "3",
+								},
 							},
 						},
 					},
@@ -78,9 +88,11 @@ func Test_GetContent(t *testing.T) {
 			query: GetContent{Version: makeInt(1)},
 			expect: ContentReadModel{
 				Status: content.Published,
-				Properties: map[string]map[string]interface{}{
+				Properties: content.ContentLanguage{
 					"foo": {
-						"bar": "1",
+						"bar": content.ContentField{
+							Value: "1",
+						},
 					},
 				},
 			},
@@ -92,9 +104,11 @@ func Test_GetContent(t *testing.T) {
 				Status:           content.Published,
 				Version: map[int]content.ContentVersion{
 					1: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"foo": {
-								"bar": "1",
+								"bar": content.ContentField{
+									Value: "2",
+								},
 							},
 						},
 					},
@@ -102,7 +116,7 @@ func Test_GetContent(t *testing.T) {
 			},
 			query:     GetContent{Version: makeInt(2)},
 			expect:    ContentReadModel{},
-			expectErr: content.ErrVersionNotExists,
+			expectErr: content.ErrMissingVersion,
 		},
 		{
 			name: "negative version",
@@ -111,9 +125,11 @@ func Test_GetContent(t *testing.T) {
 				Status:           content.Published,
 				Version: map[int]content.ContentVersion{
 					1: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"foo": {
-								"bar": "1",
+								"bar": content.ContentField{
+									Value: "3",
+								},
 							},
 						},
 					},
@@ -121,7 +137,7 @@ func Test_GetContent(t *testing.T) {
 			},
 			query:     GetContent{Version: makeInt(-2)},
 			expect:    ContentReadModel{},
-			expectErr: content.ErrVersionNotExists,
+			expectErr: content.ErrMissingVersion,
 		},
 	}
 
@@ -181,9 +197,11 @@ func Test_ListChildContent(t *testing.T) {
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
 						0: {
-							Properties: map[string]map[string]interface{}{
+							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: "root",
+									content.NameField: content.ContentField{
+										Value: "root",
+									},
 								},
 							},
 						},
@@ -196,9 +214,11 @@ func Test_ListChildContent(t *testing.T) {
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
 						0: {
-							Properties: map[string]map[string]interface{}{
+							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: "page 1",
+									content.NameField: content.ContentField{
+										Value: "page 1",
+									},
 								},
 							},
 						},
@@ -211,9 +231,11 @@ func Test_ListChildContent(t *testing.T) {
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
 						0: {
-							Properties: map[string]map[string]interface{}{
+							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: "page 2",
+									content.NameField: content.ContentField{
+										Value: "page 2",
+									},
 								},
 							},
 						},
@@ -241,9 +263,11 @@ func Test_ListChildContent(t *testing.T) {
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
 						0: {
-							Properties: map[string]map[string]interface{}{
+							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: "root",
+									content.NameField: content.ContentField{
+										Value: "root",
+									},
 								},
 							},
 						},
@@ -256,9 +280,11 @@ func Test_ListChildContent(t *testing.T) {
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
 						0: {
-							Properties: map[string]map[string]interface{}{
+							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: "page 1",
+									content.NameField: content.ContentField{
+										Value: "page 1",
+									},
 								},
 							},
 						},
@@ -271,9 +297,11 @@ func Test_ListChildContent(t *testing.T) {
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
 						0: {
-							Properties: map[string]map[string]interface{}{
+							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: "page 2",
+									content.NameField: content.ContentField{
+										Value: "page 2",
+									},
 								},
 							},
 						},

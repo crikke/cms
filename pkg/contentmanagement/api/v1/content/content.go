@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/crikke/cms/pkg/contentmanagement"
-	"github.com/crikke/cms/pkg/contentmanagement/content/query"
+	"github.com/crikke/cms/pkg/contentmanagement/app"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 )
 
 type contentEndpoint struct {
-	app contentmanagement.App
+	app app.App
 }
 
-func NewContentEndpoint(app contentmanagement.App) contentEndpoint {
+func NewContentEndpoint(app app.App) contentEndpoint {
 	return contentEndpoint{app}
 }
 func (c contentEndpoint) RegisterEndpoints(router chi.Router) {

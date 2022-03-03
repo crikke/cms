@@ -14,6 +14,7 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
@@ -25,16 +26,16 @@ var (
 	emptyContentDef contentdefinition.ContentDefinition = contentdefinition.ContentDefinition{
 		Name:                "test",
 		ID:                  uuid.New(),
-		Propertydefinitions: []contentdefinition.PropertyDefinition{},
+		Propertydefinitions: make(map[string]contentdefinition.PropertyDefinition),
 	}
 
 	reqfieldContentDef contentdefinition.ContentDefinition = contentdefinition.ContentDefinition{
 		Name: "test",
 		ID:   uuid.New(),
-		Propertydefinitions: []contentdefinition.PropertyDefinition{
-			{
+		Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
+
+			"required_field": {
 				ID:   uuid.New(),
-				Name: "required_field",
 				Type: "text",
 				Validators: map[string]interface{}{
 					"required": true,
@@ -46,6 +47,7 @@ var (
 	emptyContent content.Content = content.Content{
 		Version: map[int]content.ContentVersion{
 			0: {
+				Status:  content.Draft,
 				Created: time.Now().UTC(),
 			},
 		},
@@ -63,7 +65,19 @@ func Test_CreateContent(t *testing.T) {
 
 	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test2",
+		Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
+			content.NameField: {
+				ID:          uuid.New(),
+				Description: "Content name",
+				Type:        "text",
+				Localized:   true,
+				Validators: map[string]interface{}{
+					"required": validator.RequiredRule(true),
+				},
+			},
+		},
 	})
+
 	assert.NoError(t, err)
 
 	cmd := CreateContent{
@@ -72,6 +86,7 @@ func Test_CreateContent(t *testing.T) {
 	handler := CreateContentHandler{
 		ContentDefinitionRepository: cdRepo,
 		ContentRepository:           content.NewContentRepository(c),
+		Factory:                     content.Factory{Cfg: &siteconfiguration.SiteConfiguration{Languages: []language.Tag{language.MustParse("sv-SE")}}},
 	}
 
 	contentId, err := handler.Handle(context.Background(), cmd)
@@ -128,7 +143,44 @@ func Test_UpdateContent(t *testing.T) {
 		{
 			name:       "common fields only all configured languages",
 			contentdef: &emptyContentDef,
-			existing:   emptyContent,
+			existing: content.Content{
+				Version: map[int]content.ContentVersion{
+					0: {
+						Status:  content.Draft,
+						Created: time.Now().UTC(),
+						Properties: content.ContentLanguage{
+							"sv-SE": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "",
+								},
+								content.UrlSegmentField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "",
+								},
+							},
+							"en-US": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "",
+								},
+								content.UrlSegmentField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "",
+								},
+							},
+						},
+					},
+				},
+			},
 			updatefields: []struct {
 				Language string
 				Field    string
@@ -137,35 +189,56 @@ func Test_UpdateContent(t *testing.T) {
 				{
 					Language: "sv-SE",
 					Field:    content.NameField,
-					Value:    "name sv",
+					Value:    "name-sv",
 				},
 				{
 					Language: "sv-SE",
 					Field:    content.UrlSegmentField,
-					Value:    "url sv",
+					Value:    "url-sv",
 				},
 				{
 					Language: "en-US",
 					Field:    content.NameField,
-					Value:    "name en",
+					Value:    "name-en",
 				},
 				{
 					Language: "en-US",
 					Field:    content.UrlSegmentField,
-					Value:    "url en",
+					Value:    "url-en",
 				},
 			},
 			expected: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField:       "name sv",
-								content.UrlSegmentField: "url-sv",
+						Status: content.Draft,
+						Properties: content.ContentLanguage{
+							"sv-SE": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "name-sv",
+								},
+								content.UrlSegmentField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "url-sv",
+								},
 							},
-							"en-US": {
-								content.NameField:       "name en",
-								content.UrlSegmentField: "url-en",
+							"en-US": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "name-en",
+								},
+								content.UrlSegmentField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "url-en",
+								},
 							},
 						},
 					},
@@ -173,269 +246,81 @@ func Test_UpdateContent(t *testing.T) {
 			},
 		},
 		{
-			name:       "common fields only default language",
+			name:       "localized field with not configured language should return error",
 			contentdef: &emptyContentDef,
-			existing:   emptyContent,
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "name sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    content.UrlSegmentField,
-					Value:    "url sv",
-				},
-			},
-			expected: content.Content{
+			existing: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField:       "name sv",
-								content.UrlSegmentField: "url-sv",
-							},
-							"en-US": {
-								content.NameField:       "name sv",
-								content.UrlSegmentField: "name-sv",
+						Status:  content.Draft,
+						Created: time.Now().UTC(),
+						Properties: content.ContentLanguage{
+							"sv-SE": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "",
+								},
 							},
 						},
 					},
 				},
 			},
-		},
-		{
-			name: "not localized field with empty language ok",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:        uuid.New(),
-						Name:      "not_localized",
-						Type:      "text",
-						Localized: false,
-					},
-				},
-			},
-			existing: emptyContent,
 			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
 			}{
-				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "name sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    content.UrlSegmentField,
-					Value:    "url sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    "not_localized",
-					Value:    "ok",
-				},
-			},
-			expected: content.Content{
-				Version: map[int]content.ContentVersion{
-					0: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								"not_localized": "ok",
-							},
-							"en-US": {
-								"not_localized": nil,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "localized field with not configured language should return error",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:        uuid.New(),
-						Name:      "localized_field",
-						Type:      "text",
-						Localized: true,
-					},
-				},
-			},
-			existing: emptyContent,
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "name sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    content.UrlSegmentField,
-					Value:    "url sv",
-				},
 				{
 					Language: "nb-NO",
-					Field:    "localized_field",
-					Value:    "ok",
-				},
-			},
-			expectedErr: content.ErrNotConfiguredLocale,
-		},
-		{
-			name: "localized field ok",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:        uuid.New(),
-						Name:      "localized_field",
-						Type:      "text",
-						Localized: true,
-					},
-				},
-			},
-			existing: emptyContent,
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
 					Field:    content.NameField,
-					Value:    "name sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    content.UrlSegmentField,
-					Value:    "url sv",
-				},
-				{
-					Language: "en-US",
-					Field:    "localized_field",
-					Value:    "ok",
+					Value:    "url-sv",
 				},
 			},
-			expected: content.Content{
+			expectedErr: content.ErrMissingLanguage,
+		},
+
+		{
+			name:       "not localized field with not default language should return error",
+			contentdef: &emptyContentDef,
+			existing: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
-						Properties: map[string]map[string]interface{}{
-							"en-US": {
-								"localized_field": "ok",
+						Status:  content.Draft,
+						Created: time.Now().UTC(),
+						Properties: content.ContentLanguage{
+							"sv-SE": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: false,
+									Value:     "",
+								},
+							},
+							"en-US": content.ContentFields{
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: false,
+									Value:     "",
+								},
 							},
 						},
 					},
 				},
 			},
-		},
-		{
-			name: "not localized field with not default language should return error",
-			contentdef: &contentdefinition.ContentDefinition{
-				Name: "test",
-				ID:   uuid.New(),
-				Propertydefinitions: []contentdefinition.PropertyDefinition{
-					{
-						ID:        uuid.New(),
-						Name:      "not_localized",
-						Type:      "text",
-						Localized: false,
-					},
-				},
-			},
-			existing: emptyContent,
 			updatefields: []struct {
 				Language string
 				Field    string
 				Value    interface{}
 			}{
 				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "name sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    content.UrlSegmentField,
-					Value:    "url sv",
-				},
-				{
 					Language: "en-US",
-					Field:    "not_localized",
-					Value:    "not ok",
+					Field:    content.NameField,
+					Value:    "url-sv",
 				},
 			},
 			expectedErr: content.ErrUnlocalizedPropLocalizedValue,
-		},
-		{
-			name:       "update published content",
-			contentdef: &emptyContentDef,
-			existing: content.Content{
-				PublishedVersion: 1,
-				Status:           content.Published,
-				Version: map[int]content.ContentVersion{
-					0: {
-						Created: time.Now().Add(time.Hour * -1),
-					},
-					1: {
-						Created: time.Now(),
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField: "v1",
-							},
-						},
-					},
-				},
-			},
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
-					Field:    content.NameField,
-					Value:    "v2",
-				},
-			},
-			expected: content.Content{
-				PublishedVersion: 1,
-				Status:           content.Published,
-				Version: map[int]content.ContentVersion{
-					1: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField: "v1",
-							},
-						},
-					},
-					2: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField: "v2",
-							},
-						},
-					},
-				},
-			},
-			version: 1,
 		},
 	}
 
@@ -457,32 +342,38 @@ func Test_UpdateContent(t *testing.T) {
 			contentId, err := contentRepo.CreateContent(context.Background(), test.existing)
 			assert.NoError(t, err)
 
-			cmd := UpdateContent{
-				Id:      contentId,
-				Fields:  test.updatefields,
-				Version: test.version,
-			}
+			for _, f := range test.updatefields {
 
-			handler := UpdateContentHandler{
-				ContentDefinitionRepository: cdRepo,
-				ContentRepository:           contentRepo,
-				SiteConfiguration:           &cfg,
-			}
-			err = handler.Handle(context.Background(), cmd)
+				cmd := UpdateField{
+					Id:       contentId,
+					Version:  test.version,
+					Field:    f.Field,
+					Language: f.Language,
+					Value:    f.Value,
+				}
 
-			if test.expectedErr != "" {
-				assert.Equal(t, test.expectedErr, err.Error())
-			}
+				handler := UpdateFieldHandler{
+					ContentRepository:           contentRepo,
+					ContentDefinitionRepository: cdRepo,
+					Factory:                     content.Factory{Cfg: &cfg},
+				}
 
+				err := handler.Handle(context.Background(), cmd)
+				if test.expectedErr != "" {
+					assert.Equal(t, test.expectedErr, err.Error())
+				} else {
+					assert.NoError(t, err)
+				}
+
+			}
 			actual, err := contentRepo.GetContent(context.Background(), contentId)
 			assert.NoError(t, err)
-
 			for version, contentver := range test.expected.Version {
 
 				for lang, fields := range contentver.Properties {
 
 					for field, value := range fields {
-						assert.Equal(t, value, actual.Version[version].Properties[lang][field], value, version, lang, field)
+						assert.Equal(t, value.Value, actual.Version[version].Properties[lang][field].Value, value)
 					}
 				}
 			}
@@ -514,10 +405,8 @@ func Test_PublishContent(t *testing.T) {
 			content: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField: "name sv",
-							},
+						Properties: content.ContentLanguage{
+							"sv-SE": {},
 						},
 					},
 				},
@@ -531,10 +420,20 @@ func Test_PublishContent(t *testing.T) {
 			content: content.Content{
 				Version: map[int]content.ContentVersion{
 					0: {
-						Properties: map[string]map[string]interface{}{
+						Properties: content.ContentLanguage{
 							"sv-SE": {
-								content.NameField: "name sv",
-								"required_field":  "ok",
+								content.NameField: content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: true,
+									Value:     "name sv",
+								},
+								"required_field": content.ContentField{
+									ID:        uuid.New(),
+									Type:      "text",
+									Localized: false,
+									Value:     "ok",
+								},
 							},
 						},
 					},
@@ -547,33 +446,33 @@ func Test_PublishContent(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:       "new version is published",
-			contentdef: &emptyContentDef,
-			content: content.Content{
-				PublishedVersion: 0,
-				Version: map[int]content.ContentVersion{
-					0: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField: "name sv",
-							},
-						},
-					},
-					1: {
-						Properties: map[string]map[string]interface{}{
-							"sv-SE": {
-								content.NameField: "name sv",
-							},
-						},
-					},
-				},
-			},
-			publishVer: 1,
-			expected: content.Content{
-				PublishedVersion: 1,
-			},
-		},
+		// {
+		// 	name:       "new version is published",
+		// 	contentdef: &emptyContentDef,
+		// 	content: content.Content{
+		// 		PublishedVersion: 0,
+		// 		Version: map[int]content.ContentVersion{
+		// 			0: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 					},
+		// 				},
+		// 			},
+		// 			1: {
+		// 				Properties: map[string]map[string]interface{}{
+		// 					"sv-SE": {
+		// 						content.NameField: "name sv",
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// 	publishVer: 1,
+		// 	expected: content.Content{
+		// 		PublishedVersion: 1,
+		// 	},
+		// },
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
@@ -607,7 +506,12 @@ func Test_PublishContent(t *testing.T) {
 
 			err = handler.Handle(context.Background(), cmd)
 			if test.expectedErr != "" {
-				assert.Equal(t, test.expectedErr, err.Error())
+				if assert.Error(t, err) {
+					assert.Equal(t, test.expectedErr, err.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+
 			}
 			actual, err := contentRepo.GetContent(context.Background(), id)
 			assert.NoError(t, err)

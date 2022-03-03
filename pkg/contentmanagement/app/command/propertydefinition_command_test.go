@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
-
 	"github.com/crikke/cms/pkg/db"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +17,8 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 
 	repo := contentdefinition.NewContentDefinitionRepository(c)
 	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-		Name: "test",
+		Name:                "test",
+		Propertydefinitions: make(map[string]contentdefinition.PropertyDefinition),
 	})
 
 	assert.NoError(t, err)
@@ -36,12 +36,13 @@ func Test_CreatePropertyDefinition(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	actual, err := repo.GetPropertyDefinition(context.TODO(), cid, id)
+	cd, err := repo.GetContentDefinition(context.TODO(), cid)
 	assert.NoError(t, err)
 
-	assert.Equal(t, testpd.Name, actual.Name)
+	actual := cd.Propertydefinitions[testpd.Name]
 	assert.Equal(t, testpd.Description, actual.Description)
 	assert.Equal(t, testpd.Type, actual.Type)
+	assert.Equal(t, id, actual.ID)
 }
 
 func Test_UpdatePropertyDefinition(t *testing.T) {
@@ -52,7 +53,8 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	// create contentdefinition
 	repo := contentdefinition.NewContentDefinitionRepository(c)
 	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-		Name: "test",
+		Name:                "test",
+		Propertydefinitions: make(map[string]contentdefinition.PropertyDefinition),
 	})
 	assert.NoError(t, err)
 
@@ -85,9 +87,12 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get propertydefiniton
-	actual, err := repo.GetPropertyDefinition(context.TODO(), cid, pid)
+	cd, err := repo.GetContentDefinition(context.TODO(), cid)
 	assert.NoError(t, err)
-	assert.Equal(t, str, actual.Name)
+
+	actual := cd.Propertydefinitions[str]
+	assert.NoError(t, err)
+	// assert.Equal(t, str, actual.Name)
 	assert.Equal(t, str, actual.Description)
 	assert.Equal(t, createcmd.Type, actual.Type)
 	assert.Equal(t, b, actual.Localized)
@@ -101,7 +106,8 @@ func Test_DeletePropertyDefinition(t *testing.T) {
 	// create contentdefinition
 	repo := contentdefinition.NewContentDefinitionRepository(c)
 	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-		Name: "test",
+		Name:                "test",
+		Propertydefinitions: make(map[string]contentdefinition.PropertyDefinition),
 	})
 	assert.NoError(t, err)
 
@@ -142,7 +148,8 @@ func Test_AddValidation(t *testing.T) {
 
 	repo := contentdefinition.NewContentDefinitionRepository(c)
 	cid, err := repo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-		Name: "test",
+		Name:                "test",
+		Propertydefinitions: make(map[string]contentdefinition.PropertyDefinition),
 	})
 
 	assert.NoError(t, err)

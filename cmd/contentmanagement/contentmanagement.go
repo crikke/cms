@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"github.com/crikke/cms/pkg/contentdelivery/config"
-	"github.com/crikke/cms/pkg/contentmanagement"
 	contentapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
+	"github.com/crikke/cms/pkg/contentmanagement/app"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/crikke/cms/pkg/contentmanagement/content"
-	"github.com/crikke/cms/pkg/contentmanagement/content/query"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/go-chi/chi"
@@ -71,8 +71,8 @@ func (s Server) Start() error {
 		panic(err)
 	}
 	contentRepo := content.NewContentRepository(c)
-	app := contentmanagement.App{
-		Queries: contentmanagement.Queries{
+	app := app.App{
+		Queries: app.Queries{
 			GetContent: query.GetContentHandler{
 				Repo: contentRepo,
 			},

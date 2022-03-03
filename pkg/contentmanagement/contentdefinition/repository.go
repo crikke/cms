@@ -8,8 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const collection = "contentdefinition"
-
 type ContentDefinitionRepository interface {
 	CreateContentDefinition(ctx context.Context, cd *ContentDefinition) (uuid.UUID, error)
 	UpdateContentDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error
@@ -20,21 +18,22 @@ type ContentDefinitionRepository interface {
 }
 
 type repository struct {
-	client   *mongo.Client
-	database *mongo.Database
+	collection string
+	client     *mongo.Client
+	database   *mongo.Database
 }
 
 func NewContentDefinitionRepository(client *mongo.Client) ContentDefinitionRepository {
 
 	db := client.Database("cms")
-	r := repository{client: client, database: db}
-
-	return r
+	r := &repository{client: client, database: db}
+	r.collection = "contentdefinition"
+	return *r
 }
 
 func (r repository) CreateContentDefinition(ctx context.Context, cd *ContentDefinition) (uuid.UUID, error) {
 	cd.ID = uuid.New()
-	_, err := r.database.Collection(collection).InsertOne(ctx, cd)
+	_, err := r.database.Collection(r.collection).InsertOne(ctx, cd)
 
 	if err != nil {
 		return uuid.UUID{}, err
@@ -45,9 +44,8 @@ func (r repository) CreateContentDefinition(ctx context.Context, cd *ContentDefi
 
 func (r repository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error {
 
-	// TODO: Write/Read concern
 	entry := &ContentDefinition{}
-	err := r.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(entry)
+	err := r.database.Collection(r.collection).FindOne(ctx, bson.M{"_id": id}).Decode(entry)
 	if err != nil {
 		return err
 	}
@@ -77,7 +75,7 @@ func (r repository) DeleteContentDefinition(ctx context.Context, id uuid.UUID) e
 func (r repository) GetContentDefinition(ctx context.Context, id uuid.UUID) (ContentDefinition, error) {
 
 	res := &ContentDefinition{}
-	err := r.database.Collection(collection).FindOne(ctx, bson.D{bson.E{Key: "_id", Value: id}}).Decode(res)
+	err := r.database.Collection(r.collection).FindOne(ctx, bson.D{bson.E{Key: "_id", Value: id}}).Decode(res)
 	if err != nil {
 		return ContentDefinition{}, err
 	}
@@ -88,7 +86,7 @@ func (r repository) CreatePropertyDefinition(ctx context.Context, cid uuid.UUID,
 	pd.ID = uuid.New()
 
 	_, err := r.database.
-		Collection(collection).
+		Collection(r.collection).
 		UpdateOne(
 			ctx,
 			bson.D{bson.E{Key: "_id", Value: cid}},
@@ -113,7 +111,7 @@ func (r repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.
 	}
 
 	_, err = r.database.
-		Collection(collection).
+		Collection(r.collection).
 		UpdateOne(
 			ctx,
 			bson.D{
@@ -130,7 +128,7 @@ func (r repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.
 
 func (r repository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error {
 	_, err := r.database.
-		Collection(collection).
+		Collection(r.collection).
 		DeleteOne(
 			ctx,
 			bson.D{
@@ -150,7 +148,7 @@ func (r repository) GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUI
 	}
 
 	err := r.database.
-		Collection(collection).
+		Collection(r.collection).
 		FindOne(
 			ctx,
 			bson.D{

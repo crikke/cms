@@ -1,8 +1,8 @@
-package contentmanagement
+package app
 
 import (
-	contentcmd "github.com/crikke/cms/pkg/contentmanagement/content/command"
-	"github.com/crikke/cms/pkg/contentmanagement/content/query"
+	contentcmd "github.com/crikke/cms/pkg/contentmanagement/app/command"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 )
 
 type App struct {
