@@ -40,4 +40,9 @@ db-seed: db-up
 	# docker run --rm $(IMAGE_NAME):$(IMAGE_TAG)
 
 # todo
-# docker run -p 8081:8080 -e SWAGGER_JSON=/swagger.json -v $(pwd)/swagger.json:/swagger.json swaggerapi/swagger-ui
+# docker run -p 8081:8080 --user $(id -u):$(id -g) -e SWAGGER_JSON=/swagger.json -v $(pwd)/swagger.json:/swagger.json swaggerapi/swagger-ui
+
+
+.PHONY: swagger
+swagger:
+	docker run --rm -it -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'

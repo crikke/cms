@@ -1,37 +1,83 @@
 {
   "swagger": "2.0",
   "paths": {
-    "/content": {
+    "/content/{id}": {
       "get": {
         "description": "Gets content by Id.",
         "produces": [
           "application/json"
         ],
         "tags": [
-          "pets",
-          "users"
+          "content"
         ],
         "summary": "Get content by id and optionally version",
-        "operationId": "listPets",
+        "operationId": "GetContent",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID",
+            "name": "ID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version",
+            "name": "Version",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "404": {
+            "$ref": "#/responses/genericError"
           }
         }
       }
     }
   },
   "definitions": {
-    "UUID": {
-      "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8"
+    "ContentField": {
+      "description": "ContentField describes the property aswell as its value\nswagger: model ContentField",
+      "type": "object",
+      "properties": {
+        "ID": {
+          "$ref": "#/definitions/UUID"
+        },
+        "Localized": {
+          "type": "boolean"
+        },
+        "Type": {
+          "type": "string"
+        },
+        "Value": {
+          "type": "object"
+        }
       },
-      "x-go-package": "github.com/google/uuid"
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content"
     },
-    "contentresponse": {
+    "ContentFields": {
+      "description": "ContentField is a map where key is field name and value is the ContentField\nswagger: model ContentFields",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ContentField"
+      },
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content"
+    },
+    "ContentLanguage": {
+      "description": "ContentLanguage is a map containing a given languages ContentFields\nswagger: model ContentLanguage",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ContentFields"
+      },
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content"
+    },
+    "Contentresponse": {
       "type": "object",
       "properties": {
         "ContentDefinitionID": {
@@ -41,14 +87,7 @@
           "$ref": "#/definitions/UUID"
         },
         "Properties": {
-          "description": "properties for the content",
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          }
+          "$ref": "#/definitions/ContentLanguage"
         },
         "Status": {
           "type": "string",
@@ -61,14 +100,44 @@
         }
       },
       "x-go-name": "ContentReadModel",
-      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content/query"
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/app/query"
+    },
+    "ErrorBody": {
+      "type": "object",
+      "required": [
+        "Message"
+      ],
+      "properties": {
+        "FieldName": {
+          "type": "string"
+        },
+        "Message": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
+    },
+    "UUID": {
+      "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8"
+      },
+      "x-go-package": "github.com/google/uuid"
     }
   },
   "responses": {
     "contentResponse": {
-      "description": "ContentResponse is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
+      "description": "GetContentResponse is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
       "schema": {
-        "$ref": "#/definitions/contentresponse"
+        "$ref": "#/definitions/Contentresponse"
+      }
+    },
+    "genericError": {
+      "description": "GenericError",
+      "schema": {
+        "$ref": "#/definitions/ErrorBody"
       }
     }
   }

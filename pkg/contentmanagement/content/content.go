@@ -55,11 +55,15 @@ type Content struct {
 	Status              PublishStatus          `bson:"status"`
 }
 
+// swagger: model ContentVersion
 type ContentVersion struct {
 	Properties ContentLanguage `bson:"properties"`
 	Created    time.Time       `bson:"created"`
 	Status     PublishStatus   `bson:"status"`
 }
+
+// ContentField describes the property aswell as its value
+// swagger: model ContentField
 type ContentField struct {
 	ID        uuid.UUID `bson:"id"`
 	Type      string    `bson:"type,omitempty"`
@@ -67,7 +71,12 @@ type ContentField struct {
 	Value     interface{}
 }
 
+// ContentField is a map where key is field name and value is the ContentField
+// swagger: model ContentFields
 type ContentFields map[string]ContentField
+
+// ContentLanguage is a map containing a given languages ContentFields
+// swagger: model ContentLanguage
 type ContentLanguage map[string]ContentFields
 
 const (

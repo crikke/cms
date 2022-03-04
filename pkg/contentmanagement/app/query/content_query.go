@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// swagger:model contentresponse
+// swagger:model Contentresponse
 type ContentReadModel struct {
 	ID                  uuid.UUID
 	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`

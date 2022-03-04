@@ -24,46 +24,119 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", c.GetContent())
+			// r.Post("/", c.CreateContent())
 		})
+
 	})
 }
 
-// swagger:route GET /content pets users listPets
+type ErrorBody struct {
+	// required: true
+	Message   string
+	FieldName string
+}
+
+// GenericError
+// swagger:response genericError
+type GenericError struct {
+	// in: body
+	Body ErrorBody
+	// swagger:ignore
+	StatusCode int
+}
+
+func (g *GenericError) WriteResponse(rw http.ResponseWriter) {
+	b, err := json.Marshal(g)
+
+	if err != nil {
+		panic(err)
+	}
+
+	rw.Write(b)
+	rw.WriteHeader(401)
+}
+
+// GetContentResponse is the representation of the content for the Content management API
+// It contains all information of given content for every configured language.
+//
+// swagger:response contentResponse
+type GetContentResponse struct {
+	// in: body
+	Body query.ContentReadModel
+}
+
+// swagger:parameters GetContentRequest GetContent
+type GetContentRequest struct {
+	// ID
+	//
+	// in: path
+	// required:true
+	ID string
+	// Version
+	//
+	// in: query
+	// required:false
+	Version string
+}
+
+// swagger:route GET /content/{id} content GetContent
 //
 // Get content by id and optionally version
 //
-// Gets content by Id.
-//
+// Gets content by Id. If version is not specified, the published version will be returned.
+// If there is no version published, the version with highest version number will be returned
 //
 //     Produces:
 //     - application/json
 //
 //     Responses:
 //       200: contentResponse
-//       404
+//       404: genericError
+//       400: genericError
 func (c contentEndpoint) GetContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
+		req := GetContentRequest{
+			ID:      chi.URLParam(r, "id"),
+			Version: r.URL.Query().Get("version"),
+		}
 		var uid uuid.UUID
 		var err error
 		var ver *int
-		if id := chi.URLParam(r, "id"); id != "" {
-			uid, err = uuid.Parse(id)
+		if req.ID == "" {
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Write([]byte("missing id"))
+			return
+		}
+		uid, err = uuid.Parse(req.ID)
 
-			if err != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				rw.Write([]byte("bad formatted id"))
-				return
+		if err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			e := &GenericError{
+				Body: ErrorBody{
+					Message:   "bad formatted id",
+					FieldName: "id",
+				},
+				StatusCode: http.StatusBadRequest,
 			}
+
+			e.WriteResponse(rw)
+			return
 		}
 
-		if v := r.URL.Query().Get("v"); v != "" {
+		if req.Version != "" {
 
-			i, err := strconv.Atoi(v)
+			i, err := strconv.Atoi(req.Version)
 
 			if err != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				rw.Write([]byte("bad formatted version"))
+				e := &GenericError{
+					Body: ErrorBody{
+						Message:   "bad formatted version",
+						FieldName: "version",
+					},
+					StatusCode: http.StatusBadRequest,
+				}
+				e.WriteResponse(rw)
 				return
 			}
 
@@ -78,12 +151,19 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
 
 		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte(err.Error()))
+
+			e := &GenericError{
+				Body: ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: 404,
+			}
+
+			e.WriteResponse(rw)
 			return
 		}
 
-		response := &ContentResponse{Body: res}
+		response := &GetContentResponse{Body: res}
 		data, err := json.Marshal(response)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -95,11 +175,29 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 	}
 }
 
-// ContentResponse is the representation of the content for the Content management API
-// It contains all information of given content for every configured language.
+// swagger:parameters contentdefinitionid
 //
-// swagger:response contentResponse
-type ContentResponse struct {
-	// in: body
-	Body query.ContentReadModel
+// required: true
+type CreateContentParam struct {
+	ContentDefinitionId string
+}
+
+// swagger:route POST /content
+//
+// Create new content based on a contentdefinition
+//
+// Gets content by Id.
+//
+//     Consumes:
+//	   - application/json
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: contentResponse
+//		 400:
+func (c contentEndpoint) CreateContent() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+
+	}
 }
