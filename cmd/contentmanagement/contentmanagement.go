@@ -12,7 +12,8 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -63,7 +64,6 @@ func main() {
 }
 
 func (s Server) Start() error {
-	router := chi.NewRouter()
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
 
@@ -78,11 +78,17 @@ func (s Server) Start() error {
 			},
 		},
 	}
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
 	ep := contentapi.NewContentEndpoint(app)
 
-	ep.RegisterEndpoints(router)
+	ep.RegisterEndpoints(r)
 
-	router.Get("/swagger", func(rw http.ResponseWriter, r *http.Request) {
+	r.Get("/swagger", func(rw http.ResponseWriter, r *http.Request) {
 		dat, err := ioutil.ReadFile("./swagger.json")
 		if err != nil {
 			rw.Write([]byte(err.Error()))
@@ -94,5 +100,5 @@ func (s Server) Start() error {
 
 		rw.Write(dat)
 	})
-	return http.ListenAndServe(":8080", router)
+	return http.ListenAndServe(":8080", r)
 }

@@ -23,7 +23,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/UUID"
             }
           },
           {
@@ -32,7 +32,7 @@
             "name": "parentid",
             "in": "body",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/UUID"
             }
           }
         ],
@@ -59,14 +59,15 @@
         "operationId": "GetContent",
         "parameters": [
           {
-            "type": "string",
+            "$ref": "#/definitions/UUID",
             "description": "ID",
             "name": "ID",
             "in": "path",
             "required": true
           },
           {
-            "type": "string",
+            "type": "integer",
+            "format": "int64",
             "description": "Version",
             "name": "Version",
             "in": "query"
@@ -160,7 +161,7 @@
           "type": "string"
         }
       },
-      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/api"
     },
     "UUID": {
       "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",

@@ -1,17 +1,23 @@
 package content
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/crikke/cms/pkg/contentmanagement/api"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
+
+type key string
+
+var contentkey = key("content")
 
 type contentEndpoint struct {
 	app app.App
@@ -24,38 +30,81 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 	router.Route("/content", func(r chi.Router) {
 
+		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
+			r.Use(contentCtx)
+			r.Use(api.HandleHttpError)
 			r.Get("/", c.GetContent())
-			r.Post("/", c.CreateContent())
+			r.Put("/", c.UpdateContent())
 		})
-
 	})
 }
 
-type ErrorBody struct {
-	// required: true
-	Message   string
-	FieldName string
+func contentCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		req := ContentRequest{}
+		contentID := chi.URLParam(r, "contentid")
+		if contentID == "" {
+
+			api.WithError(r.Context(), api.GenericError{
+				StatusCode: http.StatusBadRequest,
+				Body: api.ErrorBody{
+					FieldName: "contentid",
+					Message:   "parameter contentid is required",
+				},
+			})
+			return
+		}
+
+		cid, err := uuid.Parse(contentID)
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				StatusCode: http.StatusBadRequest,
+				Body: api.ErrorBody{
+					FieldName: "contentid",
+					Message:   "bad format",
+				},
+			})
+			return
+		}
+		version := r.URL.Query().Get("version")
+
+		if version != "" {
+			v, err := strconv.Atoi(version)
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body: api.ErrorBody{
+						Message:   "bad formatted version",
+						FieldName: "version",
+					},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+
+			req.Version = &v
+		}
+
+		req.ID = cid
+
+		ctx := context.WithValue(r.Context(), contentkey, cid)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
-// GenericError
-// swagger:response genericError
-type GenericError struct {
-	// in: body
-	Body ErrorBody
-	// swagger:ignore
-	StatusCode int
-}
-
-func (g *GenericError) WriteResponse(rw http.ResponseWriter) {
-	b, err := json.Marshal(g)
-
-	if err != nil {
-		panic(err)
-	}
-
-	rw.Write(b)
-	rw.WriteHeader(401)
+type ContentID struct {
+	// ID
+	//
+	// in: path
+	// required:true
+	ID uuid.UUID
+	// Version
+	//
+	// in: query
+	// required:false
+	Version *int
 }
 
 // GetContentResponse is the representation of the content for the Content management API
@@ -67,18 +116,9 @@ type GetContentResponse struct {
 	Body query.ContentReadModel
 }
 
-// swagger:parameters GetContentRequest GetContent
-type GetContentRequest struct {
-	// ID
-	//
-	// in: path
-	// required:true
-	ID string
-	// Version
-	//
-	// in: query
-	// required:false
-	Version string
+// swagger:parameters ContentRequest GetContent
+type ContentRequest struct {
+	ContentID
 }
 
 // swagger:route GET /content/{id} content GetContent
@@ -98,70 +138,28 @@ type GetContentRequest struct {
 func (c contentEndpoint) GetContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		req := GetContentRequest{
-			ID:      chi.URLParam(r, "id"),
-			Version: r.URL.Query().Get("version"),
-		}
-		var uid uuid.UUID
-		var err error
-		var ver *int
-		if req.ID == "" {
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte("missing id"))
-			return
-		}
-		uid, err = uuid.Parse(req.ID)
+		var req ContentRequest
 
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			e := &GenericError{
-				Body: ErrorBody{
-					Message:   "bad formatted id",
-					FieldName: "id",
-				},
-				StatusCode: http.StatusBadRequest,
-			}
-
-			e.WriteResponse(rw)
-			return
-		}
-
-		if req.Version != "" {
-
-			i, err := strconv.Atoi(req.Version)
-
-			if err != nil {
-				e := &GenericError{
-					Body: ErrorBody{
-						Message:   "bad formatted version",
-						FieldName: "version",
-					},
-					StatusCode: http.StatusBadRequest,
-				}
-				e.WriteResponse(rw)
-				return
-			}
-
-			ver = &i
+		if r := r.Context().Value(contentkey); r != nil {
+			req = r.(ContentRequest)
 		}
 
 		q := query.GetContent{
-			Id:      uid,
-			Version: ver,
+			Id:      req.ID,
+			Version: req.Version,
 		}
 
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
 
 		if err != nil {
 
-			e := &GenericError{
-				Body: ErrorBody{
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
 					Message: err.Error(),
 				},
-				StatusCode: 404,
-			}
+				StatusCode: http.StatusNotFound,
+			})
 
-			e.WriteResponse(rw)
 			return
 		}
 
@@ -182,10 +180,10 @@ type CreateContentRequest struct {
 	// Contentdefinition ID
 	// in: body
 	// required: true
-	ContentDefinitionId string `json:"contentdefinitionid"`
+	ContentDefinitionId uuid.UUID `json:"contentdefinitionid"`
 	// ParentId
 	// in: body
-	ParentId string `json:"parentid"`
+	ParentId uuid.UUID `json:"parentid"`
 }
 
 // swagger:response CreateContentResponse
@@ -215,55 +213,28 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			e := &GenericError{
-				Body: ErrorBody{
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusBadRequest,
-			}
-			e.WriteResponse(rw)
+			})
 			return
-		}
-
-		cid, err := uuid.Parse(req.ContentDefinitionId)
-		if err != nil {
-			e := &GenericError{
-				Body: ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			}
-			e.WriteResponse(rw)
-			return
-		}
-
-		pid, err := uuid.Parse(req.ParentId)
-		if err != nil {
-			e := &GenericError{
-				Body: ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			}
-			e.WriteResponse(rw)
-			return
-
 		}
 
 		id, err := c.app.Commands.CreateContent.Handle(r.Context(),
 			command.CreateContent{
-				ContentDefinitionId: cid,
-				ParentID:            pid,
+				ContentDefinitionId: req.ContentDefinitionId,
+				ParentID:            req.ParentId,
 			},
 		)
 		if err != nil {
-			e := &GenericError{
-				Body: ErrorBody{
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusBadRequest,
-			}
-			e.WriteResponse(rw)
+			})
 			return
 
 		}
@@ -271,5 +242,26 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 		url := r.URL.String()
 		rw.Header().Add("Location", fmt.Sprintf("%s/%s", url, id.String()))
 		rw.WriteHeader(http.StatusCreated)
+	}
+}
+
+// swager:route PUT /content/{id} content UpdateContent
+//
+// Update content
+//
+// Updates content node
+//
+//		Consumes:
+//		- application/json
+//		Produces:
+//		- application/json
+//
+//		Responses:
+//		  200: OK
+//		  404: genericError
+//        400: genericError
+func (c contentEndpoint) UpdateContent() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
 	}
 }
