@@ -48,7 +48,7 @@
     },
     "/content/{id}": {
       "get": {
-        "description": "Gets content by Id. If version is not specified, the published version will be returned.\nIf there is no version published, the version with highest version number will be returned",
+        "description": "Gets content by Id.",
         "produces": [
           "application/json"
         ],
@@ -70,12 +70,102 @@
             "format": "int64",
             "description": "Version",
             "name": "Version",
-            "in": "query"
+            "in": "query",
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "404": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
+      "put": {
+        "description": "Updates content node",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "content"
+        ],
+        "summary": "Update content",
+        "operationId": "UpdateContent",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "description": "ID",
+            "name": "ID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Version",
+            "name": "Version",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Language",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "404": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes a content node",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "content"
+        ],
+        "summary": "Delete content",
+        "operationId": "DeleteContent",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "description": "ID",
+            "name": "ID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Version",
+            "name": "Version",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
           },
           "400": {
             "$ref": "#/responses/genericError"

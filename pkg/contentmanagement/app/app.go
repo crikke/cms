@@ -16,4 +16,6 @@ type Queries struct {
 }
 type Commands struct {
 	CreateContent contentcmd.CreateContentHandler
+	UpdateField   contentcmd.UpdateFieldHandler
+	DeleteContent contentcmd.DeleteContentHandler
 }

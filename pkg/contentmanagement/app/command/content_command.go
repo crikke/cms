@@ -52,11 +52,11 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 }
 
 type UpdateField struct {
-	Id       uuid.UUID
-	Version  int
-	Language string
-	Field    string
-	Value    interface{}
+	ContentID uuid.UUID
+	Version   int
+	Language  string
+	Name      string
+	Value     interface{}
 }
 
 type UpdateFieldHandler struct {
@@ -67,10 +67,10 @@ type UpdateFieldHandler struct {
 
 func (h UpdateFieldHandler) Handle(ctx context.Context, cmd UpdateField) error {
 
-	return h.ContentRepository.UpdateContent(ctx, cmd.Id, func(ctx context.Context, c *content.Content) (*content.Content, error) {
+	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 		cv := c.Version[cmd.Version]
 
-		err := h.Factory.SetField(&cv, cmd.Language, cmd.Field, cmd.Value)
+		err := h.Factory.SetField(&cv, cmd.Language, cmd.Name, cmd.Value)
 
 		if err != nil {
 			return nil, err
@@ -171,4 +171,15 @@ func getPropertyValue(c content.ContentVersion, name, locale string) interface{}
 	}
 
 	return properties[name].Value
+}
+
+type DeleteContent struct {
+	ID uuid.UUID
+}
+type DeleteContentHandler struct {
+}
+
+func (h DeleteContentHandler) Handle(ctx context.Context, cmd DeleteContent) error {
+	// TODO: Implement
+	return nil
 }

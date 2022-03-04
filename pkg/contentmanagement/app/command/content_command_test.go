@@ -345,11 +345,11 @@ func Test_UpdateContent(t *testing.T) {
 			for _, f := range test.updatefields {
 
 				cmd := UpdateField{
-					Id:       contentId,
-					Version:  test.version,
-					Field:    f.Field,
-					Language: f.Language,
-					Value:    f.Value,
+					ContentID: contentId,
+					Version:   test.version,
+					Name:      f.Field,
+					Language:  f.Language,
+					Value:     f.Value,
 				}
 
 				handler := UpdateFieldHandler{

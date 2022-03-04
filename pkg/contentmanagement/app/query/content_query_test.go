@@ -85,7 +85,7 @@ func Test_GetContent(t *testing.T) {
 					},
 				},
 			},
-			query: GetContent{Version: makeInt(1)},
+			query: GetContent{Version: 1},
 			expect: ContentReadModel{
 				Status: content.Published,
 				Properties: content.ContentLanguage{
@@ -114,7 +114,7 @@ func Test_GetContent(t *testing.T) {
 					},
 				},
 			},
-			query:     GetContent{Version: makeInt(2)},
+			query:     GetContent{Version: 2},
 			expect:    ContentReadModel{},
 			expectErr: content.ErrMissingVersion,
 		},
@@ -135,7 +135,7 @@ func Test_GetContent(t *testing.T) {
 					},
 				},
 			},
-			query:     GetContent{Version: makeInt(-2)},
+			query:     GetContent{Version: -2},
 			expect:    ContentReadModel{},
 			expectErr: content.ErrMissingVersion,
 		},
@@ -363,9 +363,4 @@ func Test_ListChildContent(t *testing.T) {
 			}
 		})
 	}
-}
-
-func makeInt(n int) *int {
-	i := int(n)
-	return &i
 }

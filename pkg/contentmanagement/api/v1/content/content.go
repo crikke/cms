@@ -32,7 +32,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
-			r.Use(contentCtx)
+			r.Use(contentIdContext)
 			r.Use(api.HandleHttpError)
 			r.Get("/", c.GetContent())
 			r.Put("/", c.UpdateContent())
@@ -40,7 +40,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 	})
 }
 
-func contentCtx(next http.Handler) http.Handler {
+func contentIdContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		req := ContentRequest{}
@@ -72,20 +72,29 @@ func contentCtx(next http.Handler) http.Handler {
 		version := r.URL.Query().Get("version")
 
 		if version != "" {
-			v, err := strconv.Atoi(version)
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body: api.ErrorBody{
-						Message:   "bad formatted version",
-						FieldName: "version",
-					},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-
-			req.Version = &v
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
+					Message:   "parameter version is required",
+					FieldName: "version",
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
 		}
+
+		v, err := strconv.Atoi(version)
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
+					Message:   "bad formatted version",
+					FieldName: "version",
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+		req.Version = v
 
 		req.ID = cid
 
@@ -103,8 +112,8 @@ type ContentID struct {
 	// Version
 	//
 	// in: query
-	// required:false
-	Version *int
+	// required:true
+	Version int
 }
 
 // GetContentResponse is the representation of the content for the Content management API
@@ -125,8 +134,7 @@ type ContentRequest struct {
 //
 // Get content by id and optionally version
 //
-// Gets content by Id. If version is not specified, the published version will be returned.
-// If there is no version published, the version with highest version number will be returned
+// Gets content by Id.
 //
 //     Produces:
 //     - application/json
@@ -245,7 +253,20 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 	}
 }
 
-// swager:route PUT /content/{id} content UpdateContent
+// swagger:parameters UpdateContentRequest UpdateContent
+type UpdateContentRequest struct {
+	ContentID
+	Language string
+
+	// ! TODO remove swagger ignore
+	// swagger:ignore
+	Fields []struct {
+		Name  string
+		Value interface{}
+	}
+}
+
+// swagger:route PUT /content/{id} content UpdateContent
 //
 // Update content
 //
@@ -263,5 +284,74 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		var req UpdateContentRequest
+
+		if r := r.Context().Value(contentkey); r != nil {
+			id := r.(ContentID)
+			req = UpdateContentRequest{ContentID: id}
+		}
+
+		// ! TODO: this needs to be remade.
+		// ! eighter by implementing transactions,
+		// ! or not having an array of fields.
+		// ! otherwise partial updates can happen.
+		for _, field := range req.Fields {
+
+			err := c.app.Commands.UpdateField.Handle(r.Context(), command.UpdateField{
+				ContentID: req.ID,
+				Version:   req.Version,
+				Value:     field.Name,
+				Language:  req.Language,
+				Name:      field.Name,
+			})
+
+			if err != nil {
+				api.WithError(r.Context(), err)
+				return
+			}
+		}
+	}
+}
+
+// swagger:parameters DeleteContentRequest DeleteContent
+type DeleteContentRequest struct {
+	// ! TODO: Split ContentID and ContentVersion
+	// ! DeleteContent does not need ContentVersion
+	ContentID
+}
+
+// swagger:route DELETE /content/{id} content DeleteContent
+//
+// Delete content
+//
+// Deletes a content node
+//
+//		Consumes:
+//		- application/json
+//		Produces:
+//		- application/json
+//
+//		Responses:
+//		  200: OK
+//		  404: genericError
+//        400: genericError
+func (c contentEndpoint) DeleteContent() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		var req DeleteContentRequest
+
+		if r := r.Context().Value(contentkey); r != nil {
+			id := r.(ContentID)
+			req = DeleteContentRequest{ContentID: id}
+		}
+		err := c.app.Commands.DeleteContent.Handle(
+			r.Context(),
+			command.DeleteContent{
+				ID: req.ID,
+			})
+
+		if err != nil {
+			api.WithError(r.Context(), err)
+		}
 	}
 }
