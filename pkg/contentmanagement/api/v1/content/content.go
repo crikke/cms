@@ -2,10 +2,12 @@ package content
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/crikke/cms/pkg/contentmanagement/app"
+	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -24,7 +26,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", c.GetContent())
-			// r.Post("/", c.CreateContent())
+			r.Post("/", c.CreateContent())
 		})
 
 	})
@@ -175,18 +177,29 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 	}
 }
 
-// swagger:parameters contentdefinitionid
-//
-// required: true
-type CreateContentParam struct {
-	ContentDefinitionId string
+// swagger:parameters CreateContentRequest CreateContent
+type CreateContentRequest struct {
+	// Contentdefinition ID
+	// in: body
+	// required: true
+	ContentDefinitionId string `json:"contentdefinitionid"`
+	// ParentId
+	// in: body
+	// required: true
+	ParentId string `json:"parentid"`
 }
 
-// swagger:route POST /content
+// swagger:response CreateContentResponse
+type CreateContentResponse struct {
+	Location string
+}
+
+// swagger:route POST /content content CreateContent
 //
-// Create new content based on a contentdefinition
+// Create new content
 //
-// Gets content by Id.
+// Creates new content node under the parent. The content is created from the specified contentdefinition
+// which acts as a template, containing what properties to create & their validation.
 //
 //     Consumes:
 //	   - application/json
@@ -194,10 +207,70 @@ type CreateContentParam struct {
 //     - application/json
 //
 //     Responses:
-//       200: contentResponse
-//		 400:
+//       201: CreateContentResponse
+//		 400: genericError
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
+		req := &CreateContentRequest{}
+
+		err := json.NewDecoder(r.Body).Decode(req)
+		if err != nil {
+			e := &GenericError{
+				Body: ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			}
+			e.WriteResponse(rw)
+			return
+		}
+
+		cid, err := uuid.Parse(req.ContentDefinitionId)
+		if err != nil {
+			e := &GenericError{
+				Body: ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			}
+			e.WriteResponse(rw)
+			return
+		}
+
+		pid, err := uuid.Parse(req.ParentId)
+		if err != nil {
+			e := &GenericError{
+				Body: ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			}
+			e.WriteResponse(rw)
+			return
+
+		}
+
+		id, err := c.app.Commands.CreateContent.Handle(r.Context(),
+			command.CreateContent{
+				ContentDefinitionId: cid,
+				ParentID:            pid,
+			},
+		)
+		if err != nil {
+			e := &GenericError{
+				Body: ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			}
+			e.WriteResponse(rw)
+			return
+
+		}
+
+		url := r.URL.String()
+		rw.Header().Add("Location", fmt.Sprintf("%s/%s", url, id.String()))
+		rw.WriteHeader(http.StatusCreated)
 	}
 }

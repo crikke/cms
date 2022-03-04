@@ -13,6 +13,7 @@ import (
 
 type CreateContent struct {
 	ContentDefinitionId uuid.UUID
+	ParentID            uuid.UUID
 }
 
 type CreateContentHandler struct {

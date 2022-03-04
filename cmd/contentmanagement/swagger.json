@@ -1,9 +1,55 @@
 {
   "swagger": "2.0",
   "paths": {
+    "/content": {
+      "post": {
+        "description": "Creates new content node under the parent. The content is created from the specified contentdefinition\nwhich acts as a template, containing what properties to create \u0026 their validation.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "content"
+        ],
+        "summary": "Create new content",
+        "operationId": "CreateContent",
+        "parameters": [
+          {
+            "x-go-name": "ContentDefinitionId",
+            "description": "Contentdefinition ID",
+            "name": "contentdefinitionid",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "ParentId",
+            "description": "ParentId",
+            "name": "parentid",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/CreateContentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/content/{id}": {
       "get": {
-        "description": "Gets content by Id.",
+        "description": "Gets content by Id. If version is not specified, the published version will be returned.\nIf there is no version published, the version with highest version number will be returned",
         "produces": [
           "application/json"
         ],
@@ -128,6 +174,14 @@
     }
   },
   "responses": {
+    "CreateContentResponse": {
+      "description": "",
+      "headers": {
+        "Location": {
+          "type": "string"
+        }
+      }
+    },
     "contentResponse": {
       "description": "GetContentResponse is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
       "schema": {
