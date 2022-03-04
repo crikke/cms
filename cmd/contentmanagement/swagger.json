@@ -31,7 +31,6 @@
             "description": "ParentId",
             "name": "parentid",
             "in": "body",
-            "required": true,
             "schema": {
               "type": "string"
             }

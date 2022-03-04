@@ -185,7 +185,6 @@ type CreateContentRequest struct {
 	ContentDefinitionId string `json:"contentdefinitionid"`
 	// ParentId
 	// in: body
-	// required: true
 	ParentId string `json:"parentid"`
 }
 

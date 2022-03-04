@@ -93,11 +93,12 @@ func (f Factory) getDefaultLanguage() string {
 	return f.Cfg.Languages[0].String()
 }
 
-func (f Factory) NewContent(spec contentdefinition.ContentDefinition) (Content, error) {
+func (f Factory) NewContent(spec contentdefinition.ContentDefinition, parentID uuid.UUID) (Content, error) {
 
 	c := Content{
 		ContentDefinitionID: spec.ID,
 		Version:             map[int]ContentVersion{},
+		ParentID:            parentID,
 		Status:              Draft,
 	}
 

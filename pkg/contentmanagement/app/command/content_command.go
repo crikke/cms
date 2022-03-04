@@ -29,7 +29,21 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 		return uuid.UUID{}, err
 	}
 
-	c, err := h.Factory.NewContent(cd)
+	// if empty parentid this is a root object
+	if cmd.ParentID != (uuid.UUID{}) {
+
+		parent, err := h.ContentRepository.GetContent(ctx, cmd.ParentID)
+
+		if err != nil {
+			return uuid.UUID{}, err
+		}
+
+		if parent.Version[parent.PublishedVersion].Status != content.Published {
+			return uuid.UUID{}, errors.New("cannot create content under unpublished content")
+		}
+	}
+
+	c, err := h.Factory.NewContent(cd, cmd.ParentID)
 	if err != nil {
 		return uuid.UUID{}, err
 	}

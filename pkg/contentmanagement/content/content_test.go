@@ -75,7 +75,7 @@ func Test_CreateContent(t *testing.T) {
 				Cfg: cfg,
 			}
 
-			actual, err := f.NewContent(test.contentdef)
+			actual, err := f.NewContent(test.contentdef, uuid.UUID{})
 			assert.NoError(t, err)
 
 			assert.Equal(t, test.contentdef.ID, actual.ContentDefinitionID)
