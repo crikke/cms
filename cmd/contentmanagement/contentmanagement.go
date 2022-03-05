@@ -7,6 +7,7 @@ import (
 
 	"github.com/crikke/cms/pkg/contentdelivery/config"
 	contentapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
+	"github.com/crikke/cms/pkg/contentmanagement/api/v1/contentdefinition"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/crikke/cms/pkg/contentmanagement/content"
@@ -84,9 +85,11 @@ func (s Server) Start() error {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	ep := contentapi.NewContentEndpoint(app)
+	contentendpoint := contentapi.NewContentEndpoint(app)
+	contentendpoint.RegisterEndpoints(r)
 
-	ep.RegisterEndpoints(r)
+	contentdefendpoint := contentdefinition.NewContentDefinitionEndpoint(app)
+	contentdefendpoint.RegisterEndpoints(r)
 
 	r.Get("/swagger", func(rw http.ResponseWriter, r *http.Request) {
 		dat, err := ioutil.ReadFile("./swagger.json")

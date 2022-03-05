@@ -175,6 +175,78 @@
           }
         }
       }
+    },
+    "/contentdefinition": {
+      "post": {
+        "description": "Creates a new contentdefinition. The contentdefinition\nacts as a template for creating new content,\ncontaining what properties to create \u0026 their validation.",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "contentdefinition"
+        ],
+        "summary": "Creates a new content definition",
+        "operationId": "CreateContentDefinition",
+        "parameters": [
+          {
+            "description": "Content definition Name",
+            "name": "Name",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Content definition description",
+            "name": "Description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/CreateContentDefinitionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/contentdefinition/{id}": {
+      "get": {
+        "description": "Gets a content definition",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "contentdefinition"
+        ],
+        "operationId": "GetContentDefinition",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "ID",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/GetContentDefinitionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -253,6 +325,32 @@
       },
       "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/api"
     },
+    "PropertyDefinition": {
+      "type": "object",
+      "properties": {
+        "Description": {
+          "description": "Name        string    `bson:\"name,omitempty\"`",
+          "type": "string"
+        },
+        "ID": {
+          "$ref": "#/definitions/UUID"
+        },
+        "Localized": {
+          "type": "boolean"
+        },
+        "Type": {
+          "type": "string"
+        },
+        "Validators": {
+          "description": "instead of using map[strin]validator.Validator, interface{} is used\nthis wont be a problem becuase they will be translated to validator.Validator in GetValidatorQueury",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      },
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+    },
     "UUID": {
       "description": "A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC\n4122.",
       "type": "array",
@@ -264,7 +362,7 @@
     }
   },
   "responses": {
-    "CreateContentResponse": {
+    "CreateContentDefinitionResponse": {
       "description": "",
       "headers": {
         "Location": {
@@ -272,8 +370,32 @@
         }
       }
     },
+    "GetContentDefinitionResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/definitions/PropertyDefinition"
+        },
+        "$ref": "#/definitions/UUID"
+      },
+      "headers": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "ID": {},
+        "Name": {
+          "type": "string"
+        },
+        "Propertydefinitions": {}
+      }
+    },
     "contentResponse": {
-      "description": "GetContentResponse is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
+      "description": "response is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
       "schema": {
         "$ref": "#/definitions/Contentresponse"
       }
@@ -282,6 +404,14 @@
       "description": "GenericError",
       "schema": {
         "$ref": "#/definitions/ErrorBody"
+      }
+    },
+    "response": {
+      "description": "",
+      "headers": {
+        "Location": {
+          "type": "string"
+        }
       }
     }
   }

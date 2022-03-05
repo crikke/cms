@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )
@@ -42,7 +43,7 @@ func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildCont
 
 	for _, ch := range children {
 
-		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][content.NameField].Value
+		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][contentdefinition.NameField].Value
 		result = append(result, ContentListReadModel{
 			ID:   ch.ID,
 			Name: name.(string),

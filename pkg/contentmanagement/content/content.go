@@ -38,11 +38,6 @@ HTTP PUT contentmanagement/content/{contentID}
 
 */
 
-const (
-	NameField       = "name"
-	UrlSegmentField = "url"
-)
-
 // swagger:enum PublishStatus
 type PublishStatus string
 

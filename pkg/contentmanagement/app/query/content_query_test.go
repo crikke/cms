@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/crikke/cms/pkg/contentmanagement/content"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
@@ -199,7 +200,7 @@ func Test_ListChildContent(t *testing.T) {
 						0: {
 							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: content.ContentField{
+									contentdefinition.NameField: content.ContentField{
 										Value: "root",
 									},
 								},
@@ -216,7 +217,7 @@ func Test_ListChildContent(t *testing.T) {
 						0: {
 							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: content.ContentField{
+									contentdefinition.NameField: content.ContentField{
 										Value: "page 1",
 									},
 								},
@@ -233,7 +234,7 @@ func Test_ListChildContent(t *testing.T) {
 						0: {
 							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: content.ContentField{
+									contentdefinition.NameField: content.ContentField{
 										Value: "page 2",
 									},
 								},
@@ -265,7 +266,7 @@ func Test_ListChildContent(t *testing.T) {
 						0: {
 							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: content.ContentField{
+									contentdefinition.NameField: content.ContentField{
 										Value: "root",
 									},
 								},
@@ -282,7 +283,7 @@ func Test_ListChildContent(t *testing.T) {
 						0: {
 							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: content.ContentField{
+									contentdefinition.NameField: content.ContentField{
 										Value: "page 1",
 									},
 								},
@@ -299,7 +300,7 @@ func Test_ListChildContent(t *testing.T) {
 						0: {
 							Properties: content.ContentLanguage{
 								"sv-SE": {
-									content.NameField: content.ContentField{
+									contentdefinition.NameField: content.ContentField{
 										Value: "page 2",
 									},
 								},

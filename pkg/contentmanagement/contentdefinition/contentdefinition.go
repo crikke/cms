@@ -4,7 +4,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/google/uuid"
+)
+
+const (
+	NameField       = "name"
+	UrlSegmentField = "url"
 )
 
 type ContentDefinition struct {
@@ -39,10 +45,22 @@ const ErrPropertyAlreadyExists = "propertydefinition already exists on contentde
 func NewContentDefinition(name, desc string) (ContentDefinition, error) {
 
 	if name == "" {
-		return ContentDefinition{}, errors.New("missing field: Name")
+		return ContentDefinition{}, errors.New("name required")
 	}
 
-	return ContentDefinition{Name: name, Description: desc}, nil
+	return ContentDefinition{
+		Name:        name,
+		Description: desc,
+		Propertydefinitions: map[string]PropertyDefinition{
+			NameField: {
+				ID:        uuid.New(),
+				Type:      "text",
+				Localized: true,
+				Validators: map[string]interface{}{
+					"required": validator.RequiredRule(true),
+				},
+			},
+		}}, nil
 }
 
 func (cd ContentDefinition) PropertyValid(field, lang string, value interface{}) error {

@@ -1,5 +1,25 @@
 package query
 
+import (
+	"context"
+
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/google/uuid"
+)
+
+type GetContentDefinition struct {
+	ID uuid.UUID
+}
+
+type GetContentDefinitionHandler struct {
+}
+
+func (h GetContentDefinitionHandler) Handle(ctx context.Context, query GetContentDefinition) (contentdefinition.ContentDefinition, error) {
+
+	// ! TODO: implement
+	return contentdefinition.ContentDefinition{}, nil
+}
+
 // type GetValidatorForProperty struct {
 // 	ContentDefinitionID  uuid.UUID
 // 	PropertyDefinitionID uuid.UUID

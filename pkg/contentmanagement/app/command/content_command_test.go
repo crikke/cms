@@ -66,7 +66,7 @@ func Test_CreateContent(t *testing.T) {
 	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
 		Name: "test2",
 		Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
-			content.NameField: {
+			contentdefinition.NameField: {
 				ID:          uuid.New(),
 				Description: "Content name",
 				Type:        "text",
@@ -150,13 +150,13 @@ func Test_UpdateContent(t *testing.T) {
 						Created: time.Now().UTC(),
 						Properties: content.ContentLanguage{
 							"sv-SE": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
 									Value:     "",
 								},
-								content.UrlSegmentField: content.ContentField{
+								contentdefinition.UrlSegmentField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
@@ -164,13 +164,13 @@ func Test_UpdateContent(t *testing.T) {
 								},
 							},
 							"en-US": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
 									Value:     "",
 								},
-								content.UrlSegmentField: content.ContentField{
+								contentdefinition.UrlSegmentField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
@@ -188,22 +188,22 @@ func Test_UpdateContent(t *testing.T) {
 			}{
 				{
 					Language: "sv-SE",
-					Field:    content.NameField,
+					Field:    contentdefinition.NameField,
 					Value:    "name-sv",
 				},
 				{
 					Language: "sv-SE",
-					Field:    content.UrlSegmentField,
+					Field:    contentdefinition.UrlSegmentField,
 					Value:    "url-sv",
 				},
 				{
 					Language: "en-US",
-					Field:    content.NameField,
+					Field:    contentdefinition.NameField,
 					Value:    "name-en",
 				},
 				{
 					Language: "en-US",
-					Field:    content.UrlSegmentField,
+					Field:    contentdefinition.UrlSegmentField,
 					Value:    "url-en",
 				},
 			},
@@ -213,13 +213,13 @@ func Test_UpdateContent(t *testing.T) {
 						Status: content.Draft,
 						Properties: content.ContentLanguage{
 							"sv-SE": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
 									Value:     "name-sv",
 								},
-								content.UrlSegmentField: content.ContentField{
+								contentdefinition.UrlSegmentField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
@@ -227,13 +227,13 @@ func Test_UpdateContent(t *testing.T) {
 								},
 							},
 							"en-US": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
 									Value:     "name-en",
 								},
-								content.UrlSegmentField: content.ContentField{
+								contentdefinition.UrlSegmentField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
@@ -255,7 +255,7 @@ func Test_UpdateContent(t *testing.T) {
 						Created: time.Now().UTC(),
 						Properties: content.ContentLanguage{
 							"sv-SE": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,
@@ -273,7 +273,7 @@ func Test_UpdateContent(t *testing.T) {
 			}{
 				{
 					Language: "nb-NO",
-					Field:    content.NameField,
+					Field:    contentdefinition.NameField,
 					Value:    "url-sv",
 				},
 			},
@@ -290,7 +290,7 @@ func Test_UpdateContent(t *testing.T) {
 						Created: time.Now().UTC(),
 						Properties: content.ContentLanguage{
 							"sv-SE": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: false,
@@ -298,7 +298,7 @@ func Test_UpdateContent(t *testing.T) {
 								},
 							},
 							"en-US": content.ContentFields{
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: false,
@@ -316,7 +316,7 @@ func Test_UpdateContent(t *testing.T) {
 			}{
 				{
 					Language: "en-US",
-					Field:    content.NameField,
+					Field:    contentdefinition.NameField,
 					Value:    "url-sv",
 				},
 			},
@@ -422,7 +422,7 @@ func Test_PublishContent(t *testing.T) {
 					0: {
 						Properties: content.ContentLanguage{
 							"sv-SE": {
-								content.NameField: content.ContentField{
+								contentdefinition.NameField: content.ContentField{
 									ID:        uuid.New(),
 									Type:      "text",
 									Localized: true,

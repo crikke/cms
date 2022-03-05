@@ -43,7 +43,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 func contentIdContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		req := ContentRequest{}
+		req := ContentID{}
 		contentID := chi.URLParam(r, "contentid")
 		if contentID == "" {
 
@@ -116,20 +116,6 @@ type ContentID struct {
 	Version int
 }
 
-// GetContentResponse is the representation of the content for the Content management API
-// It contains all information of given content for every configured language.
-//
-// swagger:response contentResponse
-type GetContentResponse struct {
-	// in: body
-	Body query.ContentReadModel
-}
-
-// swagger:parameters ContentRequest GetContent
-type ContentRequest struct {
-	ContentID
-}
-
 // swagger:route GET /content/{id} content GetContent
 //
 // Get content by id and optionally version
@@ -144,12 +130,27 @@ type ContentRequest struct {
 //       404: genericError
 //       400: genericError
 func (c contentEndpoint) GetContent() http.HandlerFunc {
+
+	// response is the representation of the content for the Content management API
+	// It contains all information of given content for every configured language.
+	//
+	// swagger:response contentResponse
+	type response struct {
+		// in: body
+		Body query.ContentReadModel
+	}
+
+	// swagger:parameters GetContent
+	type request struct {
+		ContentID
+	}
+
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		var req ContentRequest
+		var req request
 
 		if r := r.Context().Value(contentkey); r != nil {
-			req = r.(ContentRequest)
+			req = r.(request)
 		}
 
 		q := query.GetContent{
@@ -171,7 +172,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 			return
 		}
 
-		response := &GetContentResponse{Body: res}
+		response := &response{Body: res}
 		data, err := json.Marshal(response)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -181,22 +182,6 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 
 		rw.Write(data)
 	}
-}
-
-// swagger:parameters CreateContentRequest CreateContent
-type CreateContentRequest struct {
-	// Contentdefinition ID
-	// in: body
-	// required: true
-	ContentDefinitionId uuid.UUID `json:"contentdefinitionid"`
-	// ParentId
-	// in: body
-	ParentId uuid.UUID `json:"parentid"`
-}
-
-// swagger:response CreateContentResponse
-type CreateContentResponse struct {
-	Location string
 }
 
 // swagger:route POST /content content CreateContent
@@ -215,9 +200,25 @@ type CreateContentResponse struct {
 //       201: CreateContentResponse
 //		 400: genericError
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
+
+	// swagger:parameters CreateContent
+	type request struct {
+		// Contentdefinition ID
+		// in: body
+		// required: true
+		ContentDefinitionId uuid.UUID `json:"contentdefinitionid"`
+		// ParentId
+		// in: body
+		ParentId uuid.UUID `json:"parentid"`
+	}
+
+	// swagger:response response
+	type _ struct {
+		Location string
+	}
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		req := &CreateContentRequest{}
+		req := &request{}
 
 		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
@@ -253,19 +254,6 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 	}
 }
 
-// swagger:parameters UpdateContentRequest UpdateContent
-type UpdateContentRequest struct {
-	ContentID
-	Language string
-
-	// ! TODO remove swagger ignore
-	// swagger:ignore
-	Fields []struct {
-		Name  string
-		Value interface{}
-	}
-}
-
 // swagger:route PUT /content/{id} content UpdateContent
 //
 // Update content
@@ -282,13 +270,27 @@ type UpdateContentRequest struct {
 //		  404: genericError
 //        400: genericError
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
+
+	// swagger:parameters UpdateContent
+	type request struct {
+		ContentID
+		Language string
+
+		// ! TODO remove swagger ignore
+		// swagger:ignore
+		Fields []struct {
+			Name  string
+			Value interface{}
+		}
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		var req UpdateContentRequest
+		var req request
 
 		if r := r.Context().Value(contentkey); r != nil {
 			id := r.(ContentID)
-			req = UpdateContentRequest{ContentID: id}
+			req = request{ContentID: id}
 		}
 
 		// ! TODO: this needs to be remade.
@@ -313,13 +315,6 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 	}
 }
 
-// swagger:parameters DeleteContentRequest DeleteContent
-type DeleteContentRequest struct {
-	// ! TODO: Split ContentID and ContentVersion
-	// ! DeleteContent does not need ContentVersion
-	ContentID
-}
-
 // swagger:route DELETE /content/{id} content DeleteContent
 //
 // Delete content
@@ -336,13 +331,21 @@ type DeleteContentRequest struct {
 //		  404: genericError
 //        400: genericError
 func (c contentEndpoint) DeleteContent() http.HandlerFunc {
+
+	// swagger:parameters request DeleteContent
+	type request struct {
+		// ! TODO: Split ContentID and ContentVersion
+		// ! DeleteContent does not need ContentVersion
+		ContentID
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		var req DeleteContentRequest
+		var req request
 
 		if r := r.Context().Value(contentkey); r != nil {
 			id := r.(ContentID)
-			req = DeleteContentRequest{ContentID: id}
+			req = request{ContentID: id}
 		}
 		err := c.app.Commands.DeleteContent.Handle(
 			r.Context(),

@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/casbin/casbin/v2 v2.40.6
-	github.com/go-chi/chi v1.5.4
 	github.com/google/uuid v1.3.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0

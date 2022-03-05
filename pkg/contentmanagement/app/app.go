@@ -13,9 +13,13 @@ type App struct {
 type Queries struct {
 	GetContent  query.GetContentHandler
 	ListContent query.ListChildContentHandler
+
+	GetContentDefinition query.GetContentDefinitionHandler
 }
 type Commands struct {
 	CreateContent contentcmd.CreateContentHandler
 	UpdateField   contentcmd.UpdateFieldHandler
 	DeleteContent contentcmd.DeleteContentHandler
+
+	CreateContentDefinition contentcmd.CreateContentDefinitionHandler
 }
