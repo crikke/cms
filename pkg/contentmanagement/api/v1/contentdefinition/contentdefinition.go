@@ -28,8 +28,10 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", c.GetContentDefinition())
+			r.Delete("/", c.DeleteContentDefinition())
 		})
 		r.Post("/", c.CreateContentDefinition())
+		r.Get("/", c.ListContentDefinitions())
 	})
 }
 
@@ -165,5 +167,136 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 		}
 
 		w.Write(bytes)
+	}
+}
+
+// swagger:route GET /contentdefinition contentdefinition ListContentDefinitions
+//
+// Get all content definitions
+//
+//     Produces:
+//	   - application/json
+//
+//     Responses:
+//       200: ListContentDefinitionsResponse
+//		 400: genericError
+//		 500: genericError
+func (c contentEndpoint) ListContentDefinitions() http.HandlerFunc {
+
+	// swagger:response ListContentDefinitionsResponse
+	type _ struct {
+
+		// in: body
+		ContentDefinitions []struct {
+			Name string
+			ID   uuid.UUID
+		}
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+// swagger:route DELETE /contentdefinition/{id} contentdefinition DeleteContentDefinition
+//
+// Delete a content definition
+//
+//     Responses:
+//       200: OK
+//		 400: genericError
+//		 404: genericError
+//		 500: genericError
+func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
+
+	// swagger:parameters DeleteContentDefinition
+	type _ struct {
+		ID uuid.UUID
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var id uuid.UUID
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			id = uid
+		}
+
+		err := c.app.Commands.DeleteContentDefinition.Handle(r.Context(), command.DeleteContentDefinition{ID: id})
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+	}
+}
+
+// swagger:route PUT /contentdefinition/{id} contentdefinition UpdateContentDefinition
+//
+// Updates a contentdefinition
+//
+//     Responses:
+//       200: OK
+//		 400: genericError
+//		 404: genericError
+//		 500: genericError
+func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
+
+	type body struct {
+		Name        string
+		Description string
+	}
+
+	// swagger:parameters UpdateContentDefinition
+
+	type request struct {
+		Id uuid.UUID
+		// in:body
+		Body *body
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		req := &request{
+			Body: &body{},
+		}
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.Id = uid
+		}
+
+		err := json.NewDecoder(r.Body).Decode(req.Body)
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+		c.app.Commands.UpdateContentDefinition.Handle(r.Context(), command.UpdateContentDefinition{
+			ID: req.Id,
+		})
 	}
 }

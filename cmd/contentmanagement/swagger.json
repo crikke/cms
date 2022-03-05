@@ -177,6 +177,27 @@
       }
     },
     "/contentdefinition": {
+      "get": {
+        "description": "Get all content definitions",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "contentdefinition"
+        ],
+        "operationId": "ListContentDefinitions",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ListContentDefinitionsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
       "post": {
         "description": "Creates a new contentdefinition. The contentdefinition\nacts as a template for creating new content,\ncontaining what properties to create \u0026 their validation.",
         "consumes": [
@@ -240,6 +261,55 @@
             "$ref": "#/responses/GetContentDefinitionResponse"
           },
           "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
+      "put": {
+        "description": "Updates a contentdefinition",
+        "tags": [
+          "contentdefinition"
+        ],
+        "operationId": "UpdateContentDefinition",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "404": {
+            "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a content definition",
+        "tags": [
+          "contentdefinition"
+        ],
+        "operationId": "DeleteContentDefinition",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "ID",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "404": {
             "$ref": "#/responses/genericError"
           },
           "500": {
@@ -392,6 +462,23 @@
           "type": "string"
         },
         "Propertydefinitions": {}
+      }
+    },
+    "ListContentDefinitionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ID": {
+              "$ref": "#/definitions/UUID"
+            },
+            "Name": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "contentResponse": {

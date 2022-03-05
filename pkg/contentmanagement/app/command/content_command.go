@@ -59,13 +59,13 @@ type UpdateField struct {
 	Value     interface{}
 }
 
-type UpdateFieldHandler struct {
+type UpdateContentFieldHandler struct {
 	ContentRepository           content.ContentRepository
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	Factory                     content.Factory
 }
 
-func (h UpdateFieldHandler) Handle(ctx context.Context, cmd UpdateField) error {
+func (h UpdateContentFieldHandler) Handle(ctx context.Context, cmd UpdateField) error {
 
 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 		cv := c.Version[cmd.Version]

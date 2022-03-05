@@ -299,7 +299,7 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 		// ! otherwise partial updates can happen.
 		for _, field := range req.Fields {
 
-			err := c.app.Commands.UpdateField.Handle(r.Context(), command.UpdateField{
+			err := c.app.Commands.UpdateContentField.Handle(r.Context(), command.UpdateField{
 				ContentID: req.ID,
 				Version:   req.Version,
 				Value:     field.Name,

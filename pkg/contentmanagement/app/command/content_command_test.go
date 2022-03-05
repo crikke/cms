@@ -352,7 +352,7 @@ func Test_UpdateContent(t *testing.T) {
 					Value:     f.Value,
 				}
 
-				handler := UpdateFieldHandler{
+				handler := UpdateContentFieldHandler{
 					ContentRepository:           contentRepo,
 					ContentDefinitionRepository: cdRepo,
 					Factory:                     content.Factory{Cfg: &cfg},

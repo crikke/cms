@@ -17,9 +17,11 @@ type Queries struct {
 	GetContentDefinition query.GetContentDefinitionHandler
 }
 type Commands struct {
-	CreateContent contentcmd.CreateContentHandler
-	UpdateField   contentcmd.UpdateFieldHandler
-	DeleteContent contentcmd.DeleteContentHandler
+	CreateContent      contentcmd.CreateContentHandler
+	UpdateContentField contentcmd.UpdateContentFieldHandler
+	DeleteContent      contentcmd.DeleteContentHandler
 
 	CreateContentDefinition contentcmd.CreateContentDefinitionHandler
+	UpdateContentDefinition contentcmd.UpdateContentDefinitionHandler
+	DeleteContentDefinition contentcmd.DeleteContentDefinitionHandler
 }
