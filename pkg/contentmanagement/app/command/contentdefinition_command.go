@@ -43,9 +43,9 @@ func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateCo
 }
 
 type UpdateContentDefinition struct {
-	ID          uuid.UUID `bson:"_id,omitempty"`
-	Name        string    `bson:"omitempty"`
-	Description string    `bson:"omitempty"`
+	ContentDefinitionID uuid.UUID `bson:"_id,omitempty"`
+	Name                string    `bson:"omitempty"`
+	Description         string    `bson:"omitempty"`
 }
 
 type UpdateContentDefinitionHandler struct {
@@ -59,7 +59,7 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 		fmt.Println("UpdateContentDefinitionHandler", cmd, err)
 	}()
 
-	err = c.repo.UpdateContentDefinition(ctx, cmd.ID, func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+	err = c.repo.UpdateContentDefinition(ctx, cmd.ContentDefinitionID, func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 		if cmd.Name != "" {
 			cd.Name = cmd.Name

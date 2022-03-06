@@ -83,7 +83,7 @@ func Test_UpdateContentDefinition(t *testing.T) {
 			assert.NoError(t, err)
 
 			cmd := test.updatecmd
-			cmd.ID = id
+			cmd.ContentDefinitionID = id
 
 			handler := UpdateContentDefinitionHandler{repo: repo}
 			handler.Handle(context.TODO(), cmd)

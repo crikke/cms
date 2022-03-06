@@ -24,18 +24,30 @@ func NewContentDefinitionEndpoint(app app.App) contentEndpoint {
 
 func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
-	router.Route("/contentdefinition", func(r chi.Router) {
+	router.Route("/contentdefinitions", func(r chi.Router) {
+
+		r.Get("/", c.ListContentDefinitions())
+		r.Post("/", c.CreateContentDefinition())
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", c.GetContentDefinition())
 			r.Delete("/", c.DeleteContentDefinition())
+			r.Put("/", c.UpdateContentDefinition())
+
+			r.Route("/propertydefinitions", func(r chi.Router) {
+
+				r.Post("/", c.CreatePropertyDefinition())
+
+				r.Route("/{name}", func(r chi.Router) {
+
+				})
+			})
 		})
-		r.Post("/", c.CreateContentDefinition())
-		r.Get("/", c.ListContentDefinitions())
+
 	})
 }
 
-// swagger:route POST /contentdefinition contentdefinition CreateContentDefinition
+// swagger:route POST /contentdefinitions contentdefinition CreateContentDefinition
 //
 // Creates a new content definition
 //
@@ -103,7 +115,7 @@ func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /contentdefinition/{id} contentdefinition GetContentDefinition
+// swagger:route GET /contentdefinitions/{id} contentdefinition GetContentDefinition
 //
 // Gets a content definition
 //
@@ -170,7 +182,7 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /contentdefinition contentdefinition ListContentDefinitions
+// swagger:route GET /contentdefinitions contentdefinition ListContentDefinitions
 //
 // Get all content definitions
 //
@@ -198,7 +210,7 @@ func (c contentEndpoint) ListContentDefinitions() http.HandlerFunc {
 	}
 }
 
-// swagger:route DELETE /contentdefinition/{id} contentdefinition DeleteContentDefinition
+// swagger:route DELETE /contentdefinitions/{id} contentdefinition DeleteContentDefinition
 //
 // Delete a content definition
 //
@@ -242,7 +254,7 @@ func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route PUT /contentdefinition/{id} contentdefinition UpdateContentDefinition
+// swagger:route PUT /contentdefinitions/{id} contentdefinition UpdateContentDefinition
 //
 // Updates a contentdefinition
 //
@@ -296,7 +308,68 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 		}
 
 		c.app.Commands.UpdateContentDefinition.Handle(r.Context(), command.UpdateContentDefinition{
-			ID: req.Id,
+			ContentDefinitionID: req.Id,
 		})
+	}
+}
+
+// swagger:route PUT /contentdefinitions/{id}/propertydefinitions contentdefinition CreatePropertyDefinition
+//
+// Creates a new propertydefinition
+//
+//     Responses:
+//       200: OK
+//		 400: genericError
+//		 404: genericError
+//		 500: genericError
+func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
+
+	type body struct {
+		Name        string
+		Description string
+		// ! TODO should not be string, probably enum
+		Type string
+	}
+	type request struct {
+		Id uuid.UUID
+		// in:body
+		Body *body
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		req := &request{
+			Body: &body{},
+		}
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.Id = uid
+		}
+
+		_, err := c.app.Commands.CreatePropertyDefinition.Handle(r.Context(), command.CreatePropertyDefinition{
+			ContentDefinitionID: req.Id,
+			Name:                req.Body.Name,
+			Description:         req.Body.Description,
+			Type:                req.Body.Type,
+		})
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
 	}
 }

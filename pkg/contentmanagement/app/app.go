@@ -24,4 +24,6 @@ type Commands struct {
 	CreateContentDefinition contentcmd.CreateContentDefinitionHandler
 	UpdateContentDefinition contentcmd.UpdateContentDefinitionHandler
 	DeleteContentDefinition contentcmd.DeleteContentDefinitionHandler
+
+	CreatePropertyDefinition contentcmd.CreatePropertyDefinitionHandler
 }
