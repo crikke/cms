@@ -27,31 +27,27 @@ var (
 			Build()
 )
 
-// M
-type Db interface {
-}
+// type MongoDb struct {
+// 	client *mongo.Client
+// }
 
-type MongoDb struct {
-	client *mongo.Client
-}
+// func NewMongoDB(ctx context.Context, connectionString string, opts ...func(*MongoDb) error) (Db, error) {
+// 	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(connectionString))
 
-func NewMongoDB(ctx context.Context, connectionString string, opts ...func(*MongoDb) error) (Db, error) {
-	c, err := mongo.Connect(ctx, options.Client().SetRegistry(registry), options.Client().ApplyURI(connectionString))
+// 	if err != nil {
+// 		return nil, err
 
-	if err != nil {
-		return nil, err
+// 	}
+// 	d := &MongoDb{client: c}
 
-	}
-	d := &MongoDb{client: c}
-
-	for _, opt := range opts {
-		err = opt(d)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return d, nil
-}
+// 	for _, opt := range opts {
+// 		err = opt(d)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	return d, nil
+// }
 
 func Connect(ctx context.Context, connectionstring string) (*mongo.Client, error) {
 

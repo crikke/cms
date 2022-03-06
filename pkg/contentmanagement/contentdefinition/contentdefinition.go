@@ -13,6 +13,7 @@ const (
 	UrlSegmentField = "url"
 )
 
+// swagger:model ContentDefinition
 type ContentDefinition struct {
 	ID                  uuid.UUID `bson:"_id"`
 	Name                string    `bson:"name,omitempty"`
@@ -21,6 +22,7 @@ type ContentDefinition struct {
 	Propertydefinitions map[string]PropertyDefinition
 }
 
+// swagger:model PropertyDefinition
 type PropertyDefinition struct {
 	ID uuid.UUID `bson:"id"`
 	// Name        string    `bson:"name,omitempty"`

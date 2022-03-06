@@ -1,10 +1,5 @@
-/*
-	Test TODOS:
+//go:build integration
 
-	Tests involving version & status.
-	Publish new version previous version should be set to  unpublished
-	Updating a published version, the new version should be status draft
-*/
 package command
 
 import (

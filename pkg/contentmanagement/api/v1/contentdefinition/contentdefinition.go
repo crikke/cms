@@ -9,7 +9,6 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -25,6 +24,8 @@ func NewContentDefinitionEndpoint(app app.App) contentEndpoint {
 func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 	router.Route("/contentdefinitions", func(r chi.Router) {
+
+		// ! TODO ContentDefinitionID should use Context instead to remove duplicate code
 
 		r.Get("/", c.ListContentDefinitions())
 		r.Post("/", c.CreateContentDefinition())
@@ -122,11 +123,13 @@ func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 //
 // Gets a content definition
 //
+// Gets a content definition by ID
+//
 //     Consumes:
 //	   - application/json
 //
 //     Responses:
-//       200: GetContentDefinitionResponse
+//       200: ContentDefinition
 //		 400: genericError
 //		 500: genericError
 func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
@@ -136,10 +139,10 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 		ID uuid.UUID
 	}
 
-	// swagger:response GetContentDefinitionResponse
-	type response struct {
-		contentdefinition.ContentDefinition
-	}
+	// // swagger:response GetContentDefinitionResponse
+	// type response struct {
+	// 	contentdefinition.ContentDefinition
+	// }
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -169,9 +172,9 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 			return
 		}
 
-		res := &response{cd}
+		// res := &response{cd}
 
-		bytes, err := json.Marshal(res)
+		bytes, err := json.Marshal(&cd)
 
 		if err != nil {
 			api.WithError(r.Context(), api.GenericError{
@@ -188,6 +191,8 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 // swagger:route GET /contentdefinitions contentdefinition ListContentDefinitions
 //
 // Get all content definitions
+//
+// Gets all existing contentdefinitions
 //
 //     Produces:
 //	   - application/json
@@ -451,6 +456,8 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 }
 
 // swagger:route DELETE /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition DeletePropertyDefinition
+//
+// Deletes a propertydefinition
 //
 // Deletes an property definition
 //

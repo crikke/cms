@@ -197,7 +197,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 //     - application/json
 //
 //     Responses:
-//       201: CreateContentResponse
+//       201: Location
 //		 400: genericError
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
@@ -212,10 +212,6 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 		ParentId uuid.UUID `json:"parentid"`
 	}
 
-	// swagger:response response
-	type _ struct {
-		Location string
-	}
 	return func(rw http.ResponseWriter, r *http.Request) {
 
 		req := &request{}

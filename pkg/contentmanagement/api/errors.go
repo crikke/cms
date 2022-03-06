@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+func init() {
+
+}
+
 type key string
 
 var errorKey = key("error")
@@ -37,7 +41,7 @@ type ErrorBody struct {
 }
 
 // GenericError
-// swagger:response genericError
+// swagger:model genericError
 type GenericError struct {
 	// in: body
 	Body ErrorBody

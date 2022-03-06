@@ -38,10 +38,13 @@
         ],
         "responses": {
           "201": {
-            "$ref": "#/responses/CreateContentResponse"
+            "$ref": "#/responses/Location"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       }
@@ -79,10 +82,16 @@
             "$ref": "#/responses/contentResponse"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "404": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       },
@@ -126,10 +135,16 @@
             "$ref": "#/responses/OK"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "404": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       },
@@ -168,33 +183,46 @@
             "$ref": "#/responses/OK"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "404": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       }
     },
     "/contentdefinitions": {
       "get": {
-        "description": "Get all content definitions",
+        "description": "Gets all existing contentdefinitions",
         "produces": [
           "application/json"
         ],
         "tags": [
           "contentdefinition"
         ],
+        "summary": "Get all content definitions",
         "operationId": "ListContentDefinitions",
         "responses": {
           "200": {
             "$ref": "#/responses/ListContentDefinitionsResponse"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       },
@@ -231,23 +259,30 @@
             "$ref": "#/responses/CreateContentDefinitionResponse"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       }
     },
     "/contentdefinitions/{id}": {
       "get": {
-        "description": "Gets a content definition",
+        "description": "Gets a content definition by ID",
         "consumes": [
           "application/json"
         ],
         "tags": [
           "contentdefinition"
         ],
+        "summary": "Gets a content definition",
         "operationId": "GetContentDefinition",
         "parameters": [
           {
@@ -258,13 +293,22 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/GetContentDefinitionResponse"
+            "description": "ContentDefinition",
+            "schema": {
+              "$ref": "#/definitions/ContentDefinition"
+            }
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       },
@@ -302,13 +346,22 @@
             "$ref": "#/responses/OK"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "404": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       },
@@ -330,13 +383,22 @@
             "$ref": "#/responses/OK"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "404": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       }
@@ -379,13 +441,22 @@
             "$ref": "#/responses/OK"
           },
           "400": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "404": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       }
@@ -445,7 +516,10 @@
             "$ref": "#/responses/OK"
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       },
@@ -455,6 +529,7 @@
           "contentdefinition",
           "propertydefinition"
         ],
+        "summary": "Deletes a propertydefinition",
         "operationId": "DeletePropertyDefinition",
         "parameters": [
           {
@@ -473,13 +548,41 @@
             "$ref": "#/responses/OK"
           },
           "500": {
-            "$ref": "#/responses/genericError"
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
           }
         }
       }
     }
   },
   "definitions": {
+    "ContentDefinition": {
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "ID": {
+          "$ref": "#/definitions/UUID"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Propertydefinitions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/PropertyDefinition"
+          }
+        }
+      },
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+    },
     "ContentField": {
       "description": "ContentField describes the property aswell as its value\nswagger: model ContentField",
       "type": "object",
@@ -589,6 +692,17 @@
         "format": "uint8"
       },
       "x-go-package": "github.com/google/uuid"
+    },
+    "genericError": {
+      "description": "GenericError",
+      "type": "object",
+      "properties": {
+        "Body": {
+          "$ref": "#/definitions/ErrorBody"
+        }
+      },
+      "x-go-name": "GenericError",
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/api"
     }
   },
   "responses": {
@@ -598,30 +712,6 @@
         "Location": {
           "type": "string"
         }
-      }
-    },
-    "GetContentDefinitionResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/definitions/PropertyDefinition"
-        },
-        "$ref": "#/definitions/UUID"
-      },
-      "headers": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Description": {
-          "type": "string"
-        },
-        "ID": {},
-        "Name": {
-          "type": "string"
-        },
-        "Propertydefinitions": {}
       }
     },
     "ListContentDefinitionsResponse": {
@@ -641,24 +731,21 @@
         }
       }
     },
-    "contentResponse": {
-      "description": "response is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
-      "schema": {
-        "$ref": "#/definitions/Contentresponse"
-      }
-    },
-    "genericError": {
-      "description": "GenericError",
-      "schema": {
-        "$ref": "#/definitions/ErrorBody"
-      }
-    },
-    "response": {
+    "Location": {
       "description": "",
       "headers": {
         "Location": {
           "type": "string"
         }
+      }
+    },
+    "OK": {
+      "description": "No content returned"
+    },
+    "contentResponse": {
+      "description": "response is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
+      "schema": {
+        "$ref": "#/definitions/Contentresponse"
       }
     }
   }

@@ -1,3 +1,5 @@
+//go:build integration
+
 package query
 
 // func Test_GetPropertyDefinitionValidationRule(t *testing.T) {
