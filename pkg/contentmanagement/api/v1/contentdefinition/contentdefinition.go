@@ -38,8 +38,11 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 				r.Post("/", c.CreatePropertyDefinition())
 
-				r.Route("/{name}", func(r chi.Router) {
+				r.Route("/{pid}", func(r chi.Router) {
+					r.Put("/", c.UpdatePropertyDefinition())
+					r.Delete("/", c.DeletePropertyDefinition())
 
+					r.Put("/validator", c.UpdatePropertyDefinitionValidator())
 				})
 			})
 		})
@@ -271,7 +274,6 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 	}
 
 	// swagger:parameters UpdateContentDefinition
-
 	type request struct {
 		Id uuid.UUID
 		// in:body
@@ -313,7 +315,7 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route PUT /contentdefinitions/{id}/propertydefinitions contentdefinition CreatePropertyDefinition
+// swagger:route POST /contentdefinitions/{id}/propertydefinitions contentdefinition CreatePropertyDefinition
 //
 // Creates a new propertydefinition
 //
@@ -330,6 +332,7 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 		// ! TODO should not be string, probably enum
 		Type string
 	}
+	// swagger:parameters CreatePropertyDefinition
 	type request struct {
 		Id uuid.UUID
 		// in:body
@@ -361,6 +364,218 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 			Name:                req.Body.Name,
 			Description:         req.Body.Description,
 			Type:                req.Body.Type,
+		})
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+	}
+}
+
+// swagger:route PUT /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition UpdatePropertyDefinition
+//
+// Updates an property definition
+//
+//     Responses:
+//		 200: OK
+//		 500: genericError
+func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
+
+	// swagger:parameters UpdatePropertyDefinition
+	type request struct {
+		ContentDefinitionID  uuid.UUID
+		PropertyDefinitionID uuid.UUID
+		// in:body
+		Body *struct {
+			Name        *string
+			Description *string
+			Localized   *bool
+		}
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		req := &request{
+			Body: &struct {
+				Name        *string
+				Description *string
+				Localized   *bool
+			}{},
+		}
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.ContentDefinitionID = uid
+		}
+
+		if param := chi.URLParam(r, "pid"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.PropertyDefinitionID = uid
+		}
+
+		err := c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), command.UpdatePropertyDefinition{
+			ContentDefinitionID:  req.ContentDefinitionID,
+			PropertyDefinitionID: req.PropertyDefinitionID,
+			Name:                 req.Body.Name,
+			Description:          req.Body.Description,
+			Localized:            req.Body.Localized,
+		})
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+	}
+}
+
+// swagger:route DELETE /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition DeletePropertyDefinition
+//
+// Deletes an property definition
+//
+//     Responses:
+//		 200: OK
+//		 500: genericError
+func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
+
+	// swagger:parameters DeletePropertyDefinition
+	type request struct {
+		ContentDefinitionID  uuid.UUID
+		PropertyDefinitionID uuid.UUID
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		req := &request{}
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.ContentDefinitionID = uid
+		}
+
+		if param := chi.URLParam(r, "pid"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.PropertyDefinitionID = uid
+		}
+
+		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{
+			ContentDefinitionID:  req.ContentDefinitionID,
+			PropertyDefinitionID: req.PropertyDefinitionID,
+		})
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+	}
+}
+
+// swagger:route PUT /contentdefinitions/{id}/propertydefinitions/{pid}/validator contentdefinition UpdatePropertyDefinitionValidator
+//
+// Deletes an property definition
+//
+//     Responses:
+//		 200: OK
+//		 500: genericError
+func (c contentEndpoint) UpdatePropertyDefinitionValidator() http.HandlerFunc {
+
+	// ! TODO: this should be refactored/remade,
+	// ! each PropertyDefinition should already have fields for each validator which can be set.
+	// ! So this endpoint will not be needed and instead UpdatePropertyDefinition will be used.
+
+	// swagger:parameters DeletePropertyDefinition
+	type request struct {
+		ContentDefinitionID  uuid.UUID
+		PropertyDefinitionID uuid.UUID
+		Name                 string
+		Value                interface{}
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		req := &request{}
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.ContentDefinitionID = uid
+		}
+
+		if param := chi.URLParam(r, "pid"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.PropertyDefinitionID = uid
+		}
+
+		err := c.app.Commands.UpdateValidator.Handle(r.Context(), command.UpdateValidator{
+			ContentDefinitionID:  req.ContentDefinitionID,
+			PropertyDefinitionID: req.PropertyDefinitionID,
+			ValidatorName:        req.Name,
+			Value:                req.Value,
 		})
 
 		if err != nil {

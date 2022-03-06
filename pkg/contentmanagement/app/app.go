@@ -26,4 +26,8 @@ type Commands struct {
 	DeleteContentDefinition contentcmd.DeleteContentDefinitionHandler
 
 	CreatePropertyDefinition contentcmd.CreatePropertyDefinitionHandler
+	UpdatePropertyDefinition contentcmd.UpdatePropertyDefinitionHandler
+	DeletePropertyDefinition contentcmd.DeletePropertyDefinitionHandler
+
+	UpdateValidator contentcmd.UpdateValidatorHandler
 }

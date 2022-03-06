@@ -195,7 +195,6 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 		cmd.ContentDefinitionID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
-			// idx := 0
 			pd := contentdefinition.PropertyDefinition{}
 			name := ""
 			for n, p := range cd.Propertydefinitions {
