@@ -7,8 +7,12 @@ IMAGE_TAG := local
 all: test vet 
 
 .PHONY: test
-test: db-seed
-	go test ./... 
+test: 
+	go test ./... -tags=unit
+
+.PHONY: integration
+integration: db-up
+	go test ./... -tags=integration -p 1
 
 .PHONY: vet
 vet:
