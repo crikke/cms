@@ -12,6 +12,8 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
+	"github.com/crikke/cms/pkg/contentmanagement/content"
 	domain "github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/db"
@@ -22,11 +24,10 @@ import (
 	"golang.org/x/text/language"
 )
 
-func Test_CreateContent(t *testing.T) {
+func Test_CreateAndFetchContent(t *testing.T) {
 
 	// create content definition
 	client, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-
 	assert.NoError(t, err)
 
 	cd, _ := contentdefinition.NewContentDefinition("test contentdefinition", "test desc")
@@ -50,6 +51,11 @@ func Test_CreateContent(t *testing.T) {
 					}},
 			},
 		},
+		Queries: app.Queries{
+			GetContent: query.GetContentHandler{
+				Repo: contentRepo,
+			},
+		},
 	})
 
 	r := chi.NewRouter()
@@ -69,12 +75,31 @@ func Test_CreateContent(t *testing.T) {
 	err = json.NewEncoder(&buf).Encode(body)
 	assert.NoError(t, err)
 
-	req, err := http.NewRequest(http.MethodPost, "/contentdefinition", &buf)
+	req, err := http.NewRequest(http.MethodPost, "/content", &buf)
 	assert.NoError(t, err)
 
 	res := httptest.NewRecorder()
-
 	r.ServeHTTP(res, req)
 
+	// assert
+
+	// get the created content
+	// assert that its contentdefinition id matches the test contentdefinition id
 	assert.Equal(t, res.Result().StatusCode, http.StatusCreated)
+
+	location, err := res.Result().Location()
+	assert.NoError(t, err)
+
+	req2, err := http.NewRequest(http.MethodGet, location.String(), nil)
+	res2 := httptest.NewRecorder()
+
+	r.ServeHTTP(res2, req2)
+
+	actual := &query.ContentReadModel{}
+
+	err = json.NewDecoder(res2.Body).Decode(actual)
+	assert.NoError(t, err)
+
+	assert.Equal(t, cd.ID, actual.ContentDefinitionID)
+	assert.Equal(t, content.Draft, actual.Status)
 }

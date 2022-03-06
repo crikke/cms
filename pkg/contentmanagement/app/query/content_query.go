@@ -10,6 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// ContentReadModel is the representation of the content for the Content management API
+// It contains all information of given content for every configured language.
+//
 // swagger:model Contentresponse
 type ContentReadModel struct {
 	ID                  uuid.UUID

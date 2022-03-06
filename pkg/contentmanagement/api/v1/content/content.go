@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/crikke/cms/pkg/contentmanagement/api"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
@@ -44,7 +43,7 @@ func contentIdContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		req := ContentID{}
-		contentID := chi.URLParam(r, "contentid")
+		contentID := chi.URLParam(r, "id")
 		if contentID == "" {
 
 			api.WithError(r.Context(), api.GenericError{
@@ -69,36 +68,36 @@ func contentIdContext(next http.Handler) http.Handler {
 			})
 			return
 		}
-		version := r.URL.Query().Get("version")
+		// version := r.URL.Query().Get("version")
 
-		if version != "" {
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
-					Message:   "parameter version is required",
-					FieldName: "version",
-				},
-				StatusCode: http.StatusBadRequest,
-			})
-			return
-		}
+		// if version != "" {
+		// 	api.WithError(r.Context(), api.GenericError{
+		// 		Body: api.ErrorBody{
+		// 			Message:   "parameter version is required",
+		// 			FieldName: "version",
+		// 		},
+		// 		StatusCode: http.StatusBadRequest,
+		// 	})
+		// 	return
+		// }
 
-		v, err := strconv.Atoi(version)
-		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
-					Message:   "bad formatted version",
-					FieldName: "version",
-				},
-				StatusCode: http.StatusBadRequest,
-			})
-			return
-		}
+		// v, err := strconv.Atoi(version)
+		// if err != nil {
+		// 	api.WithError(r.Context(), api.GenericError{
+		// 		Body: api.ErrorBody{
+		// 			Message:   "bad formatted version",
+		// 			FieldName: "version",
+		// 		},
+		// 		StatusCode: http.StatusBadRequest,
+		// 	})
+		// 	return
+		// }
 
-		req.Version = v
+		// req.Version = v
 
 		req.ID = cid
 
-		ctx := context.WithValue(r.Context(), contentkey, cid)
+		ctx := context.WithValue(r.Context(), contentkey, req)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -126,19 +125,10 @@ type ContentID struct {
 //     - application/json
 //
 //     Responses:
-//       200: contentResponse
+//       200: body:Contentresponse
 //       404: genericError
 //       400: genericError
 func (c contentEndpoint) GetContent() http.HandlerFunc {
-
-	// response is the representation of the content for the Content management API
-	// It contains all information of given content for every configured language.
-	//
-	// swagger:response contentResponse
-	type response struct {
-		// in: body
-		Body query.ContentReadModel
-	}
 
 	// swagger:parameters GetContent
 	type request struct {
@@ -150,7 +140,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 		var req request
 
 		if r := r.Context().Value(contentkey); r != nil {
-			req = r.(request)
+			req = request{r.(ContentID)}
 		}
 
 		q := query.GetContent{
@@ -172,8 +162,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 			return
 		}
 
-		response := &response{Body: res}
-		data, err := json.Marshal(response)
+		data, err := json.Marshal(&res)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write([]byte(err.Error()))

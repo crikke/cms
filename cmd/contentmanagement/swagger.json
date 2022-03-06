@@ -79,7 +79,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/contentResponse"
+            "description": "Contentresponse",
+            "schema": {
+              "$ref": "#/definitions/Contentresponse"
+            }
           },
           "400": {
             "description": "genericError",
@@ -619,6 +622,7 @@
       "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content"
     },
     "Contentresponse": {
+      "description": "ContentReadModel is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
       "type": "object",
       "properties": {
         "ContentDefinitionID": {
@@ -741,12 +745,6 @@
     },
     "OK": {
       "description": "No content returned"
-    },
-    "contentResponse": {
-      "description": "response is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",
-      "schema": {
-        "$ref": "#/definitions/Contentresponse"
-      }
     }
   }
 }
