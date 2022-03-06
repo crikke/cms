@@ -42,7 +42,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 					r.Put("/", c.UpdatePropertyDefinition())
 					r.Delete("/", c.DeletePropertyDefinition())
 
-					r.Put("/validator", c.UpdatePropertyDefinitionValidator())
+					// r.Put("/validator", c.UpdatePropertyDefinitionValidator())
 				})
 			})
 		})
@@ -268,23 +268,20 @@ func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
 //		 500: genericError
 func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 
-	type body struct {
-		Name        string
-		Description string
-	}
-
 	// swagger:parameters UpdateContentDefinition
 	type request struct {
+		// ID
 		Id uuid.UUID
 		// in:body
-		Body *body
+		Body struct {
+			Name        string
+			Description string
+		}
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{
-			Body: &body{},
-		}
+		req := &request{}
 
 		if param := chi.URLParam(r, "id"); param != "" {
 
@@ -300,7 +297,7 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 			req.Id = uid
 		}
 
-		err := json.NewDecoder(r.Body).Decode(req.Body)
+		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
 			api.WithError(r.Context(), api.GenericError{
 				Body:       api.ErrorBody{Message: err.Error()},
@@ -315,7 +312,7 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route POST /contentdefinitions/{id}/propertydefinitions contentdefinition CreatePropertyDefinition
+// swagger:route POST /contentdefinitions/{id}/propertydefinitions contentdefinition propertydefinition CreatePropertyDefinition
 //
 // Creates a new propertydefinition
 //
@@ -325,25 +322,21 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 //		 404: genericError
 //		 500: genericError
 func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
+	// ! TODO Type should not be string, probably enum
 
-	type body struct {
-		Name        string
-		Description string
-		// ! TODO should not be string, probably enum
-		Type string
-	}
 	// swagger:parameters CreatePropertyDefinition
 	type request struct {
 		Id uuid.UUID
-		// in:body
-		Body *body
+		// in: body
+		Body struct {
+			Name        string
+			Description string
+			Type        string
+		}
 	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{
-			Body: &body{},
-		}
+		req := &request{}
 
 		if param := chi.URLParam(r, "id"); param != "" {
 
@@ -377,7 +370,7 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route PUT /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition UpdatePropertyDefinition
+// swagger:route PUT /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition UpdatePropertyDefinition
 //
 // Updates an property definition
 //
@@ -388,25 +381,24 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 
 	// swagger:parameters UpdatePropertyDefinition
 	type request struct {
-		ContentDefinitionID  uuid.UUID
+		// required:true
+		ContentDefinitionID uuid.UUID
+		// required:true
 		PropertyDefinitionID uuid.UUID
 		// in:body
-		Body *struct {
-			Name        *string
-			Description *string
-			Localized   *bool
+		Body struct {
+			// required:true
+			Name string
+			// required:true
+			Description string
+			// required:true
+			Localized bool
 		}
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{
-			Body: &struct {
-				Name        *string
-				Description *string
-				Localized   *bool
-			}{},
-		}
+		req := &request{}
 
 		if param := chi.URLParam(r, "id"); param != "" {
 
@@ -435,14 +427,15 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 			}
 			req.PropertyDefinitionID = uid
 		}
-
-		err := c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), command.UpdatePropertyDefinition{
+		cmd := command.UpdatePropertyDefinition{
 			ContentDefinitionID:  req.ContentDefinitionID,
 			PropertyDefinitionID: req.PropertyDefinitionID,
-			Name:                 req.Body.Name,
-			Description:          req.Body.Description,
-			Localized:            req.Body.Localized,
-		})
+			Name:                 &req.Body.Name,
+			Description:          &req.Body.Description,
+			Localized:            &req.Body.Localized,
+		}
+
+		err := c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
 
 		if err != nil {
 			api.WithError(r.Context(), api.GenericError{
@@ -455,7 +448,7 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route DELETE /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition DeletePropertyDefinition
+// swagger:route DELETE /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition DeletePropertyDefinition
 //
 // Deletes an property definition
 //
@@ -466,7 +459,9 @@ func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
 
 	// swagger:parameters DeletePropertyDefinition
 	type request struct {
-		ContentDefinitionID  uuid.UUID
+		// required:true
+		ContentDefinitionID uuid.UUID
+		// required:true
 		PropertyDefinitionID uuid.UUID
 	}
 
@@ -505,77 +500,6 @@ func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
 		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{
 			ContentDefinitionID:  req.ContentDefinitionID,
 			PropertyDefinitionID: req.PropertyDefinitionID,
-		})
-
-		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
-			return
-		}
-
-	}
-}
-
-// swagger:route PUT /contentdefinitions/{id}/propertydefinitions/{pid}/validator contentdefinition UpdatePropertyDefinitionValidator
-//
-// Deletes an property definition
-//
-//     Responses:
-//		 200: OK
-//		 500: genericError
-func (c contentEndpoint) UpdatePropertyDefinitionValidator() http.HandlerFunc {
-
-	// ! TODO: this should be refactored/remade,
-	// ! each PropertyDefinition should already have fields for each validator which can be set.
-	// ! So this endpoint will not be needed and instead UpdatePropertyDefinition will be used.
-
-	// swagger:parameters DeletePropertyDefinition
-	type request struct {
-		ContentDefinitionID  uuid.UUID
-		PropertyDefinitionID uuid.UUID
-		Name                 string
-		Value                interface{}
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		req := &request{}
-
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.ContentDefinitionID = uid
-		}
-
-		if param := chi.URLParam(r, "pid"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.PropertyDefinitionID = uid
-		}
-
-		err := c.app.Commands.UpdateValidator.Handle(r.Context(), command.UpdateValidator{
-			ContentDefinitionID:  req.ContentDefinitionID,
-			PropertyDefinitionID: req.PropertyDefinitionID,
-			ValidatorName:        req.Name,
-			Value:                req.Value,
 		})
 
 		if err != nil {

@@ -176,7 +176,7 @@
         }
       }
     },
-    "/contentdefinition": {
+    "/contentdefinitions": {
       "get": {
         "description": "Get all content definitions",
         "produces": [
@@ -239,7 +239,7 @@
         }
       }
     },
-    "/contentdefinition/{id}": {
+    "/contentdefinitions/{id}": {
       "get": {
         "description": "Gets a content definition",
         "consumes": [
@@ -274,6 +274,29 @@
           "contentdefinition"
         ],
         "operationId": "UpdateContentDefinition",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "description": "ID",
+            "name": "Id",
+            "in": "query"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Description": {
+                  "type": "string"
+                },
+                "Name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/OK"
@@ -311,6 +334,153 @@
           },
           "404": {
             "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/contentdefinitions/{id}/propertydefinitions": {
+      "post": {
+        "description": "Creates a new propertydefinition",
+        "tags": [
+          "contentdefinition",
+          "propertydefinition"
+        ],
+        "operationId": "CreatePropertyDefinition",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "Id",
+            "in": "query"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Description": {
+                  "type": "string"
+                },
+                "Name": {
+                  "type": "string"
+                },
+                "Type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "400": {
+            "$ref": "#/responses/genericError"
+          },
+          "404": {
+            "$ref": "#/responses/genericError"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/contentdefinitions/{id}/propertydefinitions/{pid}": {
+      "put": {
+        "description": "Updates an property definition",
+        "tags": [
+          "contentdefinition",
+          "propertydefinition"
+        ],
+        "operationId": "UpdatePropertyDefinition",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "ContentDefinitionID",
+            "in": "query"
+          },
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "PropertyDefinitionID",
+            "in": "query"
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "Name",
+                "Description",
+                "Localized"
+              ],
+              "properties": {
+                "Description": {
+                  "type": "string"
+                },
+                "Localized": {
+                  "type": "boolean"
+                },
+                "Name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes an property definition",
+        "tags": [
+          "contentdefinition",
+          "propertydefinition"
+        ],
+        "operationId": "DeletePropertyDefinition",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "ContentDefinitionID",
+            "in": "query"
+          },
+          {
+            "$ref": "#/definitions/UUID",
+            "name": "PropertyDefinitionID",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "500": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/contentdefinitions/{id}/propertydefinitions/{pid}/validator": {
+      "put": {
+        "description": "Deletes an property definition",
+        "tags": [
+          "contentdefinition"
+        ],
+        "operationId": "UpdatePropertyDefinitionValidator",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
           },
           "500": {
             "$ref": "#/responses/genericError"
