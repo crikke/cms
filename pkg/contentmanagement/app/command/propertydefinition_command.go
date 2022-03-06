@@ -81,6 +81,7 @@ type UpdatePropertyDefinition struct {
 	Name                 *string
 	Description          *string
 	Localized            *bool
+	Rules                map[string]interface{}
 }
 
 type UpdatePropertyDefinitionHandler struct {
@@ -128,6 +129,11 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 			if cmd.Localized != nil {
 				pd.Localized = *cmd.Localized
 			}
+
+			for k, v := range cmd.Rules {
+				pd.Validators[k] = v
+			}
+
 			cd.Propertydefinitions[pdName] = pd
 			return cd, nil
 		})

@@ -32,12 +32,47 @@ type PropertyDefinition struct {
 	Validators map[string]interface{} `bson:"validators,omitempty"`
 }
 
+type PropertyDefinitionFactory struct {
+}
+
+func (f PropertyDefinitionFactory) NewPropertyDefinition(typ, description string, localized bool) (PropertyDefinition, error) {
+
+	pd := PropertyDefinition{
+		ID:          uuid.New(),
+		Description: description,
+		Type:        typ,
+		Localized:   localized,
+		Validators: map[string]interface{}{
+			validator.RuleRequired: validator.Required(false),
+		},
+	}
+
+	switch typ {
+	case PropertyTypeText:
+		pd.Validators[validator.RuleRegex] = validator.Regex("")
+		pd.Validators[validator.RuleRange] = validator.Range{}
+	case PropertyTypeBool:
+		break
+	case PropertyTypeNumber:
+		pd.Validators[validator.RuleRange] = validator.Range{}
+	default:
+		return PropertyDefinition{}, errors.New("propertydefinition type does not exist")
+	}
+
+	return pd, nil
+}
+
+const (
+	PropertyTypeText   = "text"
+	PropertyTypeNumber = "number"
+	PropertyTypeBool   = "bool"
+)
+
 // todo this can be done better
 var propertydefinitionTypes = map[string]struct{}{
-	"text":        {},
-	"shortstring": {},
-	"number":      {},
-	"bool":        {},
+	"text":   {},
+	"number": {},
+	"bool":   {},
 }
 
 const ErrPropertyAlreadyExists = "propertydefinition already exists on contentdefinition"
@@ -57,7 +92,7 @@ func NewContentDefinition(name, desc string) (ContentDefinition, error) {
 				Type:      "text",
 				Localized: true,
 				Validators: map[string]interface{}{
-					"required": validator.RequiredRule(true),
+					"required": validator.Required(true),
 				},
 			},
 		}}, nil

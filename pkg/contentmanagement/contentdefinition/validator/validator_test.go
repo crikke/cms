@@ -12,12 +12,12 @@ func Test_RangeRule(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		rule   RangeRule
+		rule   Range
 		inputs map[interface{}]bool
 	}{
 		{
 			name: "max only",
-			rule: RangeRule{
+			rule: Range{
 				Max: makeFloat64(10),
 			},
 			inputs: map[interface{}]bool{
@@ -30,7 +30,7 @@ func Test_RangeRule(t *testing.T) {
 		},
 		{
 			name: "max & min set",
-			rule: RangeRule{
+			rule: Range{
 				Max: makeFloat64(10),
 				Min: makeFloat64(5),
 			},
@@ -91,7 +91,7 @@ func Test_RegexRule(t *testing.T) {
 		for input, ok := range test.inputs {
 
 			t.Run(fmt.Sprintf("%s_%v", test.name, input), func(t *testing.T) {
-				r := RegexRule(test.pattern)
+				r := Regex(test.pattern)
 
 				err := r.Validate(context.Background(), input)
 				if ok {
@@ -137,7 +137,7 @@ func Test_RequiredRule(t *testing.T) {
 
 			t.Run(fmt.Sprintf("%s_%v", test.name, input), func(t *testing.T) {
 
-				r := RequiredRule(test.required)
+				r := Required(test.required)
 
 				err := r.Validate(context.Background(), input)
 				if ok {

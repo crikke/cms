@@ -72,7 +72,7 @@ func Test_CreateContent(t *testing.T) {
 				Type:        "text",
 				Localized:   true,
 				Validators: map[string]interface{}{
-					"required": validator.RequiredRule(true),
+					"required": validator.Required(true),
 				},
 			},
 		},

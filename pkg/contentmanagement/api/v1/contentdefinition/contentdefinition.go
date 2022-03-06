@@ -393,6 +393,8 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 			Description string
 			// required:true
 			Localized bool
+			// Validators
+			Validation map[string]interface{}
 		}
 	}
 

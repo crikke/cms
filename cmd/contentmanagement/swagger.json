@@ -428,6 +428,13 @@
                 },
                 "Name": {
                   "type": "string"
+                },
+                "Validation": {
+                  "description": "Validators",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
                 }
               }
             }
@@ -461,23 +468,6 @@
             "in": "query"
           }
         ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/OK"
-          },
-          "500": {
-            "$ref": "#/responses/genericError"
-          }
-        }
-      }
-    },
-    "/contentdefinitions/{id}/propertydefinitions/{pid}/validator": {
-      "put": {
-        "description": "Deletes an property definition",
-        "tags": [
-          "contentdefinition"
-        ],
-        "operationId": "UpdatePropertyDefinitionValidator",
         "responses": {
           "200": {
             "$ref": "#/responses/OK"

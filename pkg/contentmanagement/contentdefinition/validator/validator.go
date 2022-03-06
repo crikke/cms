@@ -22,9 +22,15 @@ import (
 */
 // Validator runs when content is Saved
 
-type RequiredRule bool
-type RegexRule string
-type RangeRule struct {
+const (
+	RuleRequired = "required"
+	RuleRegex    = "regex"
+	RuleRange    = "range"
+)
+
+type Required bool
+type Regex string
+type Range struct {
 	Min *float64 `bson:"min, omitempty"`
 	Max *float64 `bson:"max, omitempty"`
 }
@@ -38,16 +44,16 @@ func Parse(name string, val interface{}) (Validator, error) {
 	switch name {
 	case "required":
 		if b, ok := val.(bool); ok {
-			return RequiredRule(b), nil
+			return Required(b), nil
 		}
 		return nil, errors.New("parse error: cannot parse into type RequiredField")
 	case "pattern":
 		if str, ok := val.(string); ok {
-			return RegexRule(str), nil
+			return Regex(str), nil
 		}
 		return nil, errors.New("pattern is not of type string")
 	case "range":
-		if r, ok := val.(RangeRule); ok {
+		if r, ok := val.(Range); ok {
 			return r, nil
 		}
 	}
@@ -58,7 +64,7 @@ func Parse(name string, val interface{}) (Validator, error) {
 // Validators
 
 // 0 is a valid number so wont validate
-func (r RequiredRule) Validate(ctx context.Context, field interface{}) error {
+func (r Required) Validate(ctx context.Context, field interface{}) error {
 
 	if !bool(r) {
 		return nil
@@ -77,7 +83,7 @@ func (r RequiredRule) Validate(ctx context.Context, field interface{}) error {
 	return nil
 }
 
-func (r RegexRule) Validate(ctx context.Context, field interface{}) error {
+func (r Regex) Validate(ctx context.Context, field interface{}) error {
 
 	if field == nil {
 		return errors.New("pattern do not match")
@@ -97,7 +103,7 @@ func (r RegexRule) Validate(ctx context.Context, field interface{}) error {
 	return nil
 }
 
-func (r RangeRule) Validate(ctx context.Context, field interface{}) error {
+func (r Range) Validate(ctx context.Context, field interface{}) error {
 
 	ln := 0.0
 
