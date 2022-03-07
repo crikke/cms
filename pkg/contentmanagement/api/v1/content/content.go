@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/crikke/cms/pkg/contentmanagement/api"
@@ -31,6 +32,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 	router.Route("/content", func(r chi.Router) {
 
+		r.Get("/", c.ListContent())
 		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(contentIdContext)
@@ -38,6 +40,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 			r.Use(api.HandleHttpError)
 			r.Get("/", c.GetContent())
 			r.Put("/", c.UpdateContent())
+			r.Delete("/", c.ArchiveContent())
 		})
 	})
 }
@@ -71,32 +74,6 @@ func contentIdContext(next http.Handler) http.Handler {
 			})
 			return
 		}
-		// version := r.URL.Query().Get("version")
-
-		// if version != "" {
-		// 	api.WithError(r.Context(), api.GenericError{
-		// 		Body: api.ErrorBody{
-		// 			Message:   "parameter version is required",
-		// 			FieldName: "version",
-		// 		},
-		// 		StatusCode: http.StatusBadRequest,
-		// 	})
-		// 	return
-		// }
-
-		// v, err := strconv.Atoi(version)
-		// if err != nil {
-		// 	api.WithError(r.Context(), api.GenericError{
-		// 		Body: api.ErrorBody{
-		// 			Message:   "bad formatted version",
-		// 			FieldName: "version",
-		// 		},
-		// 		StatusCode: http.StatusBadRequest,
-		// 	})
-		// 	return
-		// }
-
-		// req.Version = v
 
 		req.ID = cid
 
@@ -149,6 +126,81 @@ type ContentID struct {
 	// in: query
 	// required:true
 	Version int
+}
+
+// swagger:route GET /content content ListContent
+//
+// Gets all content
+//
+// Gets all content
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: body:Contentresponse
+//       404: genericError
+//       400: genericError
+func (c contentEndpoint) ListContent() http.HandlerFunc {
+
+	// swagger:parameters ListContent
+	type _ struct {
+		// ContentDefinition IDs
+		//
+		// in: query
+		ContentDefinitionID []uuid.UUID
+	}
+
+	return func(rw http.ResponseWriter, r *http.Request) {
+
+		val, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil {
+
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusNotFound,
+			})
+
+			return
+		}
+
+		q := query.ListContent{
+			ContentDefinitionIDs: make([]uuid.UUID, 0),
+		}
+
+		if ids, ok := val["cid"]; ok {
+			for _, id := range ids {
+				uid, _ := uuid.Parse(id)
+
+				q.ContentDefinitionIDs = append(q.ContentDefinitionIDs, uid)
+			}
+		}
+
+		res, err := c.app.Queries.ListContent.Handle(r.Context(), q)
+
+		if err != nil {
+
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusNotFound,
+			})
+
+			return
+		}
+
+		data, err := json.Marshal(&res)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Write([]byte(err.Error()))
+			return
+		}
+
+		rw.Write(data)
+	}
 }
 
 // swagger:route GET /content/{id} content GetContent
@@ -347,11 +399,11 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 	}
 }
 
-// swagger:route DELETE /content/{id} content DeleteContent
+// swagger:route DELETE /content/{id} content ArchiveContent
 //
-// Delete content
+// Archives content
 //
-// Deletes a content node
+// Archives content with ID
 //
 //		Consumes:
 //		- application/json
@@ -362,27 +414,29 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 //		  200: OK
 //		  404: genericError
 //        400: genericError
-func (c contentEndpoint) DeleteContent() http.HandlerFunc {
+func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 
 	// swagger:parameters request DeleteContent
-	type request struct {
-		// ! TODO: Split ContentID and ContentVersion
-		// ! DeleteContent does not need ContentVersion
-		ContentID
+	type _ struct {
+		// ID
+		//
+		// in: path
+		// required:true
+		ID uuid.UUID
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		var req request
+		id := uuid.UUID{}
 
 		if r := r.Context().Value(contentKey); r != nil {
-			id := r.(ContentID)
-			req = request{ContentID: id}
+			uid := r.(uuid.UUID)
+			id = uid
 		}
-		err := c.app.Commands.DeleteContent.Handle(
+		err := c.app.Commands.ArchiveContent.Handle(
 			r.Context(),
-			command.DeleteContent{
-				ID: req.ID,
+			command.ArchiveContent{
+				ID: id,
 			})
 
 		if err != nil {

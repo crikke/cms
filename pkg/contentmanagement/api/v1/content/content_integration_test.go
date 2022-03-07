@@ -15,7 +15,6 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/crikke/cms/pkg/contentmanagement/content"
 	domain "github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/db"
@@ -59,6 +58,9 @@ func Test_CreateAndUpdateNewContent(t *testing.T) {
 				ContentDefinitionRepository: cdRepo,
 				Factory:                     factory,
 			},
+			ArchiveContent: command.ArchiveContentHandler{
+				ContentRepository: contentRepo,
+			},
 		},
 		Queries: app.Queries{
 			GetContent: query.GetContentHandler{
@@ -87,29 +89,35 @@ func Test_CreateAndUpdateNewContent(t *testing.T) {
 
 		res := httptest.NewRecorder()
 		r.ServeHTTP(res, req)
-		ok = ok && assert.Equal(t, res.Result().StatusCode, http.StatusCreated)
+		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
 
 		location, err := res.Result().Location()
 		ok = ok && assert.NoError(t, err)
 		return *location, ok
 	}
 
-	getCreatedContent := func(url url.URL) (uuid.UUID, bool) {
+	getContent := func(url url.URL, expect query.ContentReadModel) (uuid.UUID, bool) {
 		t.Helper()
 
 		ok := true
 		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
+		ok = ok && assert.NoError(t, err)
+
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
 
 		actual := &query.ContentReadModel{}
+		json.NewDecoder(res.Body).Decode(actual)
 
-		err = json.NewDecoder(res.Body).Decode(actual)
-		ok = ok && assert.NoError(t, err)
 		ok = ok && assert.Equal(t, cd.ID, actual.ContentDefinitionID)
-		ok = ok && assert.Equal(t, content.Draft, actual.Status)
+		ok = ok && assert.Equal(t, expect.Status, actual.Status)
 
+		for lang, fields := range expect.Properties {
+			for fieldname, field := range fields {
+				ok = ok && assert.Equal(t, field.Value, actual.Properties[lang][fieldname].Value)
+			}
+		}
 		return actual.ID, ok
 	}
 
@@ -145,14 +153,66 @@ func Test_CreateAndUpdateNewContent(t *testing.T) {
 		return ok
 	}
 
+	archiveContent := func(contentID uuid.UUID) bool {
+		t.Helper()
+		ok := true
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/content/%s", contentID.String()), nil)
+		ok = ok && assert.NoError(t, err)
+
+		res := httptest.NewRecorder()
+
+		r.ServeHTTP(res, req)
+
+		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
+
+		return ok
+	}
+
+	listContent := func(expect []query.ContentListReadModel) bool {
+		t.Helper()
+		ok := true
+
+		req, err := http.NewRequest(http.MethodGet, "/content?cid=foo&cid=bar", nil)
+		ok = ok && assert.NoError(t, err)
+
+		res := httptest.NewRecorder()
+
+		r.ServeHTTP(res, req)
+
+		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
+		return ok
+	}
+
 	t.Run("create new content and update it", func(t *testing.T) {
+
 		location, ok := createContent(cd.ID)
 
 		var contentID uuid.UUID
 		if ok {
-			contentID, ok = getCreatedContent(location)
+			contentID, ok = getContent(location, query.ContentReadModel{
+				Status: domain.Draft,
+			})
 		}
 
 		ok = ok && updateContent(contentID)
+
+		if ok {
+			_, ok = getContent(location, query.ContentReadModel{
+				Status: domain.Draft,
+				Properties: domain.ContentLanguage{
+					"sv-SE": domain.ContentFields{
+						"name": domain.ContentField{
+							Value: "updated content",
+						},
+					},
+				},
+			})
+		}
+
+		ok = ok && archiveContent(contentID)
+		ok = ok && listContent([]query.ContentListReadModel{})
 	})
 }

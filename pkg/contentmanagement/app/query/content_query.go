@@ -10,33 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
-// ContentReadModel is the representation of the content for the Content management API
-// It contains all information of given content for every configured language.
-//
-// swagger:model Contentresponse
-type ContentReadModel struct {
-	ID                  uuid.UUID
-	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
-	Status              content.PublishStatus `bson:"publishstatus"`
-	// properties for the content
-	Properties content.ContentLanguage `bson:"properties"`
+type ListContent struct {
+	ContentDefinitionIDs []uuid.UUID
 }
 
-// In contentmanagement, all languages should be retrived for content of given version
-// If Version is nil, return publishedversion
-type GetContent struct {
-	Id      uuid.UUID
-	Version int
-}
-
-type ListChildContentHandler struct {
+type ListContentHandler struct {
 	Repo content.ContentRepository
 	Cfg  *siteconfiguration.SiteConfiguration
 }
 
-func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildContent) ([]ContentListReadModel, error) {
+func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]ContentListReadModel, error) {
 
-	children, err := h.Repo.ListContent(ctx, query.ID)
+	children, err := h.Repo.ListContent(ctx, query.ContentDefinitionIDs)
 
 	if err != nil {
 		return nil, err
@@ -54,6 +39,25 @@ func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildCont
 	}
 
 	return result, nil
+}
+
+// ContentReadModel is the representation of the content for the Content management API
+// It contains all information of given content for every configured language.
+//
+// swagger:model Contentresponse
+type ContentReadModel struct {
+	ID                  uuid.UUID
+	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
+	Status              content.PublishStatus `bson:"publishstatus"`
+	// properties for the content
+	Properties content.ContentLanguage `bson:"properties"`
+}
+
+// In contentmanagement, all languages should be retrived for content of given version
+// If Version is nil, return publishedversion
+type GetContent struct {
+	Id      uuid.UUID
+	Version int
 }
 
 type GetContentHandler struct {
@@ -87,10 +91,6 @@ func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (Conten
 type ContentListReadModel struct {
 	ID   uuid.UUID
 	Name string
-}
-
-type ListChildContent struct {
-	ID uuid.UUID
 }
 
 // type ListChildContentHandler struct {

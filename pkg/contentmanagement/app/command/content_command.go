@@ -187,13 +187,23 @@ func getPropertyValue(c content.ContentVersion, name, locale string) interface{}
 	return properties[name].Value
 }
 
-type DeleteContent struct {
+type ArchiveContent struct {
 	ID uuid.UUID
 }
-type DeleteContentHandler struct {
+type ArchiveContentHandler struct {
+	ContentRepository content.ContentRepository
 }
 
-func (h DeleteContentHandler) Handle(ctx context.Context, cmd DeleteContent) error {
-	// TODO: Implement
+func (h ArchiveContentHandler) Handle(ctx context.Context, cmd ArchiveContent) error {
+	h.ContentRepository.UpdateContent(ctx, cmd.ID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
+
+		c.Status = content.Archived
+
+		publishedVer := c.Version[c.PublishedVersion]
+		publishedVer.Status = content.Archived
+
+		c.Version[c.PublishedVersion] = publishedVer
+		return c, nil
+	})
 	return nil
 }

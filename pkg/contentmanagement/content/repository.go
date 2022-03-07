@@ -13,7 +13,7 @@ const collection = "content"
 type ContentRepository interface {
 	CreateContent(ctx context.Context, content Content) (uuid.UUID, error)
 	GetContent(ctx context.Context, id uuid.UUID) (Content, error)
-	ListContent(ctx context.Context, id uuid.UUID) ([]Content, error)
+	ListContent(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error)
 	UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error
 }
 
@@ -85,15 +85,24 @@ func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, upda
 	return nil
 }
 
-func (c contentrepository) ListContent(ctx context.Context, id uuid.UUID) ([]Content, error) {
+func (c contentrepository) ListContent(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
+
+	cdFilter := bson.E{}
+
+	if len(contentDefinitionTypes) > 0 {
+		cdFilter = bson.E{
+			Key: "contentdefinition_id",
+			Value: bson.E{
+				Key:   "$in",
+				Value: bson.A{contentDefinitionTypes},
+			}}
+	}
 
 	cur, err := c.database.
 		Collection(collection).
 		Find(
 			ctx,
-			bson.D{
-				bson.E{Key: "parentid", Value: id},
-			})
+			bson.D{cdFilter})
 
 	if err != nil {
 		return nil, err

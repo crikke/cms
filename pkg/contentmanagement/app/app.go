@@ -12,14 +12,14 @@ type App struct {
 
 type Queries struct {
 	GetContent  query.GetContentHandler
-	ListContent query.ListChildContentHandler
+	ListContent query.ListContentHandler
 
 	GetContentDefinition query.GetContentDefinitionHandler
 }
 type Commands struct {
 	CreateContent       contentcmd.CreateContentHandler
 	UpdateContentFields contentcmd.UpdateContentFieldsHandler
-	DeleteContent       contentcmd.DeleteContentHandler
+	ArchiveContent      contentcmd.ArchiveContentHandler
 
 	CreateContentDefinition contentcmd.CreateContentDefinitionHandler
 	UpdateContentDefinition contentcmd.UpdateContentDefinitionHandler
