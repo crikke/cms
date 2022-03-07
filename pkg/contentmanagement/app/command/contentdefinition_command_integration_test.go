@@ -18,7 +18,7 @@ func Test_CreateContentDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	repo := contentdefinition.NewContentDefinitionRepository(c)
-	handler := CreateContentDefinitionHandler{repo: repo}
+	handler := CreateContentDefinitionHandler{Repo: repo}
 
 	testcd := CreateContentDefinition{
 		Name:        "Test",
@@ -87,7 +87,7 @@ func Test_UpdateContentDefinition(t *testing.T) {
 			cmd := test.updatecmd
 			cmd.ContentDefinitionID = id
 
-			handler := UpdateContentDefinitionHandler{repo: repo}
+			handler := UpdateContentDefinitionHandler{Repo: repo}
 			handler.Handle(context.TODO(), cmd)
 
 			updated, err := repo.GetContentDefinition(context.TODO(), id)

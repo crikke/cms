@@ -44,7 +44,8 @@ type CreatePropertyDefinition struct {
 }
 
 type CreatePropertyDefinitionHandler struct {
-	Repo contentdefinition.ContentDefinitionRepository
+	Repo    contentdefinition.ContentDefinitionRepository
+	Factory contentdefinition.PropertyDefinitionFactory
 }
 
 func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreatePropertyDefinition) (uuid.UUID, error) {
@@ -58,8 +59,12 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 		ctx,
 		cmd.ContentDefinitionID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
-			pd, err := contentdefinition.NewPropertyDefinition(cd, cmd.Name, cmd.Description, cmd.Type)
+			pd, err := h.Factory.NewPropertyDefinition(cmd.Type, cmd.Description, false)
 			if err != nil {
+				return nil, err
+			}
+
+			if err = cd.SetPropertyDefinition(cmd.Name, pd); err != nil {
 				return nil, err
 			}
 

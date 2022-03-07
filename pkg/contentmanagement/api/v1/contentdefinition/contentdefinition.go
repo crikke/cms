@@ -40,6 +40,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 				r.Post("/", c.CreatePropertyDefinition())
 
 				r.Route("/{pid}", func(r chi.Router) {
+					r.Get("/", c.GetPropertyDefinition())
 					r.Put("/", c.UpdatePropertyDefinition())
 					r.Delete("/", c.DeletePropertyDefinition())
 
@@ -63,7 +64,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 //	   - application/json
 //
 //     Responses:
-//       201: CreateContentDefinitionResponse
+//       201: Location
 //		 400: genericError
 //		 500: genericError
 func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
@@ -78,10 +79,6 @@ func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 		Description string
 	}
 
-	// swagger:response CreateContentDefinitionResponse
-	type _ struct {
-		Location string
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		req := &request{}
@@ -322,7 +319,7 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 // Creates a new propertydefinition
 //
 //     Responses:
-//       200: OK
+//       201: Location
 //		 400: genericError
 //		 404: genericError
 //		 500: genericError
@@ -333,7 +330,7 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 	type request struct {
 		Id uuid.UUID
 		// in: body
-		Body struct {
+		Body *struct {
 			Name        string
 			Description string
 			Type        string
@@ -341,7 +338,11 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{}
+		req := &request{Body: &struct {
+			Name        string
+			Description string
+			Type        string
+		}{}}
 
 		if param := chi.URLParam(r, "id"); param != "" {
 
@@ -357,7 +358,9 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 			req.Id = uid
 		}
 
-		_, err := c.app.Commands.CreatePropertyDefinition.Handle(r.Context(), command.CreatePropertyDefinition{
+		json.NewDecoder(r.Body).Decode(req.Body)
+
+		pid, err := c.app.Commands.CreatePropertyDefinition.Handle(r.Context(), command.CreatePropertyDefinition{
 			ContentDefinitionID: req.Id,
 			Name:                req.Body.Name,
 			Description:         req.Body.Description,
@@ -371,6 +374,10 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 			})
 			return
 		}
+
+		url := r.URL.String()
+		w.Header().Add("Location", fmt.Sprintf("%s/%s", url, pid.String()))
+		w.WriteHeader(http.StatusCreated)
 
 	}
 }
@@ -518,6 +525,12 @@ func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
 			})
 			return
 		}
+
+	}
+}
+
+func (c contentEndpoint) GetPropertyDefinition() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
 }

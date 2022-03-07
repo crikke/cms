@@ -114,6 +114,16 @@ func (cd ContentDefinition) PropertyValid(field, lang string, value interface{})
 	return nil
 }
 
+func (cd *ContentDefinition) SetPropertyDefinition(name string, pd PropertyDefinition) error {
+
+	if _, exist := cd.Propertydefinitions[name]; exist {
+		return errors.New(ErrPropertyAlreadyExists)
+	}
+
+	cd.Propertydefinitions[name] = pd
+	return nil
+}
+
 func NewPropertyDefinition(contentDefinition *ContentDefinition, name, description, propertytype string) (PropertyDefinition, error) {
 
 	pd := PropertyDefinition{

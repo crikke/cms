@@ -48,7 +48,6 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 func contentIdContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		req := ContentID{}
 		contentID := chi.URLParam(r, "id")
 		if contentID == "" {
 
@@ -74,8 +73,6 @@ func contentIdContext(next http.Handler) http.Handler {
 			})
 			return
 		}
-
-		req.ID = cid
 
 		ctx := context.WithValue(r.Context(), contentKey, cid)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -113,19 +110,6 @@ func contentVersionContext(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), versionKey, v)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-type ContentID struct {
-	// ID
-	//
-	// in: path
-	// required:true
-	ID uuid.UUID
-	// Version
-	//
-	// in: query
-	// required:true
-	Version int
 }
 
 // swagger:route GET /content content ListContent
@@ -220,7 +204,15 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 
 	// swagger:parameters GetContent
 	type request struct {
-		ContentID
+		// ID
+		//
+		// in: path
+		// required:true
+		ID uuid.UUID
+		// Version
+		//
+		// in: query
+		Version *int
 	}
 
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -228,12 +220,17 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 		req := request{}
 
 		if r := r.Context().Value(contentKey); r != nil {
-			req.ContentID.ID = r.(uuid.UUID)
+			req.ID = r.(uuid.UUID)
+		}
+
+		if r := r.Context().Value(versionKey); r != nil {
+			i := r.(int)
+			req.Version = &i
 		}
 
 		q := query.GetContent{
 			Id:      req.ID,
-			Version: &req.Version,
+			Version: req.Version,
 		}
 
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)

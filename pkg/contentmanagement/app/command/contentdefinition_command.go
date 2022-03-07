@@ -22,7 +22,7 @@ func (c CreateContentDefinition) Valid() error {
 }
 
 type CreateContentDefinitionHandler struct {
-	repo contentdefinition.ContentDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateContentDefinition) (id uuid.UUID, err error) {
@@ -37,7 +37,7 @@ func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateCo
 		return
 	}
 
-	id, err = c.repo.CreateContentDefinition(ctx, &cd)
+	id, err = c.Repo.CreateContentDefinition(ctx, &cd)
 
 	return
 }
@@ -49,7 +49,7 @@ type UpdateContentDefinition struct {
 }
 
 type UpdateContentDefinitionHandler struct {
-	repo contentdefinition.ContentDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateContentDefinition) (err error) {
@@ -59,7 +59,7 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 		fmt.Println("UpdateContentDefinitionHandler", cmd, err)
 	}()
 
-	err = c.repo.UpdateContentDefinition(ctx, cmd.ContentDefinitionID, func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+	err = c.Repo.UpdateContentDefinition(ctx, cmd.ContentDefinitionID, func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 		if cmd.Name != "" {
 			cd.Name = cmd.Name
