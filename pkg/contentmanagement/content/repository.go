@@ -87,22 +87,22 @@ func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, upda
 
 func (c contentrepository) ListContent(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
 
-	cdFilter := bson.E{}
+	// cdFilter := bson.E{}
+	query := bson.M{}
+
+	query["status"] = bson.M{"$ne": Archived}
 
 	if len(contentDefinitionTypes) > 0 {
-		cdFilter = bson.E{
-			Key: "contentdefinition_id",
-			Value: bson.E{
-				Key:   "$in",
-				Value: bson.A{contentDefinitionTypes},
-			}}
+		query["contentdefinition_id"] = bson.M{
+			"$in": bson.A{contentDefinitionTypes},
+		}
 	}
 
 	cur, err := c.database.
 		Collection(collection).
 		Find(
 			ctx,
-			bson.D{cdFilter})
+			query)
 
 	if err != nil {
 		return nil, err

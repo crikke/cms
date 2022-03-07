@@ -66,6 +66,9 @@ func Test_CreateAndUpdateNewContent(t *testing.T) {
 			GetContent: query.GetContentHandler{
 				Repo: contentRepo,
 			},
+			ListContent: query.ListContentHandler{
+				Repo: contentRepo,
+				Cfg:  factory.Cfg},
 		},
 	})
 
@@ -174,15 +177,19 @@ func Test_CreateAndUpdateNewContent(t *testing.T) {
 		t.Helper()
 		ok := true
 
-		req, err := http.NewRequest(http.MethodGet, "/content?cid=foo&cid=bar", nil)
+		req, err := http.NewRequest(http.MethodGet, "/content", nil)
 		ok = ok && assert.NoError(t, err)
 
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
 
+		result := []query.ContentListReadModel{}
+
+		err = json.NewDecoder(res.Body).Decode(&result)
+		ok = ok && assert.NoError(t, err)
 		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
-		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
+		ok = ok && assert.Equal(t, len(expect), len(result))
 		return ok
 	}
 

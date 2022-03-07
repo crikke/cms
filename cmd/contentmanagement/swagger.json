@@ -2,6 +2,40 @@
   "swagger": "2.0",
   "paths": {
     "/content": {
+      "get": {
+        "description": "Gets all content",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "content"
+        ],
+        "summary": "Gets all content",
+        "operationId": "ListContent",
+        "responses": {
+          "200": {
+            "description": "ContentListReadModel",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ContentListReadModel"
+              }
+            }
+          },
+          "400": {
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
+          },
+          "404": {
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
+          }
+        }
+      },
       "post": {
         "description": "Creates new content node under the parent. The content is created from the specified contentdefinition\nwhich acts as a template, containing what properties to create \u0026 their validation.",
         "consumes": [
@@ -120,17 +154,34 @@
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "Version",
-            "name": "Version",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Language",
-            "in": "query"
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "Version",
+                "Language",
+                "Fields"
+              ],
+              "properties": {
+                "Fields": {
+                  "description": "Properties",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                },
+                "Language": {
+                  "description": "Language",
+                  "type": "string"
+                },
+                "Version": {
+                  "description": "Version",
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
           }
         ],
         "responses": {
@@ -152,7 +203,7 @@
         }
       },
       "delete": {
-        "description": "Deletes a content node",
+        "description": "Archives content with ID",
         "consumes": [
           "application/json"
         ],
@@ -162,25 +213,8 @@
         "tags": [
           "content"
         ],
-        "summary": "Delete content",
-        "operationId": "DeleteContent",
-        "parameters": [
-          {
-            "$ref": "#/definitions/UUID",
-            "description": "ID",
-            "name": "ID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Version",
-            "name": "Version",
-            "in": "query",
-            "required": true
-          }
-        ],
+        "summary": "Archives content",
+        "operationId": "ArchiveContent",
         "responses": {
           "200": {
             "$ref": "#/responses/OK"
@@ -620,6 +654,18 @@
         "$ref": "#/definitions/ContentFields"
       },
       "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/content"
+    },
+    "ContentListReadModel": {
+      "type": "object",
+      "properties": {
+        "ID": {
+          "$ref": "#/definitions/UUID"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/crikke/cms/pkg/contentmanagement/app/query"
     },
     "Contentresponse": {
       "description": "ContentReadModel is the representation of the content for the Content management API\nIt contains all information of given content for every configured language.",

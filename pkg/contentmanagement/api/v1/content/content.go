@@ -138,17 +138,17 @@ type ContentID struct {
 //     - application/json
 //
 //     Responses:
-//       200: body:Contentresponse
+//       200: body:[]ContentListReadModel
 //       404: genericError
 //       400: genericError
 func (c contentEndpoint) ListContent() http.HandlerFunc {
 
 	// swagger:parameters ListContent
 	type _ struct {
-		// ContentDefinition IDs
+		// cid
 		//
 		// in: query
-		ContentDefinitionID []uuid.UUID
+		cid []uuid.UUID
 	}
 
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -344,17 +344,6 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 //        400: genericError
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 
-	type body struct {
-		// Version
-		// required:true
-		Version int
-		// Language
-		// required:true
-		Language string
-		// Properties
-		// required:true
-		Fields map[string]interface{}
-	}
 	// swagger:parameters UpdateContent
 	type request struct {
 		// ID
@@ -364,7 +353,17 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 		ID uuid.UUID
 
 		// in:body
-		Body body
+		Body struct {
+			// Version
+			// required:true
+			Version int
+			// Language
+			// required:true
+			Language string
+			// Properties
+			// required:true
+			Fields map[string]interface{}
+		}
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -375,7 +374,11 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 			req.ID = r.(uuid.UUID)
 		}
 
-		bod := &body{}
+		bod := &struct {
+			Version  int
+			Language string
+			Fields   map[string]interface{}
+		}{}
 
 		err := json.NewDecoder(r.Body).Decode(bod)
 		if err != nil {

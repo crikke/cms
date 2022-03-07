@@ -10,6 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// swagger:model ContentListReadModel
+type ContentListReadModel struct {
+	ID   uuid.UUID
+	Name string
+}
+
 type ListContent struct {
 	ContentDefinitionIDs []uuid.UUID
 }
@@ -21,7 +27,7 @@ type ListContentHandler struct {
 
 func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]ContentListReadModel, error) {
 
-	children, err := h.Repo.ListContent(ctx, query.ContentDefinitionIDs)
+	items, err := h.Repo.ListContent(ctx, query.ContentDefinitionIDs)
 
 	if err != nil {
 		return nil, err
@@ -29,7 +35,7 @@ func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]Co
 
 	result := []ContentListReadModel{}
 
-	for _, ch := range children {
+	for _, ch := range items {
 
 		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][contentdefinition.NameField].Value
 		result = append(result, ContentListReadModel{
@@ -87,35 +93,3 @@ func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (Conten
 
 	return rm, nil
 }
-
-type ContentListReadModel struct {
-	ID   uuid.UUID
-	Name string
-}
-
-// type ListChildContentHandler struct {
-// 	Repo content.ContentRepository
-// 	Cfg  *siteconfiguration.SiteConfiguration
-// }
-
-// func (h ListChildContentHandler) Handle(ctx context.Context, query ListChildContent) ([]ContentListReadModel, error) {
-
-// 	children, err := h.Repo.ListContent(ctx, query.ID)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	result := []ContentListReadModel{}
-
-// 	for _, ch := range children {
-
-// 		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][content.NameField]
-// 		result = append(result, ContentListReadModel{
-// 			ID:   ch.ID,
-// 			Name: name.(string),
-// 		})
-// 	}
-
-// 	return result, nil
-// }
