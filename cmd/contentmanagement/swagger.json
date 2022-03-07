@@ -107,8 +107,7 @@
             "format": "int64",
             "description": "Version",
             "name": "Version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -293,7 +292,7 @@
         ],
         "responses": {
           "201": {
-            "$ref": "#/responses/CreateContentDefinitionResponse"
+            "$ref": "#/responses/Location"
           },
           "400": {
             "description": "genericError",
@@ -474,8 +473,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "$ref": "#/responses/OK"
+          "201": {
+            "$ref": "#/responses/Location"
           },
           "400": {
             "description": "genericError",
@@ -499,6 +498,29 @@
       }
     },
     "/contentdefinitions/{id}/propertydefinitions/{pid}": {
+      "get": {
+        "description": "Gets a propertydefinition",
+        "tags": [
+          "contentdefinition",
+          "propertydefinition"
+        ],
+        "summary": "Gets a propertydefinition",
+        "operationId": "GetPropertyDefinition",
+        "responses": {
+          "200": {
+            "description": "PropertyDefinition",
+            "schema": {
+              "$ref": "#/definitions/PropertyDefinition"
+            }
+          },
+          "500": {
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
+          }
+        }
+      },
       "put": {
         "description": "Updates an property definition",
         "tags": [
@@ -685,9 +707,10 @@
           "enum": [
             "draft",
             "published",
+            "previouslyPublished",
             "archived"
           ],
-          "x-go-enum-desc": "draft Draft\npublished Published\narchived Archived"
+          "x-go-enum-desc": "draft Draft\npublished Published\npreviouslyPublished PreviouslyPublished\narchived Archived"
         }
       },
       "x-go-name": "ContentReadModel",
@@ -756,14 +779,6 @@
     }
   },
   "responses": {
-    "CreateContentDefinitionResponse": {
-      "description": "",
-      "headers": {
-        "Location": {
-          "type": "string"
-        }
-      }
-    },
     "ListContentDefinitionsResponse": {
       "description": "",
       "schema": {

@@ -14,7 +14,8 @@ type Queries struct {
 	GetContent  query.GetContentHandler
 	ListContent query.ListContentHandler
 
-	GetContentDefinition query.GetContentDefinitionHandler
+	GetContentDefinition  query.GetContentDefinitionHandler
+	GetPropertyDefinition query.GetPropertyDefinitionHandler
 }
 type Commands struct {
 	CreateContent       contentcmd.CreateContentHandler
@@ -28,6 +29,4 @@ type Commands struct {
 	CreatePropertyDefinition contentcmd.CreatePropertyDefinitionHandler
 	UpdatePropertyDefinition contentcmd.UpdatePropertyDefinitionHandler
 	DeletePropertyDefinition contentcmd.DeletePropertyDefinitionHandler
-
-	UpdateValidator contentcmd.UpdateValidatorHandler
 }

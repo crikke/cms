@@ -20,6 +20,20 @@ func (h GetContentDefinitionHandler) Handle(ctx context.Context, query GetConten
 	return h.Repo.GetContentDefinition(ctx, query.ID)
 }
 
+type GetPropertyDefinition struct {
+	ContentDefinitionID  uuid.UUID
+	PropertyDefinitionID uuid.UUID
+}
+
+type GetPropertyDefinitionHandler struct {
+	Repo contentdefinition.ContentDefinitionRepository
+}
+
+func (h GetPropertyDefinitionHandler) Handle(ctx context.Context, query GetPropertyDefinition) (contentdefinition.PropertyDefinition, error) {
+
+	return h.Repo.GetPropertyDefinition(ctx, query.ContentDefinitionID, query.PropertyDefinitionID)
+}
+
 // type GetValidatorForProperty struct {
 // 	ContentDefinitionID  uuid.UUID
 // 	PropertyDefinitionID uuid.UUID

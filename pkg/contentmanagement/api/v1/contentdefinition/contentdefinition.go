@@ -537,8 +537,77 @@ func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition GetPropertyDefinition
+//
+// Gets a propertydefinition
+//
+// Gets a propertydefinition
+//
+//     Responses:
+//		 200: PropertyDefinition
+//		 500: genericError
 func (c contentEndpoint) GetPropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// swagger:parameters GetPropertyDefinition
+		type request struct {
+			// required:true
+			ContentDefinitionID uuid.UUID
+			// required:true
+			PropertyDefinitionID uuid.UUID
+		}
 
+		req := &request{}
+
+		if param := chi.URLParam(r, "id"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.ContentDefinitionID = uid
+		}
+
+		if param := chi.URLParam(r, "pid"); param != "" {
+
+			uid, err := uuid.Parse(param)
+
+			if err != nil {
+				api.WithError(r.Context(), api.GenericError{
+					Body:       api.ErrorBody{Message: err.Error()},
+					StatusCode: http.StatusBadRequest,
+				})
+				return
+			}
+			req.PropertyDefinitionID = uid
+		}
+
+		pd, err := c.app.Queries.GetPropertyDefinition.Handle(r.Context(), query.GetPropertyDefinition{
+			ContentDefinitionID:  req.ContentDefinitionID,
+			PropertyDefinitionID: req.PropertyDefinitionID,
+		})
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+		bytes, err := json.Marshal(&pd)
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+		w.Write(bytes)
 	}
 }
