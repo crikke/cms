@@ -233,7 +233,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 
 		q := query.GetContent{
 			Id:      req.ID,
-			Version: req.Version,
+			Version: &req.Version,
 		}
 
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)

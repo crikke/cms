@@ -31,6 +31,7 @@ func Test_GetContent(t *testing.T) {
 				Status:           content.Published,
 				Version: map[int]content.ContentVersion{
 					1: {
+						Status: content.Published,
 						Properties: content.ContentLanguage{
 							"foo": {
 								"bar": content.ContentField{
@@ -60,6 +61,7 @@ func Test_GetContent(t *testing.T) {
 				Status:           content.Published,
 				Version: map[int]content.ContentVersion{
 					1: {
+						Status: content.PreviouslyPublished,
 						Properties: content.ContentLanguage{
 							"foo": {
 								"bar": content.ContentField{
@@ -78,6 +80,7 @@ func Test_GetContent(t *testing.T) {
 						},
 					},
 					3: {
+						Status: content.Published,
 						Properties: content.ContentLanguage{
 							"foo": {
 								"bar": content.ContentField{
@@ -88,9 +91,9 @@ func Test_GetContent(t *testing.T) {
 					},
 				},
 			},
-			query: GetContent{Version: 1},
+			query: GetContent{Version: makeInt(1)},
 			expect: ContentReadModel{
-				Status: content.Published,
+				Status: content.PreviouslyPublished,
 				Properties: content.ContentLanguage{
 					"foo": {
 						"bar": content.ContentField{
@@ -117,7 +120,7 @@ func Test_GetContent(t *testing.T) {
 					},
 				},
 			},
-			query:     GetContent{Version: 2},
+			query:     GetContent{Version: makeInt(44)},
 			expect:    ContentReadModel{},
 			expectErr: content.ErrMissingVersion,
 		},
@@ -138,7 +141,7 @@ func Test_GetContent(t *testing.T) {
 					},
 				},
 			},
-			query:     GetContent{Version: -2},
+			query:     GetContent{Version: makeInt(-2)},
 			expect:    ContentReadModel{},
 			expectErr: content.ErrMissingVersion,
 		},
@@ -177,25 +180,16 @@ func Test_GetContent(t *testing.T) {
 
 func Test_ListChildContent(t *testing.T) {
 
-	uuids := []uuid.UUID{
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-	}
-
 	tests := []struct {
 		name   string
 		items  []content.Content
-		id     uuid.UUID
 		expect []ContentListReadModel
 	}{
 		{
 			name: "get root children",
 			items: []content.Content{
 				{
-					ID:               uuids[0],
+					ID:               uuid.New(),
 					PublishedVersion: 0,
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
@@ -211,8 +205,7 @@ func Test_ListChildContent(t *testing.T) {
 					},
 				},
 				{
-					ID:               uuids[1],
-					ParentID:         uuids[0],
+					ID:               uuid.New(),
 					PublishedVersion: 0,
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
@@ -228,8 +221,7 @@ func Test_ListChildContent(t *testing.T) {
 					},
 				},
 				{
-					ID:               uuids[2],
-					ParentID:         uuids[0],
+					ID:               uuid.New(),
 					PublishedVersion: 0,
 					Status:           content.Published,
 					Version: map[int]content.ContentVersion{
@@ -245,77 +237,15 @@ func Test_ListChildContent(t *testing.T) {
 					},
 				},
 			},
-			id: uuids[0],
 			expect: []ContentListReadModel{
 				{
-					ID:   uuids[1],
 					Name: "page 1",
 				},
 				{
-					ID:   uuids[2],
 					Name: "page 2",
 				},
-			},
-		},
-		{
-			name: "get children",
-			items: []content.Content{
 				{
-					ID:               uuids[0],
-					PublishedVersion: 0,
-					Status:           content.Published,
-					Version: map[int]content.ContentVersion{
-						0: {
-							Properties: content.ContentLanguage{
-								"sv-SE": {
-									contentdefinition.NameField: content.ContentField{
-										Value: "root",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					ID:               uuids[1],
-					ParentID:         uuids[0],
-					PublishedVersion: 0,
-					Status:           content.Published,
-					Version: map[int]content.ContentVersion{
-						0: {
-							Properties: content.ContentLanguage{
-								"sv-SE": {
-									contentdefinition.NameField: content.ContentField{
-										Value: "page 1",
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					ID:               uuids[2],
-					ParentID:         uuids[1],
-					PublishedVersion: 0,
-					Status:           content.Published,
-					Version: map[int]content.ContentVersion{
-						0: {
-							Properties: content.ContentLanguage{
-								"sv-SE": {
-									contentdefinition.NameField: content.ContentField{
-										Value: "page 2",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			id: uuids[1],
-			expect: []ContentListReadModel{
-				{
-					ID:   uuids[2],
-					Name: "page 2",
+					Name: "root",
 				},
 			},
 		},
@@ -339,10 +269,8 @@ func Test_ListChildContent(t *testing.T) {
 				repo.CreateContent(context.Background(), cnt)
 			}
 
-			query := ListChildContent{
-				ID: test.id,
-			}
-			handler := ListChildContentHandler{
+			query := ListContent{}
+			handler := ListContentHandler{
 				Repo: repo,
 				Cfg:  cfg,
 			}
@@ -356,7 +284,7 @@ func Test_ListChildContent(t *testing.T) {
 				ok := false
 
 				for _, expect := range test.expect {
-					if ch.ID == expect.ID {
+					if ch.Name == expect.Name {
 						ok = true
 						assert.Equal(t, expect.Name, ch.Name)
 					}
@@ -366,4 +294,8 @@ func Test_ListChildContent(t *testing.T) {
 			}
 		})
 	}
+}
+
+func makeInt(n int) *int {
+	return &n
 }

@@ -75,9 +75,10 @@ type ContentFields map[string]ContentField
 type ContentLanguage map[string]ContentFields
 
 const (
-	Draft     PublishStatus = "draft"
-	Published PublishStatus = "published"
-	Archived  PublishStatus = "archived"
+	Draft               PublishStatus = "draft"
+	Published           PublishStatus = "published"
+	PreviouslyPublished PublishStatus = "previouslyPublished"
+	Archived            PublishStatus = "archived"
 )
 
 type Factory struct {

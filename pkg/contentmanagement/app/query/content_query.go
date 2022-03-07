@@ -63,7 +63,7 @@ type ContentReadModel struct {
 // If Version is nil, return publishedversion
 type GetContent struct {
 	Id      uuid.UUID
-	Version int
+	Version *int
 }
 
 type GetContentHandler struct {
@@ -78,7 +78,11 @@ func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (Conten
 		return ContentReadModel{}, err
 	}
 
-	contentVer, ok := c.Version[query.Version]
+	ver := c.PublishedVersion
+	if query.Version != nil {
+		ver = *query.Version
+	}
+	contentVer, ok := c.Version[ver]
 
 	if !ok {
 		return ContentReadModel{}, errors.New(content.ErrMissingVersion)
@@ -87,7 +91,7 @@ func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (Conten
 	rm := ContentReadModel{
 		ID:                  c.ID,
 		ContentDefinitionID: c.ContentDefinitionID,
-		Status:              c.Status,
+		Status:              contentVer.Status,
 		Properties:          contentVer.Properties,
 	}
 

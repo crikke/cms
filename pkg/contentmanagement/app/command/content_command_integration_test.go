@@ -126,14 +126,11 @@ func Test_UpdateContent(t *testing.T) {
 		name         string
 		contentdef   *contentdefinition.ContentDefinition
 		existing     content.Content
-		updatefields []struct {
-			Language string
-			Field    string
-			Value    interface{}
-		}
-		version     int
-		expectedErr string
-		expected    content.Content
+		language     string
+		updateFields map[string]interface{}
+		version      int
+		expectedErr  string
+		expected     content.Content
 	}{
 		{
 			name:       "common fields only all configured languages",
@@ -176,31 +173,10 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "sv-SE",
-					Field:    contentdefinition.NameField,
-					Value:    "name-sv",
-				},
-				{
-					Language: "sv-SE",
-					Field:    contentdefinition.UrlSegmentField,
-					Value:    "url-sv",
-				},
-				{
-					Language: "en-US",
-					Field:    contentdefinition.NameField,
-					Value:    "name-en",
-				},
-				{
-					Language: "en-US",
-					Field:    contentdefinition.UrlSegmentField,
-					Value:    "url-en",
-				},
+			language: "sv-SE",
+			updateFields: map[string]interface{}{
+				contentdefinition.NameField:       "name-sv",
+				contentdefinition.UrlSegmentField: "url-sv",
 			},
 			expected: content.Content{
 				Version: map[int]content.ContentVersion{
@@ -219,20 +195,6 @@ func Test_UpdateContent(t *testing.T) {
 									Type:      "text",
 									Localized: true,
 									Value:     "url-sv",
-								},
-							},
-							"en-US": content.ContentFields{
-								contentdefinition.NameField: content.ContentField{
-									ID:        uuid.New(),
-									Type:      "text",
-									Localized: true,
-									Value:     "name-en",
-								},
-								contentdefinition.UrlSegmentField: content.ContentField{
-									ID:        uuid.New(),
-									Type:      "text",
-									Localized: true,
-									Value:     "url-en",
 								},
 							},
 						},
@@ -261,16 +223,9 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "nb-NO",
-					Field:    contentdefinition.NameField,
-					Value:    "url-sv",
-				},
+			language: "nb-NO",
+			updateFields: map[string]interface{}{
+				contentdefinition.NameField: "url-sv",
 			},
 			expectedErr: content.ErrMissingLanguage,
 		},
@@ -304,16 +259,9 @@ func Test_UpdateContent(t *testing.T) {
 					},
 				},
 			},
-			updatefields: []struct {
-				Language string
-				Field    string
-				Value    interface{}
-			}{
-				{
-					Language: "en-US",
-					Field:    contentdefinition.NameField,
-					Value:    "url-sv",
-				},
+			language: "en-US",
+			updateFields: map[string]interface{}{
+				contentdefinition.NameField: "url-sv",
 			},
 			expectedErr: content.ErrUnlocalizedPropLocalizedValue,
 		},
@@ -337,30 +285,26 @@ func Test_UpdateContent(t *testing.T) {
 			contentId, err := contentRepo.CreateContent(context.Background(), test.existing)
 			assert.NoError(t, err)
 
-			for _, f := range test.updatefields {
-
-				cmd := UpdateField{
-					ContentID: contentId,
-					Version:   test.version,
-					Name:      f.Field,
-					Language:  f.Language,
-					Value:     f.Value,
-				}
-
-				handler := UpdateContentFieldHandler{
-					ContentRepository:           contentRepo,
-					ContentDefinitionRepository: cdRepo,
-					Factory:                     content.Factory{Cfg: &cfg},
-				}
-
-				err := handler.Handle(context.Background(), cmd)
-				if test.expectedErr != "" {
-					assert.Equal(t, test.expectedErr, err.Error())
-				} else {
-					assert.NoError(t, err)
-				}
-
+			cmd := UpdateContentFields{
+				ContentID: contentId,
+				Version:   test.version,
+				Language:  test.language,
+				Fields:    test.updateFields,
 			}
+
+			handler := UpdateContentFieldsHandler{
+				ContentRepository:           contentRepo,
+				ContentDefinitionRepository: cdRepo,
+				Factory:                     content.Factory{Cfg: &cfg},
+			}
+
+			err = handler.Handle(context.Background(), cmd)
+			if test.expectedErr != "" {
+				assert.Equal(t, test.expectedErr, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+
 			actual, err := contentRepo.GetContent(context.Background(), contentId)
 			assert.NoError(t, err)
 			for version, contentver := range test.expected.Version {
