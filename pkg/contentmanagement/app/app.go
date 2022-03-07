@@ -21,6 +21,7 @@ type Commands struct {
 	CreateContent       contentcmd.CreateContentHandler
 	UpdateContentFields contentcmd.UpdateContentFieldsHandler
 	ArchiveContent      contentcmd.ArchiveContentHandler
+	PublishContent      contentcmd.PublishContentHandler
 
 	CreateContentDefinition contentcmd.CreateContentDefinitionHandler
 	UpdateContentDefinition contentcmd.UpdateContentDefinitionHandler

@@ -233,6 +233,56 @@
         }
       }
     },
+    "/content/{id}/publish": {
+      "post": {
+        "description": "Publishes content",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "content"
+        ],
+        "summary": "Publishes content",
+        "operationId": "PublishContent",
+        "parameters": [
+          {
+            "$ref": "#/definitions/UUID",
+            "description": "ID",
+            "name": "ID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Version",
+            "name": "Version",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/OK"
+          },
+          "400": {
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
+          },
+          "404": {
+            "description": "genericError",
+            "schema": {
+              "$ref": "#/definitions/genericError"
+            }
+          }
+        }
+      }
+    },
     "/contentdefinitions": {
       "get": {
         "description": "Gets all existing contentdefinitions",

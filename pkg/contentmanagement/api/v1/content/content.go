@@ -41,6 +41,8 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 			r.Get("/", c.GetContent())
 			r.Put("/", c.UpdateContent())
 			r.Delete("/", c.ArchiveContent())
+
+			r.Post("/publish", c.PublishContent())
 		})
 	})
 }
@@ -437,6 +439,74 @@ func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 			r.Context(),
 			command.ArchiveContent{
 				ID: id,
+			})
+
+		if err != nil {
+			api.WithError(r.Context(), err)
+		}
+	}
+}
+
+// swagger:route POST /content/{id}/publish content PublishContent
+//
+// Publishes content
+//
+// Publishes content
+//
+//		Consumes:
+//		- application/json
+//		Produces:
+//		- application/json
+//
+//		Responses:
+//		  200: OK
+//		  404: genericError
+//        400: genericError
+func (c contentEndpoint) PublishContent() http.HandlerFunc {
+
+	// swagger:parameters request PublishContent
+	type _ struct {
+		// ID
+		//
+		// in: path
+		// required:true
+		ID uuid.UUID
+		// Version
+		//
+		// required:true
+		// in: query
+		Version int
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		id := uuid.UUID{}
+		// version := 0
+
+		if r := r.Context().Value(contentKey); r != nil {
+			uid := r.(uuid.UUID)
+			id = uid
+		}
+
+		ver := r.Context().Value(versionKey)
+		if ver == nil {
+
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
+					Message: "missing version",
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+		version := ver.(int)
+
+		err := c.app.Commands.PublishContent.Handle(
+			r.Context(),
+			command.PublishContent{
+				ContentID: id,
+				Version:   version,
 			})
 
 		if err != nil {
