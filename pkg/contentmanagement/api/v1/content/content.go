@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/crikke/cms/pkg/contentmanagement/api"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
@@ -16,7 +17,8 @@ import (
 
 type key string
 
-var contentkey = key("content")
+var contentKey = key("content")
+var versionKey = key("version")
 
 type contentEndpoint struct {
 	app app.App
@@ -32,6 +34,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(contentIdContext)
+			r.Use(contentVersionContext)
 			r.Use(api.HandleHttpError)
 			r.Get("/", c.GetContent())
 			r.Put("/", c.UpdateContent())
@@ -97,7 +100,40 @@ func contentIdContext(next http.Handler) http.Handler {
 
 		req.ID = cid
 
-		ctx := context.WithValue(r.Context(), contentkey, req)
+		ctx := context.WithValue(r.Context(), contentKey, cid)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func contentVersionContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		version := r.URL.Query().Get("version")
+
+		if version == "" {
+			// api.WithError(r.Context(), api.GenericError{
+			// 	Body: api.ErrorBody{
+			// 		Message:   "parameter version is required",
+			// 		FieldName: "version",
+			// 	},
+			// 	StatusCode: http.StatusBadRequest,
+			// })
+			next.ServeHTTP(w, r)
+		}
+
+		v, err := strconv.Atoi(version)
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body: api.ErrorBody{
+					Message:   "bad formatted version",
+					FieldName: "version",
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), versionKey, v)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -137,10 +173,10 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		var req request
+		req := request{}
 
-		if r := r.Context().Value(contentkey); r != nil {
-			req = request{r.(ContentID)}
+		if r := r.Context().Value(contentKey); r != nil {
+			req.ContentID.ID = r.(uuid.UUID)
 		}
 
 		q := query.GetContent{
@@ -256,46 +292,57 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 //        400: genericError
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 
+	type body struct {
+		// Version
+		// required:true
+		Version int
+		// Language
+		// required:true
+		Language string
+		// Properties
+		// required:true
+		Fields map[string]interface{}
+	}
 	// swagger:parameters UpdateContent
 	type request struct {
-		ContentID
-		Language string
+		// ID
+		//
+		// in: path
+		// required:true
+		ID uuid.UUID
 
-		// ! TODO remove swagger ignore
-		// swagger:ignore
-		Fields []struct {
-			Name  string
-			Value interface{}
-		}
+		// in:body
+		Body body
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		var req request
+		req := request{}
 
-		if r := r.Context().Value(contentkey); r != nil {
-			id := r.(ContentID)
-			req = request{ContentID: id}
+		if r := r.Context().Value(contentKey); r != nil {
+			req.ID = r.(uuid.UUID)
 		}
 
-		// ! TODO: this needs to be remade.
-		// ! eighter by implementing transactions,
-		// ! or not having an array of fields.
-		// ! otherwise partial updates can happen.
-		for _, field := range req.Fields {
+		bod := &body{}
 
-			err := c.app.Commands.UpdateContentField.Handle(r.Context(), command.UpdateField{
-				ContentID: req.ID,
-				Version:   req.Version,
-				Value:     field.Name,
-				Language:  req.Language,
-				Name:      field.Name,
-			})
+		err := json.NewDecoder(r.Body).Decode(bod)
+		if err != nil {
+			api.WithError(r.Context(), err)
+			return
+		}
 
-			if err != nil {
-				api.WithError(r.Context(), err)
-				return
-			}
+		req.Body = *bod
+
+		err = c.app.Commands.UpdateContentFields.Handle(r.Context(), command.UpdateContentFields{
+			ContentID: req.ID,
+			Version:   req.Body.Version,
+			Language:  req.Body.Language,
+			Fields:    req.Body.Fields,
+		})
+
+		if err != nil {
+			api.WithError(r.Context(), err)
+			return
 		}
 	}
 }
@@ -328,7 +375,7 @@ func (c contentEndpoint) DeleteContent() http.HandlerFunc {
 
 		var req request
 
-		if r := r.Context().Value(contentkey); r != nil {
+		if r := r.Context().Value(contentKey); r != nil {
 			id := r.(ContentID)
 			req = request{ContentID: id}
 		}

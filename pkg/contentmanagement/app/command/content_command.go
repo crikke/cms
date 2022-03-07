@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 	"errors"
+	"net/http"
 
+	"github.com/crikke/cms/pkg/contentmanagement/api"
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
@@ -51,29 +53,41 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 	return h.ContentRepository.CreateContent(ctx, c)
 }
 
-type UpdateField struct {
+type UpdateContentFields struct {
 	ContentID uuid.UUID
 	Version   int
 	Language  string
-	Name      string
-	Value     interface{}
+
+	Fields map[string]interface{}
+	// Name  string
+	// Value interface{}
 }
 
-type UpdateContentFieldHandler struct {
+type UpdateContentFieldsHandler struct {
 	ContentRepository           content.ContentRepository
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	Factory                     content.Factory
 }
 
-func (h UpdateContentFieldHandler) Handle(ctx context.Context, cmd UpdateField) error {
+func (h UpdateContentFieldsHandler) Handle(ctx context.Context, cmd UpdateContentFields) error {
 
 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
-		cv := c.Version[cmd.Version]
+		cv, ok := c.Version[cmd.Version]
 
-		err := h.Factory.SetField(&cv, cmd.Language, cmd.Name, cmd.Value)
-
-		if err != nil {
-			return nil, err
+		if !ok {
+			return nil, api.GenericError{
+				Body: api.ErrorBody{
+					Message:   content.ErrMissingVersion,
+					FieldName: "version",
+				},
+				StatusCode: http.StatusNotFound,
+			}
+		}
+		for f, v := range cmd.Fields {
+			err := h.Factory.SetField(&cv, cmd.Language, f, v)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		return c, nil
