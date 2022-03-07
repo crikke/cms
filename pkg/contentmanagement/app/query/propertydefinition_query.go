@@ -12,12 +12,12 @@ type GetContentDefinition struct {
 }
 
 type GetContentDefinitionHandler struct {
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h GetContentDefinitionHandler) Handle(ctx context.Context, query GetContentDefinition) (contentdefinition.ContentDefinition, error) {
 
-	// ! TODO: implement
-	return contentdefinition.ContentDefinition{}, nil
+	return h.Repo.GetContentDefinition(ctx, query.ID)
 }
 
 // type GetValidatorForProperty struct {

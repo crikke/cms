@@ -14,7 +14,9 @@ import (
 
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
+	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -39,6 +41,14 @@ func Test_CreateContentDefinition(t *testing.T) {
 				Repo: cdRepo,
 			},
 			CreatePropertyDefinition: command.CreatePropertyDefinitionHandler{
+				Repo: cdRepo,
+			},
+			UpdatePropertyDefinition: command.UpdatePropertyDefinitionHandler{
+				Repo: cdRepo,
+			},
+		},
+		Queries: app.Queries{
+			GetContentDefinition: query.GetContentDefinitionHandler{
 				Repo: cdRepo,
 			},
 		},
@@ -104,14 +114,85 @@ func Test_CreateContentDefinition(t *testing.T) {
 		return *location, ok
 	}
 
+	updatePropertyDefinition := func(url url.URL) bool {
+		ok := true
+		type request struct {
+			Name        string
+			Description string
+			Localized   bool
+			Validation  map[string]interface{}
+		}
+
+		body := request{
+			Name:        "new name",
+			Description: "new description",
+			Localized:   true,
+			Validation: map[string]interface{}{
+				validator.RuleRegex: "^[a-z]",
+			},
+		}
+
+		var buf bytes.Buffer
+		err = json.NewEncoder(&buf).Encode(body)
+		ok = ok && assert.NoError(t, err)
+		req, err := http.NewRequest(http.MethodPut, url.String(), &buf)
+		ok = ok && assert.NoError(t, err)
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+
+		return ok
+	}
+
+	getContentDefinition := func(url url.URL) bool {
+		ok := true
+		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
+		ok = ok && assert.NoError(t, err)
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+
+		actual := contentdefinition.ContentDefinition{}
+		json.NewDecoder(res.Body).Decode(&actual)
+
+		expect := contentdefinition.ContentDefinition{
+			Name:        "test contentdefinition ",
+			Description: "test description",
+			Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
+				"new name": {
+					Description: "new description",
+					Localized:   true,
+					Type:        "text",
+					Validators: map[string]interface{}{
+						validator.RuleRequired: false,
+						validator.RuleRegex:    "^[a-z]",
+					},
+				},
+			},
+		}
+
+		assert.Equal(t, expect.Name, actual.Name)
+		assert.Equal(t, expect.Description, actual.Description)
+		assert.Equal(t, expect.Propertydefinitions["new name"].Description, actual.Propertydefinitions["new name"].Description)
+		assert.Equal(t, expect.Propertydefinitions["new name"].Localized, actual.Propertydefinitions["new name"].Localized)
+		assert.Equal(t, expect.Propertydefinitions["new name"].Validators[validator.RuleRegex], actual.Propertydefinitions["new name"].Validators[validator.RuleRegex])
+		assert.Equal(t, expect.Propertydefinitions["new name"].Validators[validator.RuleRequired], actual.Propertydefinitions["new name"].Validators[validator.RuleRequired])
+
+		return ok
+	}
+
 	t.Run("test create and update content def", func(t *testing.T) {
 
-		// var propertyLocation url.URL
+		var propertyLocation url.URL
 
 		contentLocation, ok := createContentDefinition()
 		if ok {
-			_, ok = createPropertyDefinition(contentLocation)
+			propertyLocation, ok = createPropertyDefinition(contentLocation)
 		}
 
+		ok = ok && updatePropertyDefinition(propertyLocation)
+		ok = ok && getContentDefinition(contentLocation)
 	})
 }

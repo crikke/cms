@@ -90,7 +90,7 @@ type UpdatePropertyDefinition struct {
 }
 
 type UpdatePropertyDefinitionHandler struct {
-	repo contentdefinition.ContentDefinitionRepository
+	Repo contentdefinition.ContentDefinitionRepository
 }
 
 func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdatePropertyDefinition) error {
@@ -103,7 +103,7 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 		return errors.New("empty propertydefinition id")
 	}
 
-	return h.repo.UpdateContentDefinition(
+	return h.Repo.UpdateContentDefinition(
 		ctx, cmd.ContentDefinitionID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 

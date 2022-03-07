@@ -136,11 +136,6 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 		ID uuid.UUID
 	}
 
-	// // swagger:response GetContentDefinitionResponse
-	// type response struct {
-	// 	contentdefinition.ContentDefinition
-	// }
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var id uuid.UUID
@@ -168,8 +163,6 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 			})
 			return
 		}
-
-		// res := &response{cd}
 
 		bytes, err := json.Marshal(&cd)
 
@@ -398,7 +391,7 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 		// required:true
 		PropertyDefinitionID uuid.UUID
 		// in:body
-		Body struct {
+		Body *struct {
 			// required:true
 			Name string
 			// required:true
@@ -412,7 +405,12 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{}
+		req := &request{Body: &struct {
+			Name        string
+			Description string
+			Localized   bool
+			Validation  map[string]interface{}
+		}{}}
 
 		if param := chi.URLParam(r, "id"); param != "" {
 
@@ -441,15 +439,8 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 			}
 			req.PropertyDefinitionID = uid
 		}
-		cmd := command.UpdatePropertyDefinition{
-			ContentDefinitionID:  req.ContentDefinitionID,
-			PropertyDefinitionID: req.PropertyDefinitionID,
-			Name:                 &req.Body.Name,
-			Description:          &req.Body.Description,
-			Localized:            &req.Body.Localized,
-		}
 
-		err := c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
+		err := json.NewDecoder(r.Body).Decode(req.Body)
 
 		if err != nil {
 			api.WithError(r.Context(), api.GenericError{
@@ -459,6 +450,23 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 			return
 		}
 
+		cmd := command.UpdatePropertyDefinition{
+			ContentDefinitionID:  req.ContentDefinitionID,
+			PropertyDefinitionID: req.PropertyDefinitionID,
+			Name:                 &req.Body.Name,
+			Description:          &req.Body.Description,
+			Localized:            &req.Body.Localized,
+			Rules:                req.Body.Validation,
+		}
+		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
+
+		if err != nil {
+			api.WithError(r.Context(), api.GenericError{
+				Body:       api.ErrorBody{Message: err.Error()},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
 	}
 }
 

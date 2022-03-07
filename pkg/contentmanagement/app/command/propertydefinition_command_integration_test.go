@@ -73,7 +73,7 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 	assert.NoError(t, err)
 
 	// update propertydefiniton
-	updatehandler := UpdatePropertyDefinitionHandler{repo: repo}
+	updatehandler := UpdatePropertyDefinitionHandler{Repo: repo}
 
 	str := "updated"
 	b := true
