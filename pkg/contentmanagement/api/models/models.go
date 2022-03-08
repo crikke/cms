@@ -1,13 +1,9 @@
-package api
+package models
 
 import (
 	"context"
 	"net/http"
 )
-
-func init() {
-
-}
 
 type key string
 
@@ -53,4 +49,7 @@ type GenericError struct {
 
 func (g GenericError) Error() string {
 	return g.Body.Message
+}
+
+type OKResult struct {
 }

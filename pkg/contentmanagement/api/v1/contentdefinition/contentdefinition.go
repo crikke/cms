@@ -1,17 +1,24 @@
 package contentdefinition
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/crikke/cms/pkg/contentmanagement/api"
+	"github.com/crikke/cms/pkg/contentmanagement/api/models"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 )
+
+type key string
+
+var contentKey = key("cid")
+var propertyKey = key("pid")
 
 type contentEndpoint struct {
 	app app.App
@@ -31,6 +38,9 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 		r.Post("/", c.CreateContentDefinition())
 
 		r.Route("/{id}", func(r chi.Router) {
+			r.Use(func(h http.Handler) http.Handler {
+				return contentDefinitionIdContext(h, "id", contentKey)
+			})
 			r.Get("/", c.GetContentDefinition())
 			r.Delete("/", c.DeleteContentDefinition())
 			r.Put("/", c.UpdateContentDefinition())
@@ -40,11 +50,13 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 				r.Post("/", c.CreatePropertyDefinition())
 
 				r.Route("/{pid}", func(r chi.Router) {
+					r.Use(func(h http.Handler) http.Handler {
+						return contentDefinitionIdContext(h, "pid", propertyKey)
+					})
 					r.Get("/", c.GetPropertyDefinition())
 					r.Put("/", c.UpdatePropertyDefinition())
 					r.Delete("/", c.DeletePropertyDefinition())
 
-					// r.Put("/validator", c.UpdatePropertyDefinitionValidator())
 				})
 			})
 		})
@@ -52,50 +64,95 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 	})
 }
 
-// swagger:route POST /contentdefinitions contentdefinition CreateContentDefinition
-//
-// Creates a new content definition
-//
-// Creates a new contentdefinition. The contentdefinition
-// acts as a template for creating new content,
-// containing what properties to create & their validation.
-//
-//     Consumes:
-//	   - application/json
-//
-//     Responses:
-//       201: Location
-//		 400: genericError
-//		 500: genericError
-func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
+func contentDefinitionIdContext(next http.Handler, param string, key key) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	// swagger:parameters request CreateContentDefinition
-	type request struct {
-		// Content definition Name
-		// in:body
-		Name string
-		// Content definition description
-		// in:body
-		Description string
+		id := chi.URLParam(r, param)
+		if id == "" {
+
+			models.WithError(r.Context(), models.GenericError{
+				StatusCode: http.StatusBadRequest,
+				Body: models.ErrorBody{
+					FieldName: "contentid",
+					Message:   "parameter contentid is required",
+				},
+			})
+			return
+		}
+
+		uid, err := uuid.Parse(id)
+
+		if err != nil {
+			models.WithError(r.Context(), models.GenericError{
+				StatusCode: http.StatusBadRequest,
+				Body: models.ErrorBody{
+					FieldName: "contentid",
+					Message:   "bad format",
+				},
+			})
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), key, uid)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func withID(ctx context.Context) uuid.UUID {
+
+	var id uuid.UUID
+
+	if r := ctx.Value(contentKey); r != nil {
+		id = r.(uuid.UUID)
 	}
+
+	return id
+}
+
+func withPID(ctx context.Context) uuid.UUID {
+
+	var id uuid.UUID
+
+	if r := ctx.Value(propertyKey); r != nil {
+		id = r.(uuid.UUID)
+	}
+
+	return id
+}
+
+// CreateContentDefinition 		godoc
+// @Summary 					Creates a new content definition
+// @Description 				Creates a new contentdefinition. The contentdefinition
+// @Description 				acts as a template for creating new content,
+// @Description 				containing what properties to create & their validation.
+//
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						body		body	ContentDefinitionBody	true 	"request body"
+// @Success						201			{object}	models.OKResult
+// @Header						201			{string}	Location
+// @Failure						default		{object}	models.GenericError
+// @Router						/contentdefinitions [post]
+func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{}
+		req := &ContentDefinitionBody{}
 
 		err := json.NewDecoder(r.Body).Decode(req)
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
 		}
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -107,7 +164,7 @@ func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 		})
 
 		if err != nil {
-			api.WithError(r.Context(), err)
+			models.WithError(r.Context(), err)
 			return
 		}
 		url := r.URL.String()
@@ -116,49 +173,28 @@ func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /contentdefinitions/{id} contentdefinition GetContentDefinition
+// GetContentDefinition 		godoc
+// @Summary 					Gets a content definition
+// @Description 				Gets a content definition by ID
 //
-// Gets a content definition
-//
-// Gets a content definition by ID
-//
-//     Consumes:
-//	   - application/json
-//
-//     Responses:
-//       200: ContentDefinition
-//		 400: genericError
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Success						200			{object}	contentdefinition.ContentDefinition
+// @Failure						default		{object}	models.GenericError
+// @Router						/contentdefinitions/{id} [get]
 func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
-
-	// swagger:parameters request GetContentDefinition
-	type _ struct {
-		ID uuid.UUID
-	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		var id uuid.UUID
-
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			id = uid
-		}
+		id := withID(r.Context())
 
 		cd, err := c.app.Queries.GetContentDefinition.Handle(r.Context(), query.GetContentDefinition{ID: id})
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -167,8 +203,8 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 		bytes, err := json.Marshal(&cd)
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -178,73 +214,44 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /contentdefinitions contentdefinition ListContentDefinitions
+// ListContentDefinitions 		godoc
+// @Summary 					Get all content definitions
+// @Description 				Gets all existing contentdefinitions
 //
-// Get all content definitions
-//
-// Gets all existing contentdefinitions
-//
-//     Produces:
-//	   - application/json
-//
-//     Responses:
-//       200: ListContentDefinitionsResponse
-//		 400: genericError
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Success						200			{object}	query.ListContentDefinitionModel
+// @Failure						default		{object}	models.GenericError
+// @Router						/contentdefinitions [get]
 func (c contentEndpoint) ListContentDefinitions() http.HandlerFunc {
 
-	// swagger:response ListContentDefinitionsResponse
-	type _ struct {
-
-		// in: body
-		ContentDefinitions []struct {
-			Name string
-			ID   uuid.UUID
-		}
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		_, _ = c.app.Queries.ListContentDefinitions.Handle(r.Context(), query.ListContentDefinition{})
 	}
 }
 
-// swagger:route DELETE /contentdefinitions/{id} contentdefinition DeleteContentDefinition
+// DeleteContentDefinition 		godoc
+// @Summary 					Delete a content definition
+// @Description 				Delete a content definition
 //
-// Delete a content definition
-//
-//     Responses:
-//       200: OK
-//		 400: genericError
-//		 404: genericError
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Success						200			{object}	models.OKResult
+// @Failure						default		{object}	models.GenericError
+// @Router						/contentdefinitions/{id} [delete]
 func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
 
-	// swagger:parameters DeleteContentDefinition
-	type _ struct {
-		ID uuid.UUID
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		var id uuid.UUID
 
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			id = uid
-		}
+		id := withID(r.Context())
 
 		err := c.app.Commands.DeleteContentDefinition.Handle(r.Context(), command.DeleteContentDefinition{ID: id})
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -252,117 +259,74 @@ func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route PUT /contentdefinitions/{id} contentdefinition UpdateContentDefinition
+// UpdateContentDefinition 		godoc
+// @Summary 					Updates a contentdefinition
+// @Description 				Updates a contentdefinition
 //
-// Updates a contentdefinition
-//
-//     Responses:
-//       200: OK
-//		 400: genericError
-//		 404: genericError
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						body		body	ContentDefinitionBody	true 	"request body"
+// @Success						200			{object}	models.OKResult
+// @Failure						default		{object}	models.GenericError
+// @Router						/contentdefinitions/{id} [put]
 func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
-
-	// swagger:parameters UpdateContentDefinition
-	type request struct {
-		// ID
-		Id uuid.UUID
-		// in:body
-		Body struct {
-			Name        string
-			Description string
-		}
-	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{}
+		id := withID(r.Context())
 
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.Id = uid
-		}
-
-		err := json.NewDecoder(r.Body).Decode(req)
+		body := &ContentDefinitionBody{}
+		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
 		}
 
 		c.app.Commands.UpdateContentDefinition.Handle(r.Context(), command.UpdateContentDefinition{
-			ContentDefinitionID: req.Id,
+			ContentDefinitionID: id,
+			Name:                body.Name,
+			Description:         body.Description,
 		})
 	}
 }
 
-// swagger:route POST /contentdefinitions/{id}/propertydefinitions contentdefinition propertydefinition CreatePropertyDefinition
+// CreatePropertyDefinition 	godoc
+// @Summary 					Creates a new propertydefinition
+// @Description 				Creates a new propertydefinition
 //
-// Creates a new propertydefinition
-//
-//     Responses:
-//       201: Location
-//		 400: genericError
-//		 404: genericError
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						body		body	CreatePropertyDefinitionBody	true 	"request body"
+// @Failure						default		{object}	models.GenericError
+// @Success						201			{object}	models.OKResult
+// @Header						201			{string}	Location
+// @Router						/contentdefinitions/{id}/propertydefinitions [post]
 func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 	// ! TODO Type should not be string, probably enum
 
-	// swagger:parameters CreatePropertyDefinition
-	type request struct {
-		Id uuid.UUID
-		// in: body
-		Body *struct {
-			Name        string
-			Description string
-			Type        string
-		}
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{Body: &struct {
-			Name        string
-			Description string
-			Type        string
-		}{}}
-
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.Id = uid
-		}
-
-		json.NewDecoder(r.Body).Decode(req.Body)
+		id := withID(r.Context())
+		body := &CreatePropertyDefinitionBody{}
+		json.NewDecoder(r.Body).Decode(body)
 
 		pid, err := c.app.Commands.CreatePropertyDefinition.Handle(r.Context(), command.CreatePropertyDefinition{
-			ContentDefinitionID: req.Id,
-			Name:                req.Body.Name,
-			Description:         req.Body.Description,
-			Type:                req.Body.Type,
+			ContentDefinitionID: id,
+			Name:                body.Name,
+			Description:         body.Description,
+			Type:                body.Type,
 		})
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -375,94 +339,51 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route PUT /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition UpdatePropertyDefinition
+// UpdatePropertyDefinition 	godoc
+// @Summary 					Updates an property definition
+// @Description 				Updates an property definition
 //
-// Updates an property definition
-//
-//     Responses:
-//		 200: OK
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						body		body	UpdatePropertyDefinitionBody	true 	"request body"
+// @Failure						default		{object}	models.GenericError
+// @Success						200			{object}	models.OKResult
+// @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [put]
 func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
-
-	// swagger:parameters UpdatePropertyDefinition
-	type request struct {
-		// required:true
-		ContentDefinitionID uuid.UUID
-		// required:true
-		PropertyDefinitionID uuid.UUID
-		// in:body
-		Body *struct {
-			// required:true
-			Name string
-			// required:true
-			Description string
-			// required:true
-			Localized bool
-			// Validators
-			Validation map[string]interface{}
-		}
-	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{Body: &struct {
-			Name        string
-			Description string
-			Localized   bool
-			Validation  map[string]interface{}
-		}{}}
+		body := &UpdatePropertyDefinitionBody{}
 
-		if param := chi.URLParam(r, "id"); param != "" {
+		id := withID(r.Context())
+		pid := withPID(r.Context())
 
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.ContentDefinitionID = uid
-		}
-
-		if param := chi.URLParam(r, "pid"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.PropertyDefinitionID = uid
-		}
-
-		err := json.NewDecoder(r.Body).Decode(req.Body)
+		err := json.NewDecoder(r.Body).Decode(body)
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
 		}
 
 		cmd := command.UpdatePropertyDefinition{
-			ContentDefinitionID:  req.ContentDefinitionID,
-			PropertyDefinitionID: req.PropertyDefinitionID,
-			Name:                 &req.Body.Name,
-			Description:          &req.Body.Description,
-			Localized:            &req.Body.Localized,
-			Rules:                req.Body.Validation,
+			ContentDefinitionID:  id,
+			PropertyDefinitionID: pid,
+			Name:                 &body.Name,
+			Description:          &body.Description,
+			Localized:            &body.Localized,
+			Rules:                body.Validation,
 		}
 		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -470,65 +391,33 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route DELETE /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition DeletePropertyDefinition
+// DeletePropertyDefinition 	godoc
+// @Summary 					Deletes a propertydefinition
+// @Description 				Deletes a propertydefinition
 //
-// Deletes a propertydefinition
-//
-// Deletes an property definition
-//
-//     Responses:
-//		 200: OK
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
+// @Failure						default		{object}	models.GenericError
+// @Success						200			{object}	models.OKResult
+// @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
 func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
 
-	// swagger:parameters DeletePropertyDefinition
-	type request struct {
-		// required:true
-		ContentDefinitionID uuid.UUID
-		// required:true
-		PropertyDefinitionID uuid.UUID
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := &request{}
-
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.ContentDefinitionID = uid
-		}
-
-		if param := chi.URLParam(r, "pid"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.PropertyDefinitionID = uid
-		}
+		id := withID(r.Context())
+		pid := withID(r.Context())
 
 		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{
-			ContentDefinitionID:  req.ContentDefinitionID,
-			PropertyDefinitionID: req.PropertyDefinitionID,
+			ContentDefinitionID:  id,
+			PropertyDefinitionID: pid,
 		})
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -537,63 +426,42 @@ func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /contentdefinitions/{id}/propertydefinitions/{pid} contentdefinition propertydefinition GetPropertyDefinition
+// swagger:parameters GetPropertyDefinition
+type PropertyDefinitionID struct {
+	// required:true
+	// In: path
+	PropertyDefinitionID strfmt.UUID `json:"pid"`
+	// required:true
+	// In: path
+	ContentDefinitionID strfmt.UUID `json:"id"`
+}
+
+// GetPropertyDefinition 	godoc
+// @Summary 					Gets a propertydefinition
+// @Description 				Gets a propertydefinition
 //
-// Gets a propertydefinition
-//
-// Gets a propertydefinition
-//
-//     Responses:
-//		 200: PropertyDefinition
-//		 500: genericError
+// @Tags 						contentdefinition
+// @Accept 						json
+// @Produces 					json
+// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
+// @Failure						default		{object}	models.GenericError
+// @Success						200			{object}	contentdefinition.PropertyDefinition
+// @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [get]
 func (c contentEndpoint) GetPropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// swagger:parameters GetPropertyDefinition
-		type request struct {
-			// required:true
-			ContentDefinitionID uuid.UUID
-			// required:true
-			PropertyDefinitionID uuid.UUID
-		}
 
-		req := &request{}
-
-		if param := chi.URLParam(r, "id"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.ContentDefinitionID = uid
-		}
-
-		if param := chi.URLParam(r, "pid"); param != "" {
-
-			uid, err := uuid.Parse(param)
-
-			if err != nil {
-				api.WithError(r.Context(), api.GenericError{
-					Body:       api.ErrorBody{Message: err.Error()},
-					StatusCode: http.StatusBadRequest,
-				})
-				return
-			}
-			req.PropertyDefinitionID = uid
-		}
+		id := withID(r.Context())
+		pid := withID(r.Context())
 
 		pd, err := c.app.Queries.GetPropertyDefinition.Handle(r.Context(), query.GetPropertyDefinition{
-			ContentDefinitionID:  req.ContentDefinitionID,
-			PropertyDefinitionID: req.PropertyDefinitionID,
+			ContentDefinitionID:  id,
+			PropertyDefinitionID: pid,
 		})
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return
@@ -601,8 +469,8 @@ func (c contentEndpoint) GetPropertyDefinition() http.HandlerFunc {
 		bytes, err := json.Marshal(&pd)
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body:       api.ErrorBody{Message: err.Error()},
+			models.WithError(r.Context(), models.GenericError{
+				Body:       models.ErrorBody{Message: err.Error()},
 				StatusCode: http.StatusBadRequest,
 			})
 			return

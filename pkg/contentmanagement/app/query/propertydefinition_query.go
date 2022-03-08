@@ -34,6 +34,24 @@ func (h GetPropertyDefinitionHandler) Handle(ctx context.Context, query GetPrope
 	return h.Repo.GetPropertyDefinition(ctx, query.ContentDefinitionID, query.PropertyDefinitionID)
 }
 
+type ListContentDefinition struct {
+}
+
+type ListContentDefinitionModel struct {
+	ID          uuid.UUID
+	Name        string
+	Description string
+}
+
+type ListContentDefinitionHandler struct {
+	Repo contentdefinition.ContentDefinitionRepository
+}
+
+func (h ListContentDefinitionHandler) Handle(ctx context.Context, query ListContentDefinition) ([]ListContentDefinitionModel, error) {
+
+	return nil, nil
+}
+
 // type GetValidatorForProperty struct {
 // 	ContentDefinitionID  uuid.UUID
 // 	PropertyDefinitionID uuid.UUID

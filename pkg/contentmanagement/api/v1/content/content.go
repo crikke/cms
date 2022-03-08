@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/crikke/cms/pkg/contentmanagement/api"
+	"github.com/crikke/cms/pkg/contentmanagement/api/models"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
@@ -31,13 +31,13 @@ func NewContentEndpoint(app app.App) contentEndpoint {
 func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 
 	router.Route("/content", func(r chi.Router) {
+		r.Use(models.HandleHttpError)
 
 		r.Get("/", c.ListContent())
 		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(contentIdContext)
 			r.Use(contentVersionContext)
-			r.Use(api.HandleHttpError)
 			r.Get("/", c.GetContent())
 			r.Put("/", c.UpdateContent())
 			r.Delete("/", c.ArchiveContent())
@@ -53,9 +53,9 @@ func contentIdContext(next http.Handler) http.Handler {
 		contentID := chi.URLParam(r, "id")
 		if contentID == "" {
 
-			api.WithError(r.Context(), api.GenericError{
+			models.WithError(r.Context(), models.GenericError{
 				StatusCode: http.StatusBadRequest,
-				Body: api.ErrorBody{
+				Body: models.ErrorBody{
 					FieldName: "contentid",
 					Message:   "parameter contentid is required",
 				},
@@ -66,9 +66,9 @@ func contentIdContext(next http.Handler) http.Handler {
 		cid, err := uuid.Parse(contentID)
 
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
+			models.WithError(r.Context(), models.GenericError{
 				StatusCode: http.StatusBadRequest,
-				Body: api.ErrorBody{
+				Body: models.ErrorBody{
 					FieldName: "contentid",
 					Message:   "bad format",
 				},
@@ -81,26 +81,41 @@ func contentIdContext(next http.Handler) http.Handler {
 	})
 }
 
+func withID(ctx context.Context) uuid.UUID {
+
+	var id uuid.UUID
+
+	if r := ctx.Value(contentKey); r != nil {
+		id = r.(uuid.UUID)
+	}
+
+	return id
+}
+
+func withVersion(ctx context.Context) *int {
+	var version *int
+
+	if r := ctx.Value(versionKey); r != nil {
+		i := r.(int)
+		version = &i
+	}
+
+	return version
+}
+
 func contentVersionContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		version := r.URL.Query().Get("version")
 
 		if version == "" {
-			// api.WithError(r.Context(), api.GenericError{
-			// 	Body: api.ErrorBody{
-			// 		Message:   "parameter version is required",
-			// 		FieldName: "version",
-			// 	},
-			// 	StatusCode: http.StatusBadRequest,
-			// })
 			next.ServeHTTP(w, r)
 		}
 
 		v, err := strconv.Atoi(version)
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message:   "bad formatted version",
 					FieldName: "version",
 				},
@@ -114,36 +129,25 @@ func contentVersionContext(next http.Handler) http.Handler {
 	})
 }
 
-// swagger:route GET /content content ListContent
-//
-// Gets all content
-//
-// Gets all content
-//
-//     Produces:
-//     - application/json
-//
-//     Responses:
-//       200: body:[]ContentListReadModel
-//       404: genericError
-//       400: genericError
+// ListContent 		godoc
+// @Summary 		List all content
+// @Description 	list all content
+// @Tags 			content
+// @Accept 			json
+// @Produces 		json
+// @Param			cid			query	[]string	true 	"uuid formatted ID." format(uuid)
+// @Success			200			{object}	[]query.ContentListReadModel
+// @Failure			default		{object}	models.GenericError
+// @Router			/content [get]
 func (c contentEndpoint) ListContent() http.HandlerFunc {
-
-	// swagger:parameters ListContent
-	type _ struct {
-		// cid
-		//
-		// in: query
-		cid []uuid.UUID
-	}
 
 	return func(rw http.ResponseWriter, r *http.Request) {
 
 		val, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
 
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusNotFound,
@@ -168,8 +172,8 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 
 		if err != nil {
 
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusNotFound,
@@ -189,58 +193,34 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /content/{id} content GetContent
-//
-// Get content by id and optionally version
-//
-// Gets content by Id.
-//
-//     Produces:
-//     - application/json
-//
-//     Responses:
-//       200: body:Contentresponse
-//       404: genericError
-//       400: genericError
+// GetContent 		godoc
+// @Summary 		Get content by id
+// @Description 	Get content by id and optionally version
+// @Tags 			content
+// @Accept 			json
+// @Produces 		json
+// @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			version		query	int		false 	"content version"
+// @Success			200			{object}	query.ContentReadModel
+// @Failure			default		{object}	models.GenericError
+// @Router			/content/{id} [get]
 func (c contentEndpoint) GetContent() http.HandlerFunc {
-
-	// swagger:parameters GetContent
-	type request struct {
-		// ID
-		//
-		// in: path
-		// required:true
-		ID uuid.UUID
-		// Version
-		//
-		// in: query
-		Version *int
-	}
-
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		req := request{}
-
-		if r := r.Context().Value(contentKey); r != nil {
-			req.ID = r.(uuid.UUID)
-		}
-
-		if r := r.Context().Value(versionKey); r != nil {
-			i := r.(int)
-			req.Version = &i
-		}
+		id := withID(r.Context())
+		version := withVersion(r.Context())
 
 		q := query.GetContent{
-			Id:      req.ID,
-			Version: req.Version,
+			Id:      id,
+			Version: version,
 		}
 
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
 
 		if err != nil {
 
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusNotFound,
@@ -260,42 +240,37 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 	}
 }
 
-// swagger:route POST /content content CreateContent
-//
-// Create new content
-//
-// Creates new content node under the parent. The content is created from the specified contentdefinition
-// which acts as a template, containing what properties to create & their validation.
-//
-//     Consumes:
-//	   - application/json
-//     Produces:
-//     - application/json
-//
-//     Responses:
-//       201: Location
-//		 400: genericError
+// CreateContent 	godoc
+// @Summary 		Create new content
+// @Description 	Creates new content basen on a contentdefinition
+// @Tags 			content
+// @Accept 			json
+// @Produces 		json
+// @Param			contentdefinitionid	body CreateContentRequest true "contentdefinitionid"
+// @Success						201			{object}	models.OKResult
+// @Header						201			{string}	Location
+// @Failure			default		{object}	models.GenericError
+// @Router			/content [post]
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
-
-	// swagger:parameters CreateContent
-	type request struct {
-		// Contentdefinition ID
-		// in: body
-		// required: true
-		ContentDefinitionId uuid.UUID `json:"contentdefinitionid"`
-		// ParentId
-		// in: body
-		ParentId uuid.UUID `json:"parentid"`
-	}
 
 	return func(rw http.ResponseWriter, r *http.Request) {
 
-		req := &request{}
+		body := &CreateContentRequest{}
 
-		err := json.NewDecoder(r.Body).Decode(req)
+		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+		}
+		cid, err := uuid.Parse(body.ContentDefinitionId.String())
+		if err != nil {
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusBadRequest,
@@ -305,13 +280,12 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
 		id, err := c.app.Commands.CreateContent.Handle(r.Context(),
 			command.CreateContent{
-				ContentDefinitionId: req.ContentDefinitionId,
-				ParentID:            req.ParentId,
+				ContentDefinitionId: cid,
 			},
 		)
 		if err != nil {
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message: err.Error(),
 				},
 				StatusCode: http.StatusBadRequest,
@@ -326,115 +300,59 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 	}
 }
 
-// swagger:route PUT /content/{id} content UpdateContent
-//
-// Update content
-//
-// Updates content node
-//
-//		Consumes:
-//		- application/json
-//		Produces:
-//		- application/json
-//
-//		Responses:
-//		  200: OK
-//		  404: genericError
-//        400: genericError
+// UpdateContent 	godoc
+// @Summary 		Update content
+// @Description 	Update content
+// @Tags 			content
+// @Accept 			json
+// @Produces 		json
+// @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			requestbody	body UpdateContentRequestBody true "body"
+// @Success			200		{object}		models.OKResult
+// @Failure			default		{object}	models.GenericError
+// @Router			/content/{id} [put]
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
-
-	// swagger:parameters UpdateContent
-	type request struct {
-		// ID
-		//
-		// in: path
-		// required:true
-		ID uuid.UUID
-
-		// in:body
-		Body struct {
-			// Version
-			// required:true
-			Version int
-			// Language
-			// required:true
-			Language string
-			// Properties
-			// required:true
-			Fields map[string]interface{}
-		}
-	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		req := request{}
+		id := withID(r.Context())
+		body := &UpdateContentRequestBody{}
 
-		if r := r.Context().Value(contentKey); r != nil {
-			req.ID = r.(uuid.UUID)
-		}
-
-		bod := &struct {
-			Version  int
-			Language string
-			Fields   map[string]interface{}
-		}{}
-
-		err := json.NewDecoder(r.Body).Decode(bod)
+		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
-			api.WithError(r.Context(), err)
+			models.WithError(r.Context(), err)
 			return
 		}
 
-		req.Body = *bod
-
 		err = c.app.Commands.UpdateContentFields.Handle(r.Context(), command.UpdateContentFields{
-			ContentID: req.ID,
-			Version:   req.Body.Version,
-			Language:  req.Body.Language,
-			Fields:    req.Body.Fields,
+			ContentID: id,
+			Version:   body.Version,
+			Language:  body.Language,
+			Fields:    body.Fields,
 		})
 
 		if err != nil {
-			api.WithError(r.Context(), err)
+			models.WithError(r.Context(), err)
 			return
 		}
 	}
 }
 
-// swagger:route DELETE /content/{id} content ArchiveContent
-//
-// Archives content
-//
-// Archives content with ID
-//
-//		Consumes:
-//		- application/json
-//		Produces:
-//		- application/json
-//
-//		Responses:
-//		  200: OK
-//		  404: genericError
-//        400: genericError
+// ArchivesContent 	godoc
+// @Summary 		Archives content
+// @Description 	Archives content with ID
+// @Tags 			content
+// @Accept 			json
+// @Produces 		json
+// @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Success			200		{object}		OKResult
+// @Failure			default		{object}	models.GenericError
+// @Router			/content/{id} [delete]
 func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
-
-	// swagger:parameters request DeleteContent
-	type _ struct {
-		// ID
-		//
-		// in: path
-		// required:true
-		ID uuid.UUID
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		id := uuid.UUID{}
+		id := withID(r.Context())
 
-		if r := r.Context().Value(contentKey); r != nil {
-			uid := r.(uuid.UUID)
-			id = uid
-		}
 		err := c.app.Commands.ArchiveContent.Handle(
 			r.Context(),
 			command.ArchiveContent{
@@ -442,57 +360,33 @@ func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 			})
 
 		if err != nil {
-			api.WithError(r.Context(), err)
+			models.WithError(r.Context(), err)
 		}
 	}
 }
 
-// swagger:route POST /content/{id}/publish content PublishContent
-//
-// Publishes content
-//
-// Publishes content
-//
-//		Consumes:
-//		- application/json
-//		Produces:
-//		- application/json
-//
-//		Responses:
-//		  200: OK
-//		  404: genericError
-//        400: genericError
+// PublishContent 	godoc
+// @Summary 		Publishes content
+// @Description 	Publishes content with ID
+// @Tags 			content
+// @Accept 			json
+// @Produces 		json
+// @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			version		query	int		true 	"content version"
+// @Success			200			{object}		OKResult
+// @Failure			default		{object}		models.GenericError
+// @Router			/content/{id}/publish [post]
 func (c contentEndpoint) PublishContent() http.HandlerFunc {
-
-	// swagger:parameters request PublishContent
-	type _ struct {
-		// ID
-		//
-		// in: path
-		// required:true
-		ID uuid.UUID
-		// Version
-		//
-		// required:true
-		// in: query
-		Version int
-	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		id := uuid.UUID{}
-		// version := 0
+		id := withID(r.Context())
+		version := withVersion(r.Context())
 
-		if r := r.Context().Value(contentKey); r != nil {
-			uid := r.(uuid.UUID)
-			id = uid
-		}
+		if version == nil {
 
-		ver := r.Context().Value(versionKey)
-		if ver == nil {
-
-			api.WithError(r.Context(), api.GenericError{
-				Body: api.ErrorBody{
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
 					Message: "missing version",
 				},
 				StatusCode: http.StatusBadRequest,
@@ -500,17 +394,15 @@ func (c contentEndpoint) PublishContent() http.HandlerFunc {
 			return
 		}
 
-		version := ver.(int)
-
 		err := c.app.Commands.PublishContent.Handle(
 			r.Context(),
 			command.PublishContent{
 				ContentID: id,
-				Version:   version,
+				Version:   *version,
 			})
 
 		if err != nil {
-			api.WithError(r.Context(), err)
+			models.WithError(r.Context(), err)
 		}
 	}
 }

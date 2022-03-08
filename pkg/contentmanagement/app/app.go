@@ -14,8 +14,9 @@ type Queries struct {
 	GetContent  query.GetContentHandler
 	ListContent query.ListContentHandler
 
-	GetContentDefinition  query.GetContentDefinitionHandler
-	GetPropertyDefinition query.GetPropertyDefinitionHandler
+	GetContentDefinition   query.GetContentDefinitionHandler
+	GetPropertyDefinition  query.GetPropertyDefinitionHandler
+	ListContentDefinitions query.ListContentDefinitionHandler
 }
 type Commands struct {
 	CreateContent       contentcmd.CreateContentHandler

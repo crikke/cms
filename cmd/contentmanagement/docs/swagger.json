@@ -1,0 +1,848 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server celler server.",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/content": {
+            "get": {
+                "description": "list all content",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "List all content",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "format": "uuid",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "uuid formatted ID.",
+                        "name": "cid",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/query.ContentListReadModel"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates new content basen on a contentdefinition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Create new content",
+                "parameters": [
+                    {
+                        "description": "contentdefinitionid",
+                        "name": "contentdefinitionid",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/content.CreateContentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/{id}": {
+            "get": {
+                "description": "Get content by id and optionally version",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Get content by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "content version",
+                        "name": "version",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/query.ContentReadModel"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update content",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Update content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "requestbody",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/content.UpdateContentRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Archives content with ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Archives content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/content.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/content/{id}/publish": {
+            "post": {
+                "description": "Publishes content with ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Publishes content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "content version",
+                        "name": "version",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/content.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentdefinitions": {
+            "get": {
+                "description": "Gets all existing contentdefinitions",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Get all content definitions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/query.ListContentDefinitionModel"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new contentdefinition. The contentdefinition\nacts as a template for creating new content,\ncontaining what properties to create \u0026 their validation.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Creates a new content definition",
+                "parameters": [
+                    {
+                        "description": "request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/contentdefinition.ContentDefinitionBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentdefinitions/{id}": {
+            "get": {
+                "description": "Gets a content definition by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Gets a content definition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/contentdefinition.ContentDefinition"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates a contentdefinition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Updates a contentdefinition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/contentdefinition.ContentDefinitionBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a content definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Delete a content definition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentdefinitions/{id}/propertydefinitions": {
+            "post": {
+                "description": "Creates a new propertydefinition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Creates a new propertydefinition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/contentdefinition.CreatePropertyDefinitionBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentdefinitions/{id}/propertydefinitions/{pid}": {
+            "get": {
+                "description": "Gets a propertydefinition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Gets a propertydefinition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/contentdefinition.PropertyDefinition"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an property definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Updates an property definition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/contentdefinition.UpdatePropertyDefinitionBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a propertydefinition",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contentdefinition"
+                ],
+                "summary": "Deletes a propertydefinition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "pid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "content.ContentField": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "localized": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "content.ContentFields": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/content.ContentField"
+            }
+        },
+        "content.ContentLanguage": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/content.ContentFields"
+            }
+        },
+        "content.CreateContentRequest": {
+            "type": "object",
+            "properties": {
+                "contentDefinitionId": {
+                    "type": "string"
+                }
+            }
+        },
+        "content.OKResult": {
+            "type": "object"
+        },
+        "content.UpdateContentRequestBody": {
+            "type": "object",
+            "properties": {
+                "fields": {
+                    "description": "Properties",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "language": {
+                    "description": "Language",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Version",
+                    "type": "integer"
+                }
+            }
+        },
+        "contentdefinition.ContentDefinition": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "propertydefinitions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/contentdefinition.PropertyDefinition"
+                    }
+                }
+            }
+        },
+        "contentdefinition.ContentDefinitionBody": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Content definition description",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Content definition Name",
+                    "type": "string"
+                }
+            }
+        },
+        "contentdefinition.CreatePropertyDefinitionBody": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "contentdefinition.PropertyDefinition": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Name        string    `bson:\"name,omitempty\"`",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "localized": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "validators": {
+                    "description": "instead of using map[strin]validator.Validator, interface{} is used\nthis wont be a problem becuase they will be translated to validator.Validator in GetValidatorQueury",
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "contentdefinition.UpdatePropertyDefinitionBody": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "localized": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "validation": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "models.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "fieldName": {
+                    "type": "string"
+                },
+                "message": {
+                    "description": "required: true",
+                    "type": "string"
+                }
+            }
+        },
+        "models.GenericError": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "in: body",
+                    "$ref": "#/definitions/models.ErrorBody"
+                },
+                "statusCode": {
+                    "description": "swagger:ignore",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.OKResult": {
+            "type": "object"
+        },
+        "query.ContentListReadModel": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "query.ContentReadModel": {
+            "type": "object",
+            "properties": {
+                "contentDefinitionID": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "properties": {
+                    "description": "properties for the content",
+                    "$ref": "#/definitions/content.ContentLanguage"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "query.ListContentDefinitionModel": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

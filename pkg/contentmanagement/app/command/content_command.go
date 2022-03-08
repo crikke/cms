@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/crikke/cms/pkg/contentmanagement/api"
+	"github.com/crikke/cms/pkg/contentmanagement/api/models"
 	"github.com/crikke/cms/pkg/contentmanagement/content"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
@@ -75,8 +75,8 @@ func (h UpdateContentFieldsHandler) Handle(ctx context.Context, cmd UpdateConten
 		cv, ok := c.Version[cmd.Version]
 
 		if !ok {
-			return nil, api.GenericError{
-				Body: api.ErrorBody{
+			return nil, models.GenericError{
+				Body: models.ErrorBody{
 					Message:   content.ErrMissingVersion,
 					FieldName: "version",
 				},
