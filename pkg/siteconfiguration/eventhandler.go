@@ -2,24 +2,33 @@ package siteconfiguration
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/streadway/amqp"
 )
 
+type ConfigurationEventHandler interface {
+	io.Closer
+	Watch(cfg *SiteConfiguration) error
+	Publish(cfg SiteConfiguration) error
+}
+
 const cfgExchange = "cms.siteconfiguration"
 
-type consumer struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
-	tag     string
-	done    chan error
+type configurationQueue struct {
+	conn        *amqp.Connection
+	channel     *amqp.Channel
+	queue       string
+	tag         string
+	done        chan error
+	initialized bool
 }
 
 // Initializes a temporary queue that subscribes to configuration changes
-func NewConfigurationWatcher(uri string, cfg *SiteConfiguration) (io.Closer, error) {
-	c := &consumer{
+func NewConfigurationEventHandler(uri string) (ConfigurationEventHandler, error) {
+	c := &configurationQueue{
 		conn:    nil,
 		channel: nil,
 		tag:     "",
@@ -64,6 +73,7 @@ func NewConfigurationWatcher(uri string, cfg *SiteConfiguration) (io.Closer, err
 		false,
 		nil,
 	)
+	c.queue = q.Name
 
 	if err != nil {
 		return nil, err
@@ -81,19 +91,32 @@ func NewConfigurationWatcher(uri string, cfg *SiteConfiguration) (io.Closer, err
 		return nil, err
 	}
 
-	messages, err := c.channel.Consume(q.Name, "", false, true, false, false, nil)
+	c.initialized = true
 
-	if err != nil {
-		return nil, err
-	}
-
-	go messageHandler(cfg, messages, c.done)
 	return c, nil
 }
 
-func (c consumer) Close() error {
+func (c *configurationQueue) Close() error {
 	c.conn.Close()
+	c.initialized = false
 	return <-c.done
+}
+
+func (c configurationQueue) Watch(cfg *SiteConfiguration) error {
+
+	if !c.initialized {
+		return errors.New("cannot watch before channel is initialized")
+	}
+
+	messages, err := c.channel.Consume(c.queue, "", false, true, false, false, nil)
+
+	if err != nil {
+		return err
+	}
+
+	go messageHandler(cfg, messages, c.done)
+
+	return nil
 }
 
 func messageHandler(cfg *SiteConfiguration, messages <-chan amqp.Delivery, done chan error) {
@@ -114,4 +137,23 @@ func messageHandler(cfg *SiteConfiguration, messages <-chan amqp.Delivery, done 
 		msg.Ack(false)
 	}
 	done <- nil
+}
+
+func (c configurationQueue) Publish(cfg SiteConfiguration) error {
+
+	data, err := json.Marshal(&cfg)
+
+	if err != nil {
+		return err
+	}
+
+	return c.channel.Publish(
+		cfgExchange,
+		"",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        data,
+		})
 }

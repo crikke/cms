@@ -37,19 +37,19 @@ func main() {
 	}
 
 	if serverConfig.ConnectionString.Mongodb != "" {
-		closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
+		cfgQueue, err := siteconfiguration.NewConfigurationEventHandler(serverConfig.ConnectionString.RabbitMQ)
 
 		if err != nil {
 			panic(err)
 		}
 
 		defer func() {
-			err = closer.Close()
+			err = cfgQueue.Close()
 			if err != nil {
 				panic(err)
 			}
 		}()
-
+		cfgQueue.Watch(siteConfig)
 	}
 
 	server := Server{

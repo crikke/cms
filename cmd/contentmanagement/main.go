@@ -8,6 +8,7 @@ import (
 	"github.com/crikke/cms/pkg/contentdelivery/config"
 	contentapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
 	contentdefapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/contentdefinition"
+	cfgapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/siteconfiguration"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
@@ -23,8 +24,9 @@ import (
 
 type Server struct {
 	// Configuration config.SiteConfiguration
-	database   *mongo.Client
-	SiteConfig *siteconfiguration.SiteConfiguration
+	database     *mongo.Client
+	eventhandler siteconfiguration.ConfigurationEventHandler
+	SiteConfig   *siteconfiguration.SiteConfiguration
 }
 
 // @title           Swagger Example API
@@ -50,29 +52,30 @@ func main() {
 
 	configRepo := siteconfiguration.NewConfigurationRepository(c)
 	siteConfig, err := configRepo.LoadConfiguration(context.Background())
+
+	server := Server{
+		database:   c,
+		SiteConfig: siteConfig,
+	}
+
 	if err != nil {
 		panic(err)
 	}
-
-	if serverConfig.ConnectionString.RabbitMQ != "" {
-		closer, err := siteconfiguration.NewConfigurationWatcher(serverConfig.ConnectionString.RabbitMQ, siteConfig)
+	if serverConfig.ConnectionString.Mongodb != "" {
+		eventhandler, err := siteconfiguration.NewConfigurationEventHandler(serverConfig.ConnectionString.RabbitMQ)
 
 		if err != nil {
 			panic(err)
 		}
 
 		defer func() {
-			err = closer.Close()
+			err = eventhandler.Close()
 			if err != nil {
 				panic(err)
 			}
 		}()
-
-	}
-
-	server := Server{
-		database:   c,
-		SiteConfig: siteConfig,
+		eventhandler.Watch(siteConfig)
+		server.eventhandler = eventhandler
 	}
 
 	panic(server.Start())
@@ -80,13 +83,8 @@ func main() {
 
 func (s Server) Start() error {
 
-	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-
-	if err != nil {
-		panic(err)
-	}
-	contentDefinitionRepo := contentdefinition.NewContentDefinitionRepository(c)
-	contentRepo := content.NewContentRepository(c)
+	contentDefinitionRepo := contentdefinition.NewContentDefinitionRepository(s.database)
+	contentRepo := content.NewContentRepository(s.database)
 	app := app.App{
 		Queries: app.Queries{
 			GetContent: query.GetContentHandler{
@@ -99,6 +97,9 @@ func (s Server) Start() error {
 				Repo: contentDefinitionRepo,
 			},
 			GetPropertyDefinition: query.GetPropertyDefinitionHandler{
+				Repo: contentDefinitionRepo,
+			},
+			ListContentDefinitions: query.ListContentDefinitionHandler{
 				Repo: contentDefinitionRepo,
 			},
 		},
@@ -136,6 +137,11 @@ func (s Server) Start() error {
 				Repo: contentDefinitionRepo,
 			},
 			DeletePropertyDefinition: command.DeletePropertyDefinitionHandler{},
+			UpdateSiteConfiguration: command.UpdateSiteConfigurationHandler{
+				Cfg:          s.SiteConfig,
+				Repo:         siteconfiguration.NewConfigurationRepository(s.database),
+				Eventhandler: s.eventhandler,
+			},
 		},
 	}
 	r := chi.NewRouter()
@@ -153,6 +159,8 @@ func (s Server) Start() error {
 
 	contentdefendpoint := contentdefapi.NewContentDefinitionEndpoint(app)
 	contentdefendpoint.RegisterEndpoints(r)
+
+	r.Mount("/siteconfiguration", cfgapi.NewSiteConfigurationRouter(s.SiteConfig))
 
 	return http.ListenAndServe(":8080", r)
 }

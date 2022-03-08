@@ -6,6 +6,8 @@ import (
 )
 
 type SiteConfiguration struct {
-	Languages []language.Tag
-	RootPage  uuid.UUID
+	// Site ID
+	ID        uuid.UUID      `bson:"_id"`
+	Languages []language.Tag `bson:"languages"`
+	RootPage  uuid.UUID      `bson:"rootpage"`
 }

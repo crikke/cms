@@ -31,4 +31,6 @@ type Commands struct {
 	CreatePropertyDefinition contentcmd.CreatePropertyDefinitionHandler
 	UpdatePropertyDefinition contentcmd.UpdatePropertyDefinitionHandler
 	DeletePropertyDefinition contentcmd.DeletePropertyDefinitionHandler
+
+	UpdateSiteConfiguration contentcmd.UpdateSiteConfigurationHandler
 }

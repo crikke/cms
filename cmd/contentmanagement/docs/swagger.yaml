@@ -148,6 +148,13 @@ definitions:
       name:
         type: string
     type: object
+  siteconfiguration.SiteConfigurationRequest:
+    properties:
+      languages:
+        items:
+          type: string
+        type: array
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -571,4 +578,40 @@ paths:
       summary: Updates an property definition
       tags:
       - contentdefinition
+  /siteconfiguration:
+    get:
+      description: Gets siteconfiguration for this site.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/siteconfiguration.SiteConfigurationRequest'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get siteconfiguration
+      tags:
+      - siteconfiguration
+    put:
+      description: Updates siteconfiguration for this site.
+      parameters:
+      - description: request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/siteconfiguration.SiteConfigurationRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Updates siteconfiguration
+      tags:
+      - siteconfiguration
 swagger: "2.0"

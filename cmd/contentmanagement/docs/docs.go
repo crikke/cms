@@ -630,6 +630,61 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/siteconfiguration": {
+            "get": {
+                "description": "Gets siteconfiguration for this site.",
+                "tags": [
+                    "siteconfiguration"
+                ],
+                "summary": "Get siteconfiguration",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/siteconfiguration.SiteConfigurationRequest"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates siteconfiguration for this site.",
+                "tags": [
+                    "siteconfiguration"
+                ],
+                "summary": "Updates siteconfiguration",
+                "parameters": [
+                    {
+                        "description": "request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/siteconfiguration.SiteConfigurationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OKResult"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -848,6 +903,17 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "siteconfiguration.SiteConfigurationRequest": {
+            "type": "object",
+            "properties": {
+                "languages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         }
