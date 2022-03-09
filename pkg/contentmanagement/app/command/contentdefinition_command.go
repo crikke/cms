@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/google/uuid"
 )
 

@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -12,11 +12,11 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/crikke/cms/pkg/contentdefinition"
+	"github.com/crikke/cms/pkg/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"

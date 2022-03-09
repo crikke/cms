@@ -5,7 +5,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	mongodbadapter "github.com/casbin/mongodb-adapter/v3"
-	"github.com/crikke/cms/pkg/contentdelivery/config"
+	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/contentdelivery/content"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition/validator"
+	"github.com/crikke/cms/pkg/contentdefinition/validator"
 	"github.com/google/uuid"
 )
 

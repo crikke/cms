@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/crikke/cms/pkg/contentmanagement/content"
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/content"
+	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )

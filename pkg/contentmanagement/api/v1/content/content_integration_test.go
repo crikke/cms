@@ -12,11 +12,11 @@ import (
 	"net/url"
 	"testing"
 
+	domain "github.com/crikke/cms/pkg/content"
+	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	domain "github.com/crikke/cms/pkg/contentmanagement/content"
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/go-chi/chi/v5"

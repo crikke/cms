@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

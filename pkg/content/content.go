@@ -5,38 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/crikke/cms/pkg/contentmanagement/contentdefinition"
+	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/google/uuid"
 )
-
-/*
-
-Saving content example:
-
-HTTP POST contentmanagement/content
-{
-	"contentdefinition": uuid,
-}
-
-HTTP PUT contentmanagement/content/{contentID}
-{
-	"name": {
-		"sv_SE": "exempel",
-		"en_US": "example"
-	},
-	"properties": [
-		{
-			"id": uuid
-			"value": {
-				"sv_SE": "example value"
-			},
-			"localized": false|true // todo should PUT contain this? isnt contentdefinition responsible for this?
-		}
-	]
-}
-
-*/
 
 // swagger:enum PublishStatus
 type PublishStatus string
@@ -47,7 +19,9 @@ type Content struct {
 	ParentID            uuid.UUID `bson:"parentid"`
 	PublishedVersion    int
 	Version             map[int]ContentVersion `bson:"version"`
-	Status              PublishStatus          `bson:"status"`
+	// Which languages this content has been translated to
+	AvailableLanguages []string      `bson:"version"`
+	Status             PublishStatus `bson:"status"`
 }
 
 // swagger: model ContentVersion
@@ -128,6 +102,7 @@ func (f Factory) AddLanguage(c *ContentVersion, language string) (ContentFields,
 	if _, ok := c.Properties[language]; !ok {
 		c.Properties[language] = cl
 	}
+
 	return cl, nil
 }
 

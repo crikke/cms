@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/crikke/cms/pkg/config"
 	contentapi "github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
-	"github.com/crikke/cms/pkg/contentdelivery/config"
 	"github.com/crikke/cms/pkg/contentdelivery/content"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
