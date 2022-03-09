@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/crikke/cms/pkg/config"
-	contentapi "github.com/crikke/cms/pkg/contentdelivery/api/v1/content"
-	"github.com/crikke/cms/pkg/contentdelivery/content"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/crikke/cms/pkg/telemetry"
@@ -71,10 +69,10 @@ func (s Server) Start() error {
 		// locale.Handler(s.SiteConfig),
 	)
 
-	v1 := r.Group("/v1")
+	// v1 := r.Group("/v1")
 	{
-		contentRepo := content.NewContentRepository(s.database, s.SiteConfig)
-		contentapi.RegisterEndpoints(v1, s.SiteConfig, contentRepo)
+		// contentRepo := content.NewContentRepository(s.database, s.SiteConfig)
+		// contentapi.NewContentRoute(v1, s.SiteConfig, contentRepo)
 	}
 
 	return r.Run()

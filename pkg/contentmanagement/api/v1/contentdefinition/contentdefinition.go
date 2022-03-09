@@ -20,15 +20,15 @@ type key string
 var contentKey = key("cid")
 var propertyKey = key("pid")
 
-type contentEndpoint struct {
+type endpoint struct {
 	app app.App
 }
 
-func NewContentDefinitionEndpoint(app app.App) contentEndpoint {
-	return contentEndpoint{app}
+func NewContentDefinitionEndpoint(app app.App) endpoint {
+	return endpoint{app}
 }
 
-func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
+func (c endpoint) RegisterEndpoints(router chi.Router) {
 
 	router.Route("/contentdefinitions", func(r chi.Router) {
 
@@ -134,7 +134,7 @@ func withPID(ctx context.Context) uuid.UUID {
 // @Header						201			{string}	Location
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentdefinitions [post]
-func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
+func (c endpoint) CreateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -184,7 +184,7 @@ func (c contentEndpoint) CreateContentDefinition() http.HandlerFunc {
 // @Success						200			{object}	contentdefinition.ContentDefinition
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentdefinitions/{id} [get]
-func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
+func (c endpoint) GetContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -224,7 +224,7 @@ func (c contentEndpoint) GetContentDefinition() http.HandlerFunc {
 // @Success						200			{object}	query.ListContentDefinitionModel
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentdefinitions [get]
-func (c contentEndpoint) ListContentDefinitions() http.HandlerFunc {
+func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, _ = c.app.Queries.ListContentDefinitions.Handle(r.Context(), query.ListContentDefinition{})
@@ -242,7 +242,7 @@ func (c contentEndpoint) ListContentDefinitions() http.HandlerFunc {
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentdefinitions/{id} [delete]
-func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
+func (c endpoint) DeleteContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -271,7 +271,7 @@ func (c contentEndpoint) DeleteContentDefinition() http.HandlerFunc {
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentdefinitions/{id} [put]
-func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
+func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -308,7 +308,7 @@ func (c contentEndpoint) UpdateContentDefinition() http.HandlerFunc {
 // @Success						201			{object}	models.OKResult
 // @Header						201			{string}	Location
 // @Router						/contentdefinitions/{id}/propertydefinitions [post]
-func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
+func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 	// ! TODO Type should not be string, probably enum
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -352,7 +352,7 @@ func (c contentEndpoint) CreatePropertyDefinition() http.HandlerFunc {
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
 // @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [put]
-func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
+func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -403,7 +403,7 @@ func (c contentEndpoint) UpdatePropertyDefinition() http.HandlerFunc {
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
 // @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
-func (c contentEndpoint) DeletePropertyDefinition() http.HandlerFunc {
+func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -448,7 +448,7 @@ type PropertyDefinitionID struct {
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	contentdefinition.PropertyDefinition
 // @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [get]
-func (c contentEndpoint) GetPropertyDefinition() http.HandlerFunc {
+func (c endpoint) GetPropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())

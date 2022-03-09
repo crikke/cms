@@ -1,13 +1,14 @@
 //go:build unit
 
-package locale
+package content
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/crikke/cms/pkg/contentdelivery/app"
 	"github.com/crikke/cms/pkg/siteconfiguration"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
 )
@@ -54,24 +55,18 @@ func Test_GetLocale(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.acceptlanguage, func(t *testing.T) {
 
-			router := gin.Default()
-
-			r := httptest.NewRequest("GET", "/", nil)
-			r.Header.Add("Accept-Language", test.acceptlanguage)
+			req := httptest.NewRequest("GET", "/", nil)
+			req.Header.Add("Accept-Language", test.acceptlanguage)
 
 			w := httptest.NewRecorder()
+			ep := endpoint{app: app.App{SiteConfiguration: config}}
 
-			router.GET("/", func(c *gin.Context) {
+			ep.localeContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				actual := withLocale(r.Context())
 
-				tag, err := GetLocale(c.Request, config)
+				assert.Equal(t, test.expected.String(), actual)
+			})).ServeHTTP(w, req)
 
-				ok := err == nil
-
-				assert.Equal(t, test.ok, ok)
-				assert.Equal(t, test.expected, tag)
-			})
-
-			router.ServeHTTP(w, r)
 		})
 	}
 }

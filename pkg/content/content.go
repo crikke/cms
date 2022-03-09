@@ -19,9 +19,7 @@ type Content struct {
 	ParentID            uuid.UUID `bson:"parentid"`
 	PublishedVersion    int
 	Version             map[int]ContentVersion `bson:"version"`
-	// Which languages this content has been translated to
-	AvailableLanguages []string      `bson:"version"`
-	Status             PublishStatus `bson:"status"`
+	Status              PublishStatus          `bson:"status"`
 }
 
 // swagger: model ContentVersion
@@ -162,6 +160,30 @@ func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefiniti
 
 	c.Version[len(c.Version)] = *cv
 	return cv, nil
+}
+
+func (c Content) GetPublishedVersion() (ContentVersion, error) {
+	cv, ok := c.Version[c.PublishedVersion]
+
+	if !ok {
+		return ContentVersion{}, errors.New(ErrMissingVersion)
+	}
+
+	if cv.Status != Published {
+		return ContentVersion{}, errors.New("not published")
+	}
+
+	return cv, nil
+}
+
+func (c ContentVersion) AvailableLanguages() []string {
+
+	res := make([]string, 0)
+	for lang := range c.Properties {
+		res = append(res, lang)
+	}
+
+	return res
 }
 
 func (c ContentVersion) CanEdit() bool {
