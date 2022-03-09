@@ -125,6 +125,7 @@ func (c contentrepository) ListContentByContentDefinition(ctx context.Context, c
 
 func (c contentrepository) ListContentByTags(ctx context.Context, tags []string) ([]Content, error) {
 
+	c.database.Collection(collection).Find(ctx, bson.M{})
 	// for _, field := range tags {
 
 	// }

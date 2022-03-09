@@ -99,32 +99,32 @@ func (r repository) CreatePropertyDefinition(ctx context.Context, cid uuid.UUID,
 	return pd.ID, err
 }
 
-func (r repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error {
+// func (r repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error {
 
-	entry, err := r.GetPropertyDefinition(ctx, cid, pid)
-	if err != nil {
-		return err
-	}
-	e, err := updateFn(ctx, &entry)
-	if err != nil {
-		return err
-	}
+// 	entry, err := r.GetPropertyDefinition(ctx, cid, pid)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	e, err := updateFn(ctx, &entry)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = r.database.
-		Collection(r.collection).
-		UpdateOne(
-			ctx,
-			bson.D{
-				bson.E{Key: "_id", Value: cid},
-				bson.E{Key: "propertydefinitions.id", Value: pid}},
-			bson.M{"$set": bson.M{"propertydefinitions.$": e}})
+// 	_, err = r.database.
+// 		Collection(r.collection).
+// 		UpdateOne(
+// 			ctx,
+// 			bson.D{
+// 				bson.E{Key: "_id", Value: cid},
+// 				bson.E{Key: "propertydefinitions.id", Value: pid}},
+// 			bson.M{"$set": bson.M{"propertydefinitions.$": e}})
 
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (r repository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error {
 	_, err := r.database.

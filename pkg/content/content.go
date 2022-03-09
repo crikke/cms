@@ -13,6 +13,11 @@ import (
 // swagger:enum PublishStatus
 type PublishStatus string
 
+//! TODO: instead of storing the versionnumber in PublishedVersion, store the actual version there.
+//! This will always be the most frequent requested data and by doing this unnecessary logic to query the published version wont be needed.
+//! Older versions should be moved to another collection since read speeds isn´t as important.
+//! Obviously ContentVersion will need a version field.
+//! This will also solve problem with status, since status will only be needed on Content and not ContentVersion
 type Content struct {
 	ID                  uuid.UUID `bson:"_id"`
 	ContentDefinitionID uuid.UUID `bson:"contentdefinition_id"`
