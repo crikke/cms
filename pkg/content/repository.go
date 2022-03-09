@@ -13,7 +13,8 @@ const collection = "content"
 type ContentRepository interface {
 	CreateContent(ctx context.Context, content Content) (uuid.UUID, error)
 	GetContent(ctx context.Context, id uuid.UUID) (Content, error)
-	ListContent(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error)
+	ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error)
+	ListContentByTags(ctx context.Context, tags []string) ([]Content, error)
 	UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error
 }
 
@@ -85,9 +86,8 @@ func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, upda
 	return nil
 }
 
-func (c contentrepository) ListContent(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
+func (c contentrepository) ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
 
-	// cdFilter := bson.E{}
 	query := bson.M{}
 
 	query["status"] = bson.M{"$ne": Archived}
@@ -121,4 +121,12 @@ func (c contentrepository) ListContent(ctx context.Context, contentDefinitionTyp
 	}
 
 	return result, nil
+}
+
+func (c contentrepository) ListContentByTags(ctx context.Context, tags []string) ([]Content, error) {
+
+	// for _, field := range tags {
+
+	// }
+	return nil, nil
 }

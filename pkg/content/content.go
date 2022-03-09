@@ -27,6 +27,7 @@ type ContentVersion struct {
 	Properties ContentLanguage `bson:"properties"`
 	Created    time.Time       `bson:"created"`
 	Status     PublishStatus   `bson:"status"`
+	Tags       []string        `bson:"tags,omitempty"`
 }
 
 // ContentField describes the property aswell as its value
