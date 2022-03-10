@@ -37,10 +37,13 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(contentIdContext)
-			r.Use(contentVersionContext)
-			r.Get("/", c.GetContent())
 			r.Put("/", c.UpdateContent())
 			r.Delete("/", c.ArchiveContent())
+
+			r.Route("/", func(r chi.Router) {
+				r.Use(contentVersionContext)
+				r.Get("/", c.GetContent())
+			})
 
 			r.Post("/publish", c.PublishContent())
 		})
@@ -208,7 +211,7 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 // @Produces 		json
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			version		query	int		false 	"content version"
-// @Success			200			{object}	query.ContentReadModel
+// @Success			200			{object}	content.Content
 // @Failure			default		{object}	models.GenericError
 // @Router			/content/{id} [get]
 func (c contentEndpoint) GetContent() http.HandlerFunc {
@@ -254,7 +257,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 // @Accept 			json
 // @Produces 		json
 // @Param			contentdefinitionid	body CreateContentRequest true "contentdefinitionid"
-// @Success						201			{object}	models.OKResult
+// @Success						201			{object}	content.Content
 // @Header						201			{string}	Location
 // @Failure			default		{object}	models.GenericError
 // @Router			/content [post]
@@ -301,9 +304,37 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
 		}
 
+		created, err := c.app.Queries.GetContent.Handle(r.Context(), query.GetContent{
+			Id:      id,
+			Version: 0,
+		})
+		if err != nil {
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+
+		}
+
+		data, err := json.Marshal(&created)
+		if err != nil {
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
+					Message: err.Error(),
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
+
+		}
+
 		url := r.URL.String()
 		rw.Header().Add("Location", fmt.Sprintf("%s/%s", url, id.String()))
 		rw.WriteHeader(http.StatusCreated)
+		rw.Write(data)
 	}
 }
 

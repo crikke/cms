@@ -23,6 +23,7 @@ func HandleHttpError(next http.Handler) http.Handler {
 			}
 
 			http.Error(w, (err.(error)).Error(), http.StatusInternalServerError)
+			return
 		}
 	})
 

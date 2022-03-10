@@ -46,17 +46,17 @@ func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]Co
 	return result, nil
 }
 
-// ContentReadModel is the representation of the content for the Content management API
-// It contains all information of given content for every configured language.
-//
-// swagger:model Contentresponse
-type ContentReadModel struct {
-	ID                  uuid.UUID
-	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
-	Status              content.PublishStatus `bson:"publishstatus"`
-	// properties for the content
-	Properties content.ContentLanguage `bson:"properties"`
-}
+// // ContentReadModel is the representation of the content for the Content management API
+// // It contains all information of given content for every configured language.
+// //
+// // swagger:model Contentresponse
+// type ContentReadModel struct {
+// 	ID                  uuid.UUID
+// 	ContentDefinitionID uuid.UUID             `bson:"contentdefinition_id"`
+// 	Status              content.PublishStatus `bson:"publishstatus"`
+// 	// properties for the content
+// 	Properties content.ContentLanguage `bson:"properties"`
+// }
 
 // In contentmanagement, all languages should be retrived for content of given version
 // If Version is nil, return publishedversion
@@ -69,20 +69,13 @@ type GetContentHandler struct {
 	Repo content.ContentManagementRepository
 }
 
-func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (ContentReadModel, error) {
+func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (content.Content, error) {
 
 	c, err := q.Repo.GetContent(ctx, query.Id, query.Version)
 
 	if err != nil {
-		return ContentReadModel{}, err
+		return content.Content{}, err
 	}
 
-	rm := ContentReadModel{
-		ID:                  c.ID,
-		ContentDefinitionID: c.ContentDefinitionID,
-		Status:              c.Data.Status,
-		Properties:          c.Data.Properties,
-	}
-
-	return rm, nil
+	return c, nil
 }
