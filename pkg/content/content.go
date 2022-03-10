@@ -55,6 +55,10 @@ type ContentData struct {
 //!
 //! Instead this could be done by moving the map from ContentVersion.Properties to ContentField.Value
 //! This would help with when filtering which fields to return, since the field only exist once.
+//!
+//! IMPORTANT!! However, this would make it difficult when updating content since now each language can be treated as its own object,
+//! So when doing a http PUT to update some localized contentdata, replace the whole object.
+//! By doing above, the contentdata cannot be just replaced. Instead every property in every language needs to be sent and updated at once.
 
 // ContentField describes the property aswell as its value
 // swagger: model ContentField
