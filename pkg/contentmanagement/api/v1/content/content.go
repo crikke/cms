@@ -92,12 +92,12 @@ func withID(ctx context.Context) uuid.UUID {
 	return id
 }
 
-func withVersion(ctx context.Context) *int {
-	var version *int
+func withVersion(ctx context.Context) int {
+	var version int
 
 	if r := ctx.Value(versionKey); r != nil {
 		i := r.(int)
-		version = &i
+		version = i
 	}
 
 	return version
@@ -109,7 +109,14 @@ func contentVersionContext(next http.Handler) http.Handler {
 		version := r.URL.Query().Get("version")
 
 		if version == "" {
-			next.ServeHTTP(w, r)
+			models.WithError(r.Context(), models.GenericError{
+				Body: models.ErrorBody{
+					Message:   "version is required",
+					FieldName: "version",
+				},
+				StatusCode: http.StatusBadRequest,
+			})
+			return
 		}
 
 		v, err := strconv.Atoi(version)
@@ -383,22 +390,11 @@ func (c contentEndpoint) PublishContent() http.HandlerFunc {
 		id := withID(r.Context())
 		version := withVersion(r.Context())
 
-		if version == nil {
-
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: "missing version",
-				},
-				StatusCode: http.StatusBadRequest,
-			})
-			return
-		}
-
 		err := c.app.Commands.PublishContent.Handle(
 			r.Context(),
 			command.PublishContent{
 				ContentID: id,
-				Version:   *version,
+				Version:   version,
 			})
 
 		if err != nil {

@@ -6,15 +6,21 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const collection = "content"
+const contentCollection = "content"
+const contentVersionCollection = "contentversion"
 
-type ContentRepository interface {
+type ContentManagementRepository interface {
 	CreateContent(ctx context.Context, content Content) (uuid.UUID, error)
-	GetContent(ctx context.Context, id uuid.UUID) (Content, error)
+	GetContent(ctx context.Context, id uuid.UUID, version int) (Content, error)
+
 	ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error)
 	ListContentByTags(ctx context.Context, tags []string) ([]Content, error)
+	ListContentVersions(ctx context.Context, id uuid.UUID) ([]ContentVersion, error)
+
+	UpdateContentData(ctx context.Context, id uuid.UUID, version int, updateFn func(context.Context, *ContentData) (*ContentData, error)) error
 	UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error
 }
 
@@ -23,44 +29,104 @@ type contentrepository struct {
 	database *mongo.Database
 }
 
-func NewContentRepository(c *mongo.Client) ContentRepository {
+func NewContentRepository(c *mongo.Client) ContentManagementRepository {
 	return contentrepository{
 		client:   c,
 		database: c.Database("cms"),
 	}
 }
 
+//! TODO: This should be done in a transaction
 func (c contentrepository) CreateContent(ctx context.Context, content Content) (uuid.UUID, error) {
 
 	if content.ID == (uuid.UUID{}) {
 		content.ID = uuid.New()
 	}
+
+	content.Data.ContentID = content.ID
+
 	_, err := c.database.
-		Collection(collection).
+		Collection(contentCollection).
 		InsertOne(ctx, content)
 
 	if err != nil {
 		return uuid.UUID{}, err
 	}
+
+	_, err = c.database.
+		Collection(contentVersionCollection).
+		InsertOne(ctx, content.Data)
+
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
 	return content.ID, nil
 }
 
-func (c contentrepository) GetContent(ctx context.Context, id uuid.UUID) (Content, error) {
+func (c contentrepository) GetContent(ctx context.Context, id uuid.UUID, version int) (Content, error) {
 
 	content := &Content{}
-	err := c.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
+	contentData := &ContentData{}
+	filter := bson.M{
+		"contentId": id,
+		"version":   version,
+	}
+
+	err := c.database.Collection(contentVersionCollection).FindOne(ctx, filter).Decode(contentData)
+	if err != nil {
+		return Content{}, err
+	}
+
+	err = c.database.
+		Collection(contentCollection).
+		FindOne(
+			ctx,
+			bson.M{"_id": id},
+			options.FindOne().SetProjection(bson.M{"data": 0})).
+		Decode(content)
 
 	if err != nil {
 		return Content{}, err
 	}
 
+	content.Data = *contentData
+
 	return *content, nil
 }
 
-func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error {
+func (c contentrepository) UpdateContentData(ctx context.Context, id uuid.UUID, version int, updateFn func(context.Context, *ContentData) (*ContentData, error)) error {
 
+	contentData := &ContentData{}
+	err := c.database.Collection(contentVersionCollection).FindOne(ctx, bson.M{"contentId": id, "version": version}).Decode(contentData)
+
+	if err != nil {
+		return err
+	}
+
+	updated, err := updateFn(ctx, contentData)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = c.database.
+		Collection(contentVersionCollection).
+		UpdateOne(
+			ctx,
+			bson.M{"contentId": id, "version": updated.Version},
+			bson.M{"$set": updated}, options.Update().SetUpsert(true))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error {
 	content := &Content{}
-	err := c.database.Collection(collection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
+	err := c.database.Collection(contentCollection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
 
 	if err != nil {
 		return err
@@ -73,10 +139,10 @@ func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, upda
 	}
 
 	_, err = c.database.
-		Collection(collection).
+		Collection(contentCollection).
 		UpdateOne(
 			ctx,
-			bson.D{bson.E{Key: "_id", Value: id}},
+			bson.M{"_id": id},
 			bson.M{"$set": updated})
 
 	if err != nil {
@@ -99,7 +165,7 @@ func (c contentrepository) ListContentByContentDefinition(ctx context.Context, c
 	}
 
 	cur, err := c.database.
-		Collection(collection).
+		Collection(contentCollection).
 		Find(
 			ctx,
 			query)
@@ -125,9 +191,40 @@ func (c contentrepository) ListContentByContentDefinition(ctx context.Context, c
 
 func (c contentrepository) ListContentByTags(ctx context.Context, tags []string) ([]Content, error) {
 
-	c.database.Collection(collection).Find(ctx, bson.M{})
+	c.database.Collection(contentCollection).Find(ctx, bson.M{})
 	// for _, field := range tags {
 
 	// }
 	return nil, nil
+}
+
+func (c contentrepository) ListContentVersions(ctx context.Context, id uuid.UUID) ([]ContentVersion, error) {
+	filter := bson.M{"contentId": id}
+	projection := bson.M{
+		"_id":       0,
+		"contentId": 1,
+		"version":   1,
+		"status":    1,
+	}
+	cursor, err := c.database.
+		Collection(contentVersionCollection).
+		Find(ctx, filter, options.Find().SetProjection(projection))
+
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]ContentVersion, 0)
+
+	for cursor.Next(ctx) {
+		item := &ContentVersion{}
+		err := cursor.Decode(item)
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, *item)
+	}
+	return items, nil
 }

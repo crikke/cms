@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"errors"
 
 	"github.com/crikke/cms/pkg/content"
 	"github.com/crikke/cms/pkg/contentdefinition"
@@ -21,13 +20,14 @@ type ListContent struct {
 }
 
 type ListContentHandler struct {
-	Repo content.ContentRepository
+	Repo content.ContentManagementRepository
 	Cfg  *siteconfiguration.SiteConfiguration
 }
 
+//! TODO Should name be returned for current locale?
 func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]ContentListReadModel, error) {
 
-	items, err := h.Repo.ListContent(ctx, query.ContentDefinitionIDs)
+	items, err := h.Repo.ListContentByContentDefinition(ctx, query.ContentDefinitionIDs)
 
 	if err != nil {
 		return nil, err
@@ -36,8 +36,7 @@ func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]Co
 	result := []ContentListReadModel{}
 
 	for _, ch := range items {
-
-		name := ch.Version[ch.PublishedVersion].Properties[h.Cfg.Languages[0].String()][contentdefinition.NameField].Value
+		name := ch.Data.Properties[h.Cfg.Languages[0].String()][contentdefinition.NameField].Value
 		result = append(result, ContentListReadModel{
 			ID:   ch.ID,
 			Name: name.(string),
@@ -63,36 +62,26 @@ type ContentReadModel struct {
 // If Version is nil, return publishedversion
 type GetContent struct {
 	Id      uuid.UUID
-	Version *int
+	Version int
 }
 
 type GetContentHandler struct {
-	Repo content.ContentRepository
+	Repo content.ContentManagementRepository
 }
 
 func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (ContentReadModel, error) {
 
-	c, err := q.Repo.GetContent(ctx, query.Id)
+	c, err := q.Repo.GetContent(ctx, query.Id, query.Version)
 
 	if err != nil {
 		return ContentReadModel{}, err
 	}
 
-	ver := c.PublishedVersion
-	if query.Version != nil {
-		ver = *query.Version
-	}
-	contentVer, ok := c.Version[ver]
-
-	if !ok {
-		return ContentReadModel{}, errors.New(content.ErrMissingVersion)
-	}
-
 	rm := ContentReadModel{
 		ID:                  c.ID,
 		ContentDefinitionID: c.ContentDefinitionID,
-		Status:              contentVer.Status,
-		Properties:          contentVer.Properties,
+		Status:              c.Data.Status,
+		Properties:          c.Data.Properties,
 	}
 
 	return rm, nil

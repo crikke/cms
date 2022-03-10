@@ -10,6 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type ContentVersion struct {
+	ContentID uuid.UUID     `bson:"contentId"`
+	Version   int           `bson:"version"`
+	Status    PublishStatus `bson:"status"`
+}
+
 // swagger:enum PublishStatus
 type PublishStatus string
 
@@ -19,21 +25,36 @@ type PublishStatus string
 //! Obviously ContentVersion will need a version field.
 //! This will also solve problem with status, since status will only be needed on ContentVersion and not Content
 type Content struct {
-	ID                  uuid.UUID `bson:"_id"`
-	ContentDefinitionID uuid.UUID `bson:"contentdefinition_id"`
-	ParentID            uuid.UUID `bson:"parentid"`
-	PublishedVersion    int
-	Version             map[int]ContentVersion `bson:"version"`
-	Status              PublishStatus          `bson:"status"`
+	ID                  uuid.UUID   `bson:"_id"`
+	ContentDefinitionID uuid.UUID   `bson:"contentdefinition_id"`
+	Data                ContentData `bson:"data"`
+	Created             time.Time   `bson:"created"`
+	Updated             time.Time   `bson:"updated"`
 }
 
-// swagger: model ContentVersion
-type ContentVersion struct {
+// swagger: model ContentData
+type ContentData struct {
+	ContentID  uuid.UUID       `bson:"contentId"`
+	Version    int             `bson:"version"`
 	Properties ContentLanguage `bson:"properties"`
-	Created    time.Time       `bson:"created"`
-	Status     PublishStatus   `bson:"status"`
-	Tags       []string        `bson:"tags,omitempty"`
+	// TODO: does ContentData need a Created Field?
+	Created time.Time     `bson:"created"`
+	Status  PublishStatus `bson:"status"`
+	Tags    []string      `bson:"tags,omitempty"`
 }
+
+//! TODO: Is it better to handle localized values in field directly?
+//! This could make it easier to query content, since only one ContentFields would be needed to be fetched.
+//! Currently to get content for given locale:
+//! - Get ContentVersion
+//! - Get ContentLanguage with default locale
+//! - Get ContentLanguage for current locale
+//! - For each field in default locale
+//! - 	if field is localize
+//! -	return field from current locale
+//!
+//! Instead this could be done by moving the map from ContentVersion.Properties to ContentField.Value
+//! This would help with when filtering which fields to return, since the field only exist once.
 
 // ContentField describes the property aswell as its value
 // swagger: model ContentField
@@ -67,16 +88,13 @@ func (f Factory) getDefaultLanguage() string {
 	return f.Cfg.Languages[0].String()
 }
 
-func (f Factory) NewContent(spec contentdefinition.ContentDefinition, parentID uuid.UUID) (Content, error) {
+func (f Factory) NewContent(spec contentdefinition.ContentDefinition) (Content, error) {
 
 	c := Content{
 		ContentDefinitionID: spec.ID,
-		Version:             map[int]ContentVersion{},
-		ParentID:            parentID,
-		Status:              Draft,
 	}
 
-	cv := ContentVersion{
+	cv := ContentData{
 		Status:     Draft,
 		Created:    time.Now(),
 		Properties: make(ContentLanguage),
@@ -90,13 +108,13 @@ func (f Factory) NewContent(spec contentdefinition.ContentDefinition, parentID u
 		}
 	}
 
-	c.Version[0] = cv
+	c.Data = cv
 	cv.Properties[f.getDefaultLanguage()] = cf
 
 	return c, nil
 }
 
-func (f Factory) AddLanguage(c *ContentVersion, language string) (ContentFields, error) {
+func (f Factory) AddLanguage(c *ContentData, language string) (ContentFields, error) {
 
 	if c.Status != Draft {
 		return nil, errors.New(ErrNotDraft)
@@ -110,15 +128,11 @@ func (f Factory) AddLanguage(c *ContentVersion, language string) (ContentFields,
 	return cl, nil
 }
 
-func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefinition.ContentDefinition, version int) (*ContentVersion, error) {
+func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefinition.ContentDefinition, version int) (*ContentData, error) {
 
-	existing, ok := c.Version[version]
+	existing := c.Data
 
-	if !ok {
-		return nil, errors.New(ErrMissingVersion)
-	}
-
-	cv := &ContentVersion{
+	cv := &ContentData{
 		Status:     Draft,
 		Created:    time.Now(),
 		Properties: make(ContentLanguage),
@@ -164,25 +178,24 @@ func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefiniti
 		cv.Properties[lang] = cf
 	}
 
-	c.Version[len(c.Version)] = *cv
 	return cv, nil
 }
 
-func (c Content) GetPublishedVersion() (ContentVersion, error) {
-	cv, ok := c.Version[c.PublishedVersion]
+// func (c Content) GetPublishedVersion() (ContentData, error) {
+// 	cv, ok := c.Version[c.Data]
 
-	if !ok {
-		return ContentVersion{}, errors.New(ErrMissingVersion)
-	}
+// 	if !ok {
+// 		return ContentData{}, errors.New(ErrMissingVersion)
+// 	}
 
-	if cv.Status != Published {
-		return ContentVersion{}, errors.New("not published")
-	}
+// 	if cv.Status != Published {
+// 		return ContentData{}, errors.New("not published")
+// 	}
 
-	return cv, nil
-}
+// 	return cv, nil
+// }
 
-func (c ContentVersion) AvailableLanguages() []string {
+func (c ContentData) AvailableLanguages() []string {
 
 	res := make([]string, 0)
 	for lang := range c.Properties {
@@ -192,11 +205,11 @@ func (c ContentVersion) AvailableLanguages() []string {
 	return res
 }
 
-func (c ContentVersion) CanEdit() bool {
+func (c ContentData) CanEdit() bool {
 	return c.Status == Draft
 }
 
-func (f Factory) SetField(cv *ContentVersion, lang, fieldname string, value interface{}) error {
+func (f Factory) SetField(cv *ContentData, lang, fieldname string, value interface{}) error {
 
 	normalizedFieldname := strings.ToLower(fieldname)
 	if !cv.CanEdit() {

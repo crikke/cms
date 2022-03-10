@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/crikke/cms/pkg/content"
@@ -21,41 +20,40 @@ type ContentResponse struct {
 	Created            time.Time `bson:"created"`
 }
 type GetContentByIDHandler struct {
-	Repo content.ContentRepository
+	Repo content.ContentManagementRepository
 }
 
 func (h GetContentByIDHandler) Handle(ctx context.Context, query GetContentByID) (ContentResponse, error) {
 
-	if query.ID == (uuid.UUID{}) {
-		return ContentResponse{}, errors.New("missing id")
-	}
+	// if query.ID == (uuid.UUID{}) {
+	// 	return ContentResponse{}, errors.New("missing id")
+	// }
 
-	contentresult, err := h.Repo.GetContent(ctx, query.ID)
+	// contentresult, err := h.Repo.GetContent(ctx, query.ID, nil)
 
-	if err != nil {
-		return ContentResponse{}, err
-	}
+	// if err != nil {
+	// 	return ContentResponse{}, err
+	// }
 
-	cv, err := contentresult.GetPublishedVersion()
+	// cv := contentresult.Data
+	// if cv.Status != content.Published {
+	// 	return ContentResponse{}, errors.New("not published")
+	// }
 
-	if err != nil {
-		return ContentResponse{}, err
-	}
+	// fields, ok := cv.Properties[query.Language]
 
-	fields, ok := cv.Properties[query.Language]
+	// if !ok {
+	// 	return ContentResponse{}, errors.New(content.ErrMissingLanguage)
+	// }
 
-	if !ok {
-		return ContentResponse{}, errors.New(content.ErrMissingLanguage)
-	}
+	// response := ContentResponse{
+	// 	ID:                 contentresult.ID,
+	// 	AvailableLanguages: cv.AvailableLanguages(),
+	// 	Fields:             fields,
+	// 	Created:            cv.Created,
+	// }
 
-	response := ContentResponse{
-		ID:                 contentresult.ID,
-		AvailableLanguages: cv.AvailableLanguages(),
-		Fields:             fields,
-		Created:            cv.Created,
-	}
-
-	return response, nil
+	return ContentResponse{}, nil
 }
 
 type ContentListResponse struct {
@@ -74,7 +72,7 @@ type GetContentByTags struct {
 }
 
 type GetContentByTagsHandler struct {
-	Repo content.ContentRepository
+	Repo content.ContentManagementRepository
 }
 
 //! TODO: Query builder, Find a way how it can be done loosly coupled.
@@ -88,22 +86,22 @@ type GetContentByTagsHandler struct {
 //! and fields from specified locale where field.localized:true
 func (h GetContentByTagsHandler) Handle(ctx context.Context, query GetContentByTags) ([]ContentListResponse, error) {
 
-	items, err := h.Repo.ListContentByTags(ctx, query.Tags)
+	// items, err := h.Repo.ListContentByTags(ctx, query.Tags)
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	result := make([]ContentListResponse, 0)
-	for _, item := range items {
-		if item.Status != content.Published {
-			continue
-		}
-		// result = append(result, ContentListResponse{
-		// 	ID: item.ID,
-		// 	Name: item,
-		// })
-	}
+	// result := make([]ContentListResponse, 0)
+	// for _, item := range items {
+	// 	if item.Status != content.Published {
+	// 		continue
+	// 	}
+	// 	// result = append(result, ContentListResponse{
+	// 	// 	ID: item.ID,
+	// 	// 	Name: item,
+	// 	// })
+	// }
 
-	return result, nil
+	return nil, nil
 }
