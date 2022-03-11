@@ -12,32 +12,20 @@ import (
 const contentCollection = "content"
 const contentVersionCollection = "contentversion"
 
-type ContentManagementRepository interface {
-	CreateContent(ctx context.Context, content Content) (uuid.UUID, error)
-	GetContent(ctx context.Context, id uuid.UUID, version int) (Content, error)
-
-	ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error)
-	ListContentByTags(ctx context.Context, tags []string) ([]Content, error)
-	ListContentVersions(ctx context.Context, id uuid.UUID) ([]ContentVersion, error)
-
-	UpdateContentData(ctx context.Context, id uuid.UUID, version int, updateFn func(context.Context, *ContentData) (*ContentData, error)) error
-	UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error
-}
-
-type contentrepository struct {
+type ContentManagementRepository struct {
 	client   *mongo.Client
 	database *mongo.Database
 }
 
 func NewContentRepository(c *mongo.Client) ContentManagementRepository {
-	return contentrepository{
+	return ContentManagementRepository{
 		client:   c,
 		database: c.Database("cms"),
 	}
 }
 
 //! TODO: This should be done in a transaction
-func (c contentrepository) CreateContent(ctx context.Context, content Content) (uuid.UUID, error) {
+func (c ContentManagementRepository) CreateContent(ctx context.Context, content Content) (uuid.UUID, error) {
 
 	if content.ID == (uuid.UUID{}) {
 		content.ID = uuid.New()
@@ -64,7 +52,7 @@ func (c contentrepository) CreateContent(ctx context.Context, content Content) (
 	return content.ID, nil
 }
 
-func (c contentrepository) GetContent(ctx context.Context, id uuid.UUID, version int) (Content, error) {
+func (c ContentManagementRepository) GetContent(ctx context.Context, id uuid.UUID, version int) (Content, error) {
 
 	content := &Content{}
 	contentData := &ContentData{}
@@ -95,7 +83,7 @@ func (c contentrepository) GetContent(ctx context.Context, id uuid.UUID, version
 	return *content, nil
 }
 
-func (c contentrepository) UpdateContentData(ctx context.Context, id uuid.UUID, version int, updateFn func(context.Context, *ContentData) (*ContentData, error)) error {
+func (c ContentManagementRepository) UpdateContentData(ctx context.Context, id uuid.UUID, version int, updateFn func(context.Context, *ContentData) (*ContentData, error)) error {
 
 	contentData := &ContentData{}
 	err := c.database.Collection(contentVersionCollection).FindOne(ctx, bson.M{"contentId": id, "version": version}).Decode(contentData)
@@ -124,7 +112,7 @@ func (c contentrepository) UpdateContentData(ctx context.Context, id uuid.UUID, 
 	return nil
 }
 
-func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error {
+func (c ContentManagementRepository) UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error {
 	content := &Content{}
 	err := c.database.Collection(contentCollection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
 
@@ -152,7 +140,7 @@ func (c contentrepository) UpdateContent(ctx context.Context, id uuid.UUID, upda
 	return nil
 }
 
-func (c contentrepository) ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
+func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
 
 	query := bson.M{}
 
@@ -189,7 +177,7 @@ func (c contentrepository) ListContentByContentDefinition(ctx context.Context, c
 	return result, nil
 }
 
-func (c contentrepository) ListContentByTags(ctx context.Context, tags []string) ([]Content, error) {
+func (c ContentManagementRepository) ListContentByTags(ctx context.Context, tags []string) ([]Content, error) {
 
 	c.database.Collection(contentCollection).Find(ctx, bson.M{})
 	// for _, field := range tags {
@@ -198,7 +186,7 @@ func (c contentrepository) ListContentByTags(ctx context.Context, tags []string)
 	return nil, nil
 }
 
-func (c contentrepository) ListContentVersions(ctx context.Context, id uuid.UUID) ([]ContentVersion, error) {
+func (c ContentManagementRepository) ListContentVersions(ctx context.Context, id uuid.UUID) ([]ContentVersion, error) {
 	filter := bson.M{"contentId": id}
 	projection := bson.M{
 		"_id":       0,
