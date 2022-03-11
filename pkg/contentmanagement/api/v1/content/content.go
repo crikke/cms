@@ -148,7 +148,7 @@ func contentVersionContext(next http.Handler) http.Handler {
 // @Param			cid			query	[]string	true 	"uuid formatted ID." format(uuid)
 // @Success			200			{object}	[]query.ContentListReadModel
 // @Failure			default		{object}	models.GenericError
-// @Router			/content [get]
+// @Router			/contentmanagement/content [get]
 func (c contentEndpoint) ListContent() http.HandlerFunc {
 
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -213,7 +213,7 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 // @Param			version		query	int		false 	"content version"
 // @Success			200			{object}	content.Content
 // @Failure			default		{object}	models.GenericError
-// @Router			/content/{id} [get]
+// @Router			/contentmanagement/content/{id} [get]
 func (c contentEndpoint) GetContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
@@ -260,7 +260,7 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 // @Success						201			{object}	content.Content
 // @Header						201			{string}	Location
 // @Failure			default		{object}	models.GenericError
-// @Router			/content [post]
+// @Router			/contentmanagement/content [post]
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -348,7 +348,7 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 // @Param			requestbody	body UpdateContentRequestBody true "body"
 // @Success			200		{object}		models.OKResult
 // @Failure			default		{object}	models.GenericError
-// @Router			/content/{id} [put]
+// @Router			/contentmanagement/content/{id} [put]
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -385,7 +385,7 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success			200		{object}		OKResult
 // @Failure			default		{object}	models.GenericError
-// @Router			/content/{id} [delete]
+// @Router			/contentmanagement/content/{id} [delete]
 func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -413,7 +413,7 @@ func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 // @Param			version		query	int		true 	"content version"
 // @Success			200			{object}		OKResult
 // @Failure			default		{object}		models.GenericError
-// @Router			/content/{id}/publish [post]
+// @Router			/contentmanagement/content/{id}/publish [post]
 func (c contentEndpoint) PublishContent() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {

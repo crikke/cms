@@ -1,5 +1,36 @@
 basePath: /api/v1
 definitions:
+  content.Content:
+    properties:
+      contentDefinitionID:
+        type: string
+      created:
+        type: string
+      data:
+        $ref: '#/definitions/content.ContentData'
+      id:
+        type: string
+      updated:
+        type: string
+    type: object
+  content.ContentData:
+    properties:
+      contentID:
+        type: string
+      created:
+        description: 'TODO: does ContentData need a Created Field?'
+        type: string
+      properties:
+        $ref: '#/definitions/content.ContentLanguage'
+      status:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      version:
+        type: integer
+    type: object
   content.ContentField:
     properties:
       id:
@@ -127,16 +158,17 @@ definitions:
       name:
         type: string
     type: object
-  query.ContentReadModel:
+  query.ContentResponse:
     properties:
-      contentDefinitionID:
+      availableLanguages:
+        items:
+          type: string
+        type: array
+      created:
         type: string
+      fields:
+        $ref: '#/definitions/content.ContentFields'
       id:
-        type: string
-      properties:
-        $ref: '#/definitions/content.ContentLanguage'
-        description: properties for the content
-      status:
         type: string
     type: object
   query.ListContentDefinitionModel:
@@ -155,6 +187,35 @@ definitions:
           type: string
         type: array
     type: object
+  workspace.CreateWorkspaceRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  workspace.Tag:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  workspace.Workspace:
+    properties:
+      id:
+        type: string
+      languages:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/workspace.Tag'
+        type: array
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -166,7 +227,65 @@ info:
   title: Swagger Example API
   version: "1.0"
 paths:
-  /content:
+  /contentdelivery/content/:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of content which has specified tags
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: content language
+        in: header
+        name: Accept-Language
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.ContentResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: List content by tags
+      tags:
+      - content
+  /contentdelivery/content/{id}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Gets content by ID and language. If Accept-Language header is not set,
+        the default language will be used.
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: content language
+        in: header
+        name: Accept-Language
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.ContentResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get content by ID
+      tags:
+      - content
+  /contentmanagement/content:
     get:
       consumes:
       - application/json
@@ -212,7 +331,7 @@ paths:
             Location:
               type: string
           schema:
-            $ref: '#/definitions/models.OKResult'
+            $ref: '#/definitions/content.Content'
         default:
           description: ""
           schema:
@@ -220,7 +339,7 @@ paths:
       summary: Create new content
       tags:
       - content
-  /content/{id}:
+  /contentmanagement/content/{id}:
     delete:
       consumes:
       - application/json
@@ -263,7 +382,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/query.ContentReadModel'
+            $ref: '#/definitions/content.Content'
         default:
           description: ""
           schema:
@@ -300,7 +419,7 @@ paths:
       summary: Update content
       tags:
       - content
-  /content/{id}/publish:
+  /contentmanagement/content/{id}/publish:
     post:
       consumes:
       - application/json
@@ -329,7 +448,7 @@ paths:
       summary: Publishes content
       tags:
       - content
-  /contentdefinitions:
+  /contentmanagement/contentdefinitions:
     get:
       consumes:
       - application/json
@@ -375,7 +494,7 @@ paths:
       summary: Creates a new content definition
       tags:
       - contentdefinition
-  /contentdefinitions/{id}:
+  /contentmanagement/contentdefinitions/{id}:
     delete:
       consumes:
       - application/json
@@ -451,7 +570,7 @@ paths:
       summary: Updates a contentdefinition
       tags:
       - contentdefinition
-  /contentdefinitions/{id}/propertydefinitions:
+  /contentmanagement/contentdefinitions/{id}/propertydefinitions:
     post:
       consumes:
       - application/json
@@ -484,7 +603,7 @@ paths:
       summary: Creates a new propertydefinition
       tags:
       - contentdefinition
-  /contentdefinitions/{id}/propertydefinitions/{pid}:
+  /contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid}:
     delete:
       consumes:
       - application/json
@@ -578,6 +697,80 @@ paths:
       summary: Updates an property definition
       tags:
       - contentdefinition
+  /contentmanagement/workspace:
+    post:
+      description: Create a new workspace
+      parameters:
+      - description: workspace body
+        in: body
+        name: workspace
+        required: true
+        schema:
+          $ref: '#/definitions/workspace.CreateWorkspaceRequest'
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              type: string
+          schema:
+            $ref: '#/definitions/workspace.Workspace'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Create workspace
+      tags:
+      - workspace
+  /contentmanagement/workspace/{id}:
+    get:
+      description: Get workspace by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/workspace.Workspace'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get workspace
+      tags:
+      - workspace
+    put:
+      description: Update a new workspace
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: workspace body
+        in: body
+        name: workspace
+        required: true
+        schema:
+          $ref: '#/definitions/workspace.Workspace'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/workspace.Workspace'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Update workspace
+      tags:
+      - workspace
   /siteconfiguration:
     get:
       description: Gets siteconfiguration for this site.

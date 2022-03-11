@@ -11,7 +11,6 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 )
 
@@ -133,7 +132,7 @@ func withPID(ctx context.Context) uuid.UUID {
 // @Success						201			{object}	models.OKResult
 // @Header						201			{string}	Location
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentdefinitions [post]
+// @Router						/contentmanagement/contentdefinitions [post]
 func (c endpoint) CreateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +182,7 @@ func (c endpoint) CreateContentDefinition() http.HandlerFunc {
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success						200			{object}	contentdefinition.ContentDefinition
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentdefinitions/{id} [get]
+// @Router						/contentmanagement/contentdefinitions/{id} [get]
 func (c endpoint) GetContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +222,7 @@ func (c endpoint) GetContentDefinition() http.HandlerFunc {
 // @Produces 					json
 // @Success						200			{object}	query.ListContentDefinitionModel
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentdefinitions [get]
+// @Router						/contentmanagement/contentdefinitions [get]
 func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -241,7 +240,7 @@ func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentdefinitions/{id} [delete]
+// @Router						/contentmanagement/contentdefinitions/{id} [delete]
 func (c endpoint) DeleteContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -270,7 +269,7 @@ func (c endpoint) DeleteContentDefinition() http.HandlerFunc {
 // @Param						body		body	ContentDefinitionBody	true 	"request body"
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentdefinitions/{id} [put]
+// @Router						/contentmanagement/contentdefinitions/{id} [put]
 func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -307,7 +306,7 @@ func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 // @Failure						default		{object}	models.GenericError
 // @Success						201			{object}	models.OKResult
 // @Header						201			{string}	Location
-// @Router						/contentdefinitions/{id}/propertydefinitions [post]
+// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions [post]
 func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 	// ! TODO Type should not be string, probably enum
 
@@ -351,7 +350,7 @@ func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 // @Param						body		body	UpdatePropertyDefinitionBody	true 	"request body"
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
-// @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [put]
+// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid} [put]
 func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -402,7 +401,7 @@ func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
-// @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
+// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
 func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -426,16 +425,6 @@ func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 	}
 }
 
-// swagger:parameters GetPropertyDefinition
-type PropertyDefinitionID struct {
-	// required:true
-	// In: path
-	PropertyDefinitionID strfmt.UUID `json:"pid"`
-	// required:true
-	// In: path
-	ContentDefinitionID strfmt.UUID `json:"id"`
-}
-
 // GetPropertyDefinition 	godoc
 // @Summary 					Gets a propertydefinition
 // @Description 				Gets a propertydefinition
@@ -447,7 +436,7 @@ type PropertyDefinitionID struct {
 // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	contentdefinition.PropertyDefinition
-// @Router						/contentdefinitions/{id}/propertydefinitions/{pid} [get]
+// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid} [get]
 func (c endpoint) GetPropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

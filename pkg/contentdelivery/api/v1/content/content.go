@@ -159,7 +159,7 @@ func (ep endpoint) localeContext(next http.Handler) http.Handler {
 // @Param 						Accept-Language 	header 	string 	false 	"content language"
 // @Success						200			{object}	query.ContentResponse
 // @Failure						default		{object}	models.GenericError
-// @Router						/content/{id} [get]
+// @Router						/contentdelivery/content/{id} [get]
 func (ep endpoint) GetContentById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -198,7 +198,7 @@ func (ep endpoint) GetContentById() http.HandlerFunc {
 // @Param 						Accept-Language 	header 	string 	false 	"content language"
 // @Success						200			{object}	query.ContentResponse
 // @Failure						default		{object}	models.GenericError
-// @Router						/content/ [get]
+// @Router						/contentdelivery/content/ [get]
 func (ep endpoint) ListContentByTags() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

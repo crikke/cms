@@ -21,7 +21,91 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/content": {
+        "/contentdelivery/content/": {
+            "get": {
+                "description": "Returns a list of content which has specified tags",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "List content by tags",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "content language",
+                        "name": "Accept-Language",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/query.ContentResponse"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentdelivery/content/{id}": {
+            "get": {
+                "description": "Gets content by ID and language. If Accept-Language header is not set,\nthe default language will be used.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "content"
+                ],
+                "summary": "Get content by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "content language",
+                        "name": "Accept-Language",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/query.ContentResponse"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentmanagement/content": {
             "get": {
                 "description": "list all content",
                 "consumes": [
@@ -86,7 +170,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.OKResult"
+                            "$ref": "#/definitions/content.Content"
                         },
                         "headers": {
                             "Location": {
@@ -103,7 +187,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/content/{id}": {
+        "/contentmanagement/content/{id}": {
             "get": {
                 "description": "Get content by id and optionally version",
                 "consumes": [
@@ -133,7 +217,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/query.ContentReadModel"
+                            "$ref": "#/definitions/content.Content"
                         }
                     },
                     "default": {
@@ -222,7 +306,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/content/{id}/publish": {
+        "/contentmanagement/content/{id}/publish": {
             "post": {
                 "description": "Publishes content with ID",
                 "consumes": [
@@ -265,7 +349,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/contentdefinitions": {
+        "/contentmanagement/contentdefinitions": {
             "get": {
                 "description": "Gets all existing contentdefinitions",
                 "consumes": [
@@ -331,7 +415,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/contentdefinitions/{id}": {
+        "/contentmanagement/contentdefinitions/{id}": {
             "get": {
                 "description": "Gets a content definition by ID",
                 "consumes": [
@@ -444,7 +528,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/contentdefinitions/{id}/propertydefinitions": {
+        "/contentmanagement/contentdefinitions/{id}/propertydefinitions": {
             "post": {
                 "description": "Creates a new propertydefinition",
                 "consumes": [
@@ -494,7 +578,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/contentdefinitions/{id}/propertydefinitions/{pid}": {
+        "/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid}": {
             "get": {
                 "description": "Gets a propertydefinition",
                 "consumes": [
@@ -631,6 +715,118 @@ const docTemplate = `{
                 }
             }
         },
+        "/contentmanagement/workspace": {
+            "post": {
+                "description": "Create a new workspace",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Create workspace",
+                "parameters": [
+                    {
+                        "description": "workspace body",
+                        "name": "workspace",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/workspace.CreateWorkspaceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/workspace.Workspace"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentmanagement/workspace/{id}": {
+            "get": {
+                "description": "Get workspace by id",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Get workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/workspace.Workspace"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a new workspace",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Update workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "workspace body",
+                        "name": "workspace",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/workspace.Workspace"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/workspace.Workspace"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
         "/siteconfiguration": {
             "get": {
                 "description": "Gets siteconfiguration for this site.",
@@ -688,6 +884,53 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "content.Content": {
+            "type": "object",
+            "properties": {
+                "contentDefinitionID": {
+                    "type": "string"
+                },
+                "created": {
+                    "type": "string"
+                },
+                "data": {
+                    "$ref": "#/definitions/content.ContentData"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated": {
+                    "type": "string"
+                }
+            }
+        },
+        "content.ContentData": {
+            "type": "object",
+            "properties": {
+                "contentID": {
+                    "type": "string"
+                },
+                "created": {
+                    "description": "TODO: does ContentData need a Created Field?",
+                    "type": "string"
+                },
+                "properties": {
+                    "$ref": "#/definitions/content.ContentLanguage"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
         "content.ContentField": {
             "type": "object",
             "properties": {
@@ -874,20 +1117,22 @@ const docTemplate = `{
                 }
             }
         },
-        "query.ContentReadModel": {
+        "query.ContentResponse": {
             "type": "object",
             "properties": {
-                "contentDefinitionID": {
+                "availableLanguages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created": {
                     "type": "string"
+                },
+                "fields": {
+                    "$ref": "#/definitions/content.ContentFields"
                 },
                 "id": {
-                    "type": "string"
-                },
-                "properties": {
-                    "description": "properties for the content",
-                    "$ref": "#/definitions/content.ContentLanguage"
-                },
-                "status": {
                     "type": "string"
                 }
             }
@@ -913,6 +1158,51 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                }
+            }
+        },
+        "workspace.CreateWorkspaceRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "workspace.Tag": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "workspace.Workspace": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "languages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/workspace.Tag"
                     }
                 }
             }

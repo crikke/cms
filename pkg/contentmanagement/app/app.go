@@ -17,6 +17,8 @@ type Queries struct {
 	GetContentDefinition   query.GetContentDefinitionHandler
 	GetPropertyDefinition  query.GetPropertyDefinitionHandler
 	ListContentDefinitions query.ListContentDefinitionHandler
+
+	WorkspaceQueries WorkspaceQueries
 }
 type Commands struct {
 	CreateContent       contentcmd.CreateContentHandler
@@ -33,4 +35,12 @@ type Commands struct {
 	DeletePropertyDefinition contentcmd.DeletePropertyDefinitionHandler
 
 	UpdateSiteConfiguration contentcmd.UpdateSiteConfigurationHandler
+	WorkspaceCommands       WorkspaceCommands
+}
+
+type WorkspaceCommands struct {
+}
+
+type WorkspaceQueries struct {
+	GetWorkspace query.GetWorkspaceHandler
 }

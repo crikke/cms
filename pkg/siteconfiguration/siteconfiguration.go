@@ -5,6 +5,7 @@ import (
 	"golang.org/x/text/language"
 )
 
+//
 type SiteConfiguration struct {
 	// Site ID
 	ID        uuid.UUID      `bson:"_id"`
