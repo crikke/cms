@@ -2,21 +2,41 @@ package workspace
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/text/language"
 )
 
-type Tag struct {
-	Id   uuid.UUID `bson:"_id"`
-	Name string    `bson:"name"`
-}
 type Workspace struct {
-	ID        uuid.UUID `bson:"_id"`
-	Name      string    `bson:"name"`
-	Languages []string  `bson:"languages"`
-	Tags      []Tag     `bson:"tags"`
+	ID          uuid.UUID         `bson:"_id"`
+	Name        string            `bson:"name"`
+	Description string            `bson:"description"`
+	Languages   []string          `bson:"languages"`
+	Tags        map[string]string `bson:"tags"`
+}
+
+func NewWorkspace(name, description, defaultLocale string) (Workspace, error) {
+
+	if name == "" {
+		return Workspace{}, errors.New("missing: name")
+	}
+
+	_, err := language.Parse(defaultLocale)
+
+	if err != nil {
+		return Workspace{}, err
+	}
+
+	ws := Workspace{
+		Name:        name,
+		Description: description,
+		Languages:   []string{defaultLocale},
+	}
+
+	return ws, nil
 }
 
 const workspaceCollection = "workspace"

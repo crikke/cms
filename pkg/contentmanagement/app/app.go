@@ -39,8 +39,14 @@ type Commands struct {
 }
 
 type WorkspaceCommands struct {
+	CreateWorkspace contentcmd.CreateWorkspaceHandler
+
+	UpdateTag contentcmd.UpdateTagHandler
+	DeleteTag contentcmd.DeleteTagHandler
 }
 
 type WorkspaceQueries struct {
+	GetTag       query.GetTagHandler
 	GetWorkspace query.GetWorkspaceHandler
+	ListTags     query.ListTagsHandler
 }
