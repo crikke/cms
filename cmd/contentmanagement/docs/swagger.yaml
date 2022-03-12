@@ -296,418 +296,6 @@ paths:
       summary: Get content by ID
       tags:
       - content
-  /contentmanagement/content:
-    get:
-      consumes:
-      - application/json
-      description: list all content
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: query
-        items:
-          type: string
-        name: cid
-        required: true
-        type: array
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/query.ContentListReadModel'
-            type: array
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: List all content
-      tags:
-      - content
-    post:
-      consumes:
-      - application/json
-      description: Creates new content basen on a contentdefinition
-      parameters:
-      - description: contentdefinitionid
-        in: body
-        name: contentdefinitionid
-        required: true
-        schema:
-          $ref: '#/definitions/content.CreateContentRequest'
-      responses:
-        "201":
-          description: Created
-          headers:
-            Location:
-              type: string
-          schema:
-            $ref: '#/definitions/content.Content'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Create new content
-      tags:
-      - content
-  /contentmanagement/content/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Archives content with ID
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/content.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Archives content
-      tags:
-      - content
-    get:
-      consumes:
-      - application/json
-      description: Get content by id and optionally version
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: content version
-        in: query
-        name: version
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/content.Content'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Get content by id
-      tags:
-      - content
-    put:
-      consumes:
-      - application/json
-      description: Update content
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: body
-        in: body
-        name: requestbody
-        required: true
-        schema:
-          $ref: '#/definitions/content.UpdateContentRequestBody'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Update content
-      tags:
-      - content
-  /contentmanagement/content/{id}/publish:
-    post:
-      consumes:
-      - application/json
-      description: Publishes content with ID
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: content version
-        in: query
-        name: version
-        required: true
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/content.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Publishes content
-      tags:
-      - content
-  /contentmanagement/contentdefinitions:
-    get:
-      consumes:
-      - application/json
-      description: Gets all existing contentdefinitions
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/query.ListContentDefinitionModel'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Get all content definitions
-      tags:
-      - contentdefinition
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Creates a new contentdefinition. The contentdefinition
-        acts as a template for creating new content,
-        containing what properties to create & their validation.
-      parameters:
-      - description: request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/contentdefinition.ContentDefinitionBody'
-      responses:
-        "201":
-          description: Created
-          headers:
-            Location:
-              type: string
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Creates a new content definition
-      tags:
-      - contentdefinition
-  /contentmanagement/contentdefinitions/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a content definition
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Delete a content definition
-      tags:
-      - contentdefinition
-    get:
-      consumes:
-      - application/json
-      description: Gets a content definition by ID
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/contentdefinition.ContentDefinition'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Gets a content definition
-      tags:
-      - contentdefinition
-    put:
-      consumes:
-      - application/json
-      description: Updates a contentdefinition
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/contentdefinition.ContentDefinitionBody'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Updates a contentdefinition
-      tags:
-      - contentdefinition
-  /contentmanagement/contentdefinitions/{id}/propertydefinitions:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new propertydefinition
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/contentdefinition.CreatePropertyDefinitionBody'
-      responses:
-        "201":
-          description: Created
-          headers:
-            Location:
-              type: string
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Creates a new propertydefinition
-      tags:
-      - contentdefinition
-  /contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid}:
-    delete:
-      consumes:
-      - application/json
-      description: Deletes a propertydefinition
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: pid
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Deletes a propertydefinition
-      tags:
-      - contentdefinition
-    get:
-      consumes:
-      - application/json
-      description: Gets a propertydefinition
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: pid
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/contentdefinition.PropertyDefinition'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Gets a propertydefinition
-      tags:
-      - contentdefinition
-    put:
-      consumes:
-      - application/json
-      description: Updates an property definition
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: pid
-        required: true
-        type: string
-      - description: request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/contentdefinition.UpdatePropertyDefinitionBody'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Updates an property definition
-      tags:
-      - contentdefinition
   /contentmanagement/workspace:
     post:
       description: Create a new workspace
@@ -917,6 +505,503 @@ paths:
       summary: Update tag
       tags:
       - workspace
+  /contentmanagement/workspaces/{workspace}/content:
+    get:
+      consumes:
+      - application/json
+      description: list all content
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: query
+        items:
+          type: string
+        name: cid
+        required: true
+        type: array
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/query.ContentListReadModel'
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: List all content
+      tags:
+      - content
+    post:
+      consumes:
+      - application/json
+      description: Creates new content basen on a contentdefinition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: contentdefinitionid
+        in: body
+        name: contentdefinitionid
+        required: true
+        schema:
+          $ref: '#/definitions/content.CreateContentRequest'
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              type: string
+          schema:
+            $ref: '#/definitions/content.Content'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Create new content
+      tags:
+      - content
+  /contentmanagement/workspaces/{workspace}/content/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Archives content with ID
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/content.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Archives content
+      tags:
+      - content
+    get:
+      consumes:
+      - application/json
+      description: Get content by id and optionally version
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: content version
+        in: query
+        name: version
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/content.Content'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get content by id
+      tags:
+      - content
+    put:
+      consumes:
+      - application/json
+      description: Update content
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/content.UpdateContentRequestBody'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Update content
+      tags:
+      - content
+  /contentmanagement/workspaces/{workspace}/content/{id}/publish:
+    post:
+      consumes:
+      - application/json
+      description: Publishes content with ID
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: content version
+        in: query
+        name: version
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/content.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Publishes content
+      tags:
+      - content
+  /contentmanagement/workspaces/{workspace}/contentdefinitions:
+    get:
+      consumes:
+      - application/json
+      description: Gets all existing contentdefinitions
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.ListContentDefinitionModel'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get all content definitions
+      tags:
+      - contentdefinition
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Creates a new contentdefinition. The contentdefinition
+        acts as a template for creating new content,
+        containing what properties to create & their validation.
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/contentdefinition.ContentDefinitionBody'
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              type: string
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Creates a new content definition
+      tags:
+      - contentdefinition
+  /contentmanagement/workspaces/{workspace}/contentdefinitions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a content definition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Delete a content definition
+      tags:
+      - contentdefinition
+    get:
+      consumes:
+      - application/json
+      description: Gets a content definition by ID
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/contentdefinition.ContentDefinition'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Gets a content definition
+      tags:
+      - contentdefinition
+    put:
+      consumes:
+      - application/json
+      description: Updates a contentdefinition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/contentdefinition.ContentDefinitionBody'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Updates a contentdefinition
+      tags:
+      - contentdefinition
+  /contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new propertydefinition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/contentdefinition.CreatePropertyDefinitionBody'
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              type: string
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Creates a new propertydefinition
+      tags:
+      - contentdefinition
+  /contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a propertydefinition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: pid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Deletes a propertydefinition
+      tags:
+      - contentdefinition
+    get:
+      consumes:
+      - application/json
+      description: Gets a propertydefinition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: pid
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/contentdefinition.PropertyDefinition'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Gets a propertydefinition
+      tags:
+      - contentdefinition
+    put:
+      consumes:
+      - application/json
+      description: Updates an property definition
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: pid
+        required: true
+        type: string
+      - description: request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/contentdefinition.UpdatePropertyDefinitionBody'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OKResult'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Updates an property definition
+      tags:
+      - contentdefinition
   /siteconfiguration:
     get:
       description: Gets siteconfiguration for this site.

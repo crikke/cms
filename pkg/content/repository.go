@@ -148,7 +148,7 @@ func (c ContentManagementRepository) UpdateContent(
 	return nil
 }
 
-func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID, workspace uuid.UUID) ([]Content, error) {
+func (c ContentManagementRepository) ListContent(ctx context.Context, contentDefinitionTypes []uuid.UUID, tags []string, workspace uuid.UUID) ([]Content, error) {
 
 	query := bson.M{}
 
@@ -157,6 +157,12 @@ func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.
 	if len(contentDefinitionTypes) > 0 {
 		query["contentdefinition_id"] = bson.M{
 			"$in": bson.A{contentDefinitionTypes},
+		}
+	}
+
+	if len(tags) > 0 {
+		query["tags"] = bson.M{
+			"$in": bson.A{tags},
 		}
 	}
 

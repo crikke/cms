@@ -147,23 +147,17 @@ func contentVersionContext(next http.Handler) http.Handler {
 // @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Produces 		json
 // @Param			cid			query	[]string	true 	"uuid formatted ID." format(uuid)
+// @Param			tag			query	[]string	true 	"tag id"
 // @Success			200			{object}	[]query.ContentListReadModel
 // @Failure			default		{object}	models.GenericError
 // @Router			/contentmanagement/workspaces/{workspace}/content [get]
 func (c contentEndpoint) ListContent() http.HandlerFunc {
 
-	return func(rw http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		val, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
-
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusNotFound,
-			})
-
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -179,28 +173,24 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 			}
 		}
 
+		if tags, ok := val["tag"]; ok {
+			q.Tags = append(q.Tags, tags...)
+		}
+
 		res, err := c.app.Queries.ListContent.Handle(r.Context(), q)
 
 		if err != nil {
-
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusNotFound,
-			})
-
+			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
 		data, err := json.Marshal(&res)
 		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		rw.Write(data)
+		w.Write(data)
 	}
 }
 
@@ -213,11 +203,11 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 // @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			version		query	int		false 	"content version"
-// @Success			200			{object}	content.Content
+// @Success			200			{object}	query.ContentReadModel
 // @Failure			default		{object}	models.GenericError
 // @Router			/contentmanagement/workspaces/{workspace}/content/{id} [get]
 func (c contentEndpoint) GetContent() http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
 		version := withVersion(r.Context())
@@ -230,25 +220,17 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
 
 		if err != nil {
-
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusNotFound,
-			})
-
+			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
 		data, err := json.Marshal(&res)
 		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		rw.Write(data)
+		w.Write(data)
 	}
 }
 
@@ -266,28 +248,18 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 // @Router			/contentmanagement/workspaces/{workspace}/content [post]
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
-	return func(rw http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		body := &CreateContentRequest{}
 
 		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		cid, err := uuid.Parse(body.ContentDefinitionId.String())
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -297,14 +269,8 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 			},
 		)
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
-
 		}
 
 		created, err := c.app.Queries.GetContent.Handle(r.Context(), query.GetContent{
@@ -312,32 +278,22 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 			Version: 0,
 		})
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 
 		}
 
 		data, err := json.Marshal(&created)
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body: models.ErrorBody{
-					Message: err.Error(),
-				},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 
 		}
 
 		url := r.URL.String()
-		rw.Header().Add("Location", fmt.Sprintf("%s/%s", url, id.String()))
-		rw.WriteHeader(http.StatusCreated)
-		rw.Write(data)
+		w.Header().Add("Location", fmt.Sprintf("%s/%s", url, id.String()))
+		w.WriteHeader(http.StatusCreated)
+		w.Write(data)
 	}
 }
 
@@ -362,7 +318,7 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
-			models.WithError(r.Context(), err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -374,7 +330,7 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 		})
 
 		if err != nil {
-			models.WithError(r.Context(), err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}
