@@ -33,7 +33,7 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 		return uuid.UUID{}, err
 	}
 
-	return h.ContentRepository.CreateContent(ctx, c)
+	return h.ContentRepository.CreateContent(ctx, c, cmd.WorkspaceId)
 }
 
 type UpdateContentFields struct {
@@ -53,7 +53,7 @@ type UpdateContentFieldsHandler struct {
 
 func (h UpdateContentFieldsHandler) Handle(ctx context.Context, cmd UpdateContentFields) error {
 
-	return h.ContentRepository.UpdateContentData(ctx, cmd.ContentID, cmd.Version, func(ctx context.Context, c *content.ContentData) (*content.ContentData, error) {
+	return h.ContentRepository.UpdateContentData(ctx, cmd.ContentID, cmd.Version, cmd.WorkspaceId, func(ctx context.Context, c *content.ContentData) (*content.ContentData, error) {
 
 		// if this version is a draft, update it directly.
 		// Otherwise create a new version based on this version.
@@ -61,7 +61,7 @@ func (h UpdateContentFieldsHandler) Handle(ctx context.Context, cmd UpdateConten
 		contentData := *c
 
 		if c.Status != content.Draft {
-			versions, err := h.ContentRepository.ListContentVersions(ctx, cmd.ContentID)
+			versions, err := h.ContentRepository.ListContentVersions(ctx, cmd.ContentID, cmd.WorkspaceId)
 			if err != nil {
 				return nil, err
 			}
@@ -95,7 +95,7 @@ type PublishContentHandler struct {
 
 func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) error {
 
-	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
+	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, cmd.WorkspaceId, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 		previousVersion := c.Data.Version
 
 		contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, c.ContentDefinitionID, cmd.WorkspaceId)
@@ -104,7 +104,7 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 		}
 
 		// set new version to status published
-		err = h.ContentRepository.UpdateContentData(ctx, cmd.ContentID, cmd.Version, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
+		err = h.ContentRepository.UpdateContentData(ctx, cmd.ContentID, cmd.Version, cmd.WorkspaceId, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
 
 			for propName, pd := range contentDefinition.Propertydefinitions {
 
@@ -155,7 +155,7 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 
 		// set previous version to previouslypublished
 		if previousVersion != cmd.Version {
-			err = h.ContentRepository.UpdateContentData(ctx, cmd.ContentID, previousVersion, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
+			err = h.ContentRepository.UpdateContentData(ctx, cmd.ContentID, previousVersion, cmd.WorkspaceId, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
 				cd.Status = content.PreviouslyPublished
 				return cd, nil
 			})
@@ -188,9 +188,9 @@ type ArchiveContentHandler struct {
 
 func (h ArchiveContentHandler) Handle(ctx context.Context, cmd ArchiveContent) error {
 
-	return h.ContentRepository.UpdateContent(ctx, cmd.ID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
+	return h.ContentRepository.UpdateContent(ctx, cmd.ID, cmd.WorkspaceId, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 
-		err := h.ContentRepository.UpdateContentData(ctx, cmd.ID, c.Data.Version, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
+		err := h.ContentRepository.UpdateContentData(ctx, cmd.ID, c.Data.Version, cmd.WorkspaceId, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
 			cd.Status = content.PreviouslyPublished
 			return cd, nil
 		})

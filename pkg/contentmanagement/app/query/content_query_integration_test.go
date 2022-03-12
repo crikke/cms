@@ -1,6 +1,21 @@
-//go:build integration
+// go:build integration
 
 package query
+
+// import (
+// 	"context"
+// 	"reflect"
+// 	"testing"
+
+// 	"github.com/crikke/cms/pkg/content"
+// 	"github.com/crikke/cms/pkg/contentdefinition"
+// 	"github.com/crikke/cms/pkg/db"
+// 	"github.com/crikke/cms/pkg/siteconfiguration"
+// 	"github.com/crikke/cms/pkg/workspace"
+// 	"github.com/google/uuid"
+// 	"github.com/stretchr/testify/assert"
+// 	"golang.org/x/text/language"
+// )
 
 // func Test_GetContent(t *testing.T) {
 // 	tests := []struct {
@@ -244,12 +259,14 @@ package query
 
 // 	for _, test := range tests {
 // 		t.Run(test.name, func(t *testing.T) {
-// 			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-// 			c.Database("cms").Collection("content").Drop(context.Background())
+// 			wsRepo := workspace.NewWorkspaceRepository(c)
+// 			ws, err := wsRepo.Create(context.Background(), workspace.Workspace{
+// 				Name: "test",
+// 			})
 
 // 			repo := content.NewContentRepository(c)
 // 			for _, cnt := range test.items {
-// 				repo.CreateContent(context.Background(), cnt)
+// 				repo.CreateContent(context.Background(), cnt, ws)
 // 			}
 
 // 			query := ListContent{}
@@ -275,6 +292,13 @@ package query
 
 // 				assert.True(t, ok)
 // 			}
+// 			t.Cleanup(func() {
+// 				workspaces, _ := wsRepo.ListAll(context.Background())
+
+// 				for _, ws := range workspaces {
+// 					wsRepo.Delete(context.Background(), ws.ID)
+// 				}
+// 			})
 // 		})
 // 	}
 // }

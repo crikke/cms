@@ -17,6 +17,7 @@ type ContentListReadModel struct {
 
 type ListContent struct {
 	ContentDefinitionIDs []uuid.UUID
+	WorkspaceId          uuid.UUID
 }
 
 type ListContentHandler struct {
@@ -27,7 +28,7 @@ type ListContentHandler struct {
 //! TODO Should name be returned for current locale?
 func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]ContentListReadModel, error) {
 
-	items, err := h.Repo.ListContentByContentDefinition(ctx, query.ContentDefinitionIDs)
+	items, err := h.Repo.ListContentByContentDefinition(ctx, query.ContentDefinitionIDs, query.WorkspaceId)
 
 	if err != nil {
 		return nil, err
@@ -61,8 +62,9 @@ func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]Co
 // In contentmanagement, all languages should be retrived for content of given version
 // If Version is nil, return publishedversion
 type GetContent struct {
-	Id      uuid.UUID
-	Version int
+	Id          uuid.UUID
+	WorkspaceId uuid.UUID
+	Version     int
 }
 
 type GetContentHandler struct {
@@ -71,7 +73,7 @@ type GetContentHandler struct {
 
 func (q GetContentHandler) Handle(ctx context.Context, query GetContent) (content.Content, error) {
 
-	c, err := q.Repo.GetContent(ctx, query.Id, query.Version)
+	c, err := q.Repo.GetContent(ctx, query.Id, query.Version, query.WorkspaceId)
 
 	if err != nil {
 		return content.Content{}, err

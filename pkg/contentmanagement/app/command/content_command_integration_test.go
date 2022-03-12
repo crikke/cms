@@ -94,11 +94,19 @@ func Test_CreateContent(t *testing.T) {
 
 	contentId, err := handler.Handle(context.Background(), cmd)
 	assert.NoError(t, err)
-	actual, err := contentRepo.GetContent(context.Background(), contentId, 0)
+	actual, err := contentRepo.GetContent(context.Background(), contentId, 0, ws)
 
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.UUID{}, contentId)
 	assert.Equal(t, content.Draft, actual.Data.Status)
+
+	t.Cleanup(func() {
+		workspaces, _ := wsRepo.ListAll(context.Background())
+
+		for _, ws := range workspaces {
+			wsRepo.Delete(context.Background(), ws.ID)
+		}
+	})
 }
 
 func Test_UpdateContent(t *testing.T) {
@@ -271,11 +279,11 @@ func Test_UpdateContent(t *testing.T) {
 			newContent, err := factory.NewContent(*test.contentdef)
 			assert.NoError(t, err)
 			newContent.ContentDefinitionID = contentdefinitionId
-			contentId, err := contentRepo.CreateContent(context.Background(), newContent)
+			contentId, err := contentRepo.CreateContent(context.Background(), newContent, ws)
 			assert.NoError(t, err)
 			test.existing.ContentID = contentId
 
-			contentRepo.UpdateContentData(context.Background(), contentId, test.existing.Version, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
+			contentRepo.UpdateContentData(context.Background(), contentId, test.existing.Version, ws, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
 				return &test.existing, nil
 			})
 
@@ -295,7 +303,7 @@ func Test_UpdateContent(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			actual, err := contentRepo.GetContent(context.Background(), contentId, test.cmd.Version)
+			actual, err := contentRepo.GetContent(context.Background(), contentId, test.cmd.Version, ws)
 			assert.NoError(t, err)
 
 			for lang, fields := range test.expected.Data.Properties {
@@ -307,6 +315,14 @@ func Test_UpdateContent(t *testing.T) {
 		})
 
 	}
+
+	t.Cleanup(func() {
+		workspaces, _ := wsRepo.ListAll(context.Background())
+
+		for _, ws := range workspaces {
+			wsRepo.Delete(context.Background(), ws.ID)
+		}
+	})
 }
 
 func Test_PublishContent(t *testing.T) {
@@ -440,13 +456,13 @@ func Test_PublishContent(t *testing.T) {
 			factory := content.Factory{Cfg: cfg}
 			newContent, err := factory.NewContent(*test.contentdef)
 
-			id, err := contentRepo.CreateContent(context.Background(), newContent)
+			id, err := contentRepo.CreateContent(context.Background(), newContent, ws)
 			assert.NoError(t, err)
 
 			for _, v := range test.contentVersions {
 				v.ContentID = id
 
-				err := contentRepo.UpdateContentData(context.Background(), id, 0, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
+				err := contentRepo.UpdateContentData(context.Background(), id, 0, ws, func(ctx context.Context, cd *content.ContentData) (*content.ContentData, error) {
 					return &v, nil
 				})
 				assert.NoError(t, err)
@@ -474,7 +490,7 @@ func Test_PublishContent(t *testing.T) {
 
 			}
 
-			actual, err := contentRepo.GetContent(context.Background(), id, test.publishVer)
+			actual, err := contentRepo.GetContent(context.Background(), id, test.publishVer, ws)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected.Data.Status, actual.Data.Status)
 
@@ -484,7 +500,7 @@ func Test_PublishContent(t *testing.T) {
 				}
 			}
 
-			versions, err := contentRepo.ListContentVersions(context.Background(), id)
+			versions, err := contentRepo.ListContentVersions(context.Background(), id, ws)
 			assert.NoError(t, err)
 
 			for _, cv := range versions {
@@ -493,6 +509,13 @@ func Test_PublishContent(t *testing.T) {
 				} else {
 					assert.NotEqual(t, content.Published, cv.Status)
 				}
+			}
+		})
+		t.Cleanup(func() {
+			workspaces, _ := wsRepo.ListAll(context.Background())
+
+			for _, ws := range workspaces {
+				wsRepo.Delete(context.Background(), ws.ID)
 			}
 		})
 	}

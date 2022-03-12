@@ -13,19 +13,17 @@ const contentCollection = "content"
 const contentVersionCollection = "contentversion"
 
 type ContentManagementRepository struct {
-	client   *mongo.Client
-	database *mongo.Database
+	client *mongo.Client
 }
 
 func NewContentRepository(c *mongo.Client) ContentManagementRepository {
 	return ContentManagementRepository{
-		client:   c,
-		database: c.Database("cms"),
+		client: c,
 	}
 }
 
 //! TODO: This should be done in a transaction
-func (c ContentManagementRepository) CreateContent(ctx context.Context, content Content) (uuid.UUID, error) {
+func (c ContentManagementRepository) CreateContent(ctx context.Context, content Content, workspace uuid.UUID) (uuid.UUID, error) {
 
 	if content.ID == (uuid.UUID{}) {
 		content.ID = uuid.New()
@@ -33,7 +31,7 @@ func (c ContentManagementRepository) CreateContent(ctx context.Context, content 
 
 	content.Data.ContentID = content.ID
 
-	_, err := c.database.
+	_, err := c.client.Database(workspace.String()).
 		Collection(contentCollection).
 		InsertOne(ctx, content)
 
@@ -41,7 +39,7 @@ func (c ContentManagementRepository) CreateContent(ctx context.Context, content 
 		return uuid.UUID{}, err
 	}
 
-	_, err = c.database.
+	_, err = c.client.Database(workspace.String()).
 		Collection(contentVersionCollection).
 		InsertOne(ctx, content.Data)
 
@@ -52,7 +50,7 @@ func (c ContentManagementRepository) CreateContent(ctx context.Context, content 
 	return content.ID, nil
 }
 
-func (c ContentManagementRepository) GetContent(ctx context.Context, id uuid.UUID, version int) (Content, error) {
+func (c ContentManagementRepository) GetContent(ctx context.Context, id uuid.UUID, version int, workspace uuid.UUID) (Content, error) {
 
 	content := &Content{}
 	contentData := &ContentData{}
@@ -61,12 +59,12 @@ func (c ContentManagementRepository) GetContent(ctx context.Context, id uuid.UUI
 		"version":   version,
 	}
 
-	err := c.database.Collection(contentVersionCollection).FindOne(ctx, filter).Decode(contentData)
+	err := c.client.Database(workspace.String()).Collection(contentVersionCollection).FindOne(ctx, filter).Decode(contentData)
 	if err != nil {
 		return Content{}, err
 	}
 
-	err = c.database.
+	err = c.client.Database(workspace.String()).
 		Collection(contentCollection).
 		FindOne(
 			ctx,
@@ -83,10 +81,15 @@ func (c ContentManagementRepository) GetContent(ctx context.Context, id uuid.UUI
 	return *content, nil
 }
 
-func (c ContentManagementRepository) UpdateContentData(ctx context.Context, id uuid.UUID, version int, updateFn func(context.Context, *ContentData) (*ContentData, error)) error {
+func (c ContentManagementRepository) UpdateContentData(
+	ctx context.Context,
+	id uuid.UUID,
+	version int,
+	workspace uuid.UUID,
+	updateFn func(context.Context, *ContentData) (*ContentData, error)) error {
 
 	contentData := &ContentData{}
-	err := c.database.Collection(contentVersionCollection).FindOne(ctx, bson.M{"contentId": id, "version": version}).Decode(contentData)
+	err := c.client.Database(workspace.String()).Collection(contentVersionCollection).FindOne(ctx, bson.M{"contentId": id, "version": version}).Decode(contentData)
 
 	if err != nil {
 		return err
@@ -98,7 +101,7 @@ func (c ContentManagementRepository) UpdateContentData(ctx context.Context, id u
 		return err
 	}
 
-	_, err = c.database.
+	_, err = c.client.Database(workspace.String()).
 		Collection(contentVersionCollection).
 		UpdateOne(
 			ctx,
@@ -112,9 +115,14 @@ func (c ContentManagementRepository) UpdateContentData(ctx context.Context, id u
 	return nil
 }
 
-func (c ContentManagementRepository) UpdateContent(ctx context.Context, id uuid.UUID, updateFn func(context.Context, *Content) (*Content, error)) error {
+func (c ContentManagementRepository) UpdateContent(
+	ctx context.Context,
+	id uuid.UUID,
+	workspace uuid.UUID,
+	updateFn func(context.Context, *Content) (*Content, error)) error {
+
 	content := &Content{}
-	err := c.database.Collection(contentCollection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
+	err := c.client.Database(workspace.String()).Collection(contentCollection).FindOne(ctx, bson.M{"_id": id}).Decode(content)
 
 	if err != nil {
 		return err
@@ -126,7 +134,7 @@ func (c ContentManagementRepository) UpdateContent(ctx context.Context, id uuid.
 		return err
 	}
 
-	_, err = c.database.
+	_, err = c.client.Database(workspace.String()).
 		Collection(contentCollection).
 		UpdateOne(
 			ctx,
@@ -140,7 +148,7 @@ func (c ContentManagementRepository) UpdateContent(ctx context.Context, id uuid.
 	return nil
 }
 
-func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID) ([]Content, error) {
+func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.Context, contentDefinitionTypes []uuid.UUID, workspace uuid.UUID) ([]Content, error) {
 
 	query := bson.M{}
 
@@ -152,7 +160,7 @@ func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.
 		}
 	}
 
-	cur, err := c.database.
+	cur, err := c.client.Database(workspace.String()).
 		Collection(contentCollection).
 		Find(
 			ctx,
@@ -177,16 +185,16 @@ func (c ContentManagementRepository) ListContentByContentDefinition(ctx context.
 	return result, nil
 }
 
-func (c ContentManagementRepository) ListContentByTags(ctx context.Context, tags []string) ([]Content, error) {
+func (c ContentManagementRepository) ListContentByTags(ctx context.Context, tags []string, workspace uuid.UUID) ([]Content, error) {
 
-	c.database.Collection(contentCollection).Find(ctx, bson.M{})
+	c.client.Database(workspace.String()).Collection(contentCollection).Find(ctx, bson.M{})
 	// for _, field := range tags {
 
 	// }
 	return nil, nil
 }
 
-func (c ContentManagementRepository) ListContentVersions(ctx context.Context, id uuid.UUID) ([]ContentVersion, error) {
+func (c ContentManagementRepository) ListContentVersions(ctx context.Context, id uuid.UUID, workspace uuid.UUID) ([]ContentVersion, error) {
 	filter := bson.M{"contentId": id}
 	projection := bson.M{
 		"_id":       0,
@@ -194,7 +202,7 @@ func (c ContentManagementRepository) ListContentVersions(ctx context.Context, id
 		"version":   1,
 		"status":    1,
 	}
-	cursor, err := c.database.
+	cursor, err := c.client.Database(workspace.String()).
 		Collection(contentVersionCollection).
 		Find(ctx, filter, options.Find().SetProjection(projection))
 
