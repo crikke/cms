@@ -1,5 +1,14 @@
 basePath: /api/v1
 definitions:
+  command.CreateWorkspace:
+    properties:
+      defaultLocale:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+    type: object
   content.Content:
     properties:
       contentDefinitionID:
@@ -180,6 +189,13 @@ definitions:
       name:
         type: string
     type: object
+  query.Tag:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   siteconfiguration.SiteConfigurationRequest:
     properties:
       languages:
@@ -187,14 +203,7 @@ definitions:
           type: string
         type: array
     type: object
-  workspace.CreateWorkspaceRequest:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-    type: object
-  workspace.Tag:
+  workspace.TagBody:
     properties:
       id:
         type: string
@@ -203,6 +212,8 @@ definitions:
     type: object
   workspace.Workspace:
     properties:
+      description:
+        type: string
       id:
         type: string
       languages:
@@ -212,9 +223,9 @@ definitions:
       name:
         type: string
       tags:
-        items:
-          $ref: '#/definitions/workspace.Tag'
-        type: array
+        additionalProperties:
+          type: string
+        type: object
     type: object
 host: localhost:8080
 info:
@@ -706,7 +717,7 @@ paths:
         name: workspace
         required: true
         schema:
-          $ref: '#/definitions/workspace.CreateWorkspaceRequest'
+          $ref: '#/definitions/command.CreateWorkspace'
       responses:
         "201":
           description: Created
@@ -722,14 +733,14 @@ paths:
       summary: Create workspace
       tags:
       - workspace
-  /contentmanagement/workspace/{id}:
+  /contentmanagement/workspace/{workspace}:
     get:
       description: Get workspace by id
       parameters:
       - description: uuid formatted ID.
         format: uuid
         in: path
-        name: id
+        name: workspace
         required: true
         type: string
       responses:
@@ -750,7 +761,7 @@ paths:
       - description: uuid formatted ID.
         format: uuid
         in: path
-        name: id
+        name: workspace
         required: true
         type: string
       - description: workspace body
@@ -769,6 +780,141 @@ paths:
           schema:
             $ref: '#/definitions/models.GenericError'
       summary: Update workspace
+      tags:
+      - workspace
+  /contentmanagement/workspace/{workspace}/tag:
+    get:
+      description: List all tags in workspace
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/query.Tag'
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: List all tags in workspace
+      tags:
+      - workspace
+    post:
+      description: Creates a tag in given workspace
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Tag
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/workspace.TagBody'
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              type: string
+          schema:
+            $ref: '#/definitions/workspace.Workspace'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Create tag
+      tags:
+      - workspace
+  /contentmanagement/workspace/{workspace}/tag/{tag}:
+    delete:
+      description: Delete tag by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: tag id
+        in: path
+        name: tag
+        required: true
+        type: string
+      responses:
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Delete tag
+      tags:
+      - workspace
+    get:
+      description: Get tag by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: tag
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.Tag'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get tag
+      tags:
+      - workspace
+    put:
+      description: Update tag by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: tag
+        required: true
+        type: string
+      - description: Tag
+        in: body
+        name: body
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.Tag'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Update tag
       tags:
       - workspace
   /siteconfiguration:

@@ -69,7 +69,7 @@ func withTag(ctx context.Context) string {
 // @Description 	Get workspace by id
 // @Tags 			workspace
 // @Produces 		json
-// @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success			200			{object}	workspace.Workspace
 // @Failure			default		{object}	models.GenericError
 // @Router			/contentmanagement/workspace/{workspace} [get]
@@ -147,7 +147,7 @@ type TagBody struct {
 // @Tags 			workspace
 // @Consumes 		json
 // @Produces 		json
-// @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			workspace	body workspace.Workspace true "workspace body"
 // @Success			200			{object}	workspace.Workspace
 // @Failure			default		{object}	models.GenericError
@@ -193,7 +193,7 @@ func updateWorkspace(app app.App) http.HandlerFunc {
 // @Consumes 		json
 // @Produces 		json
 // @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param			workspace	body TagBody true "Tag"
+// @Param			body			body 	TagBody true "Tag"
 // @Success			201			{object}	workspace.Workspace
 // @Header						201			{string}	Location
 // @Failure			default		{object}	models.GenericError
@@ -233,6 +233,7 @@ func createTag(app app.App) http.HandlerFunc {
 // @Summary 		List all tags in workspace
 // @Description 	List all tags in workspace
 // @Tags 			workspace
+// @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
 // @Produces 		json
 // @Success			200			{object}	[]query.Tag
 // @Failure			default		{object}	models.GenericError
@@ -262,6 +263,8 @@ func listTags(app app.App) http.HandlerFunc {
 // @Summary 		Get tag
 // @Description 	Get tag by id
 // @Tags 			workspace
+// @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			tag					path	string	true 	"name"
 // @Produces 		json
 // @Success			200			{object}	query.Tag
 // @Failure			default		{object}	models.GenericError
@@ -286,17 +289,17 @@ func getTag(app app.App) http.HandlerFunc {
 	}
 }
 
-// // // updateTag 		godoc
-// // // @Summary 		Update tag
-// // // @Description 	Update tag by id
-// // // @Tags 			workspace
-// // // @Produces 		json
-// // // @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
-// // // @Param			tag					path	string	true 	"name"
-// // // @Param			workspace	body string true "Tag"
-// // // @Success			200			{object}	query.Tag
-// // // @Failure			default		{object}	models.GenericError
-// // // @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [put]
+// updateTag 		godoc
+// @Summary 		Update tag
+// @Description 	Update tag by id
+// @Tags 			workspace
+// @Produces 		json
+// @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param			tag					path	string	true 	"name"
+// @Param			body	body string true "Tag"
+// @Success			200			{object}	query.Tag
+// @Failure			default		{object}	models.GenericError
+// @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [put]
 func updateTag(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())
@@ -342,9 +345,8 @@ func updateTag(app app.App) http.HandlerFunc {
 // @Produces 		json
 // @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			tag					path	string	true 	"tag id"
-// @Success			200			{object}	query.Tag
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [put]
+// @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [delete]
 func deleteTag(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())
