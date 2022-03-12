@@ -2,27 +2,22 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/crikke/cms/pkg/contentdefinition"
+	"github.com/crikke/cms/pkg/workspace"
 	"github.com/google/uuid"
 )
 
 type CreateContentDefinition struct {
 	Name        string
 	Description string
-}
-
-func (c CreateContentDefinition) Valid() error {
-	if c.Name == "" {
-		return errors.New("missing field: Name")
-	}
-	return nil
+	WorkspaceId uuid.UUID
 }
 
 type CreateContentDefinitionHandler struct {
-	Repo contentdefinition.ContentDefinitionRepository
+	WorkspaceRepo workspace.WorkspaceRepository
+	Repo          contentdefinition.ContentDefinitionRepository
 }
 
 func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateContentDefinition) (id uuid.UUID, err error) {
@@ -37,7 +32,7 @@ func (c CreateContentDefinitionHandler) Handle(ctx context.Context, cmd CreateCo
 		return
 	}
 
-	id, err = c.Repo.CreateContentDefinition(ctx, &cd)
+	id, err = c.Repo.CreateContentDefinition(ctx, &cd, cmd.WorkspaceId)
 
 	return
 }
@@ -46,10 +41,12 @@ type UpdateContentDefinition struct {
 	ContentDefinitionID uuid.UUID `bson:"_id,omitempty"`
 	Name                string    `bson:"omitempty"`
 	Description         string    `bson:"omitempty"`
+	WorkspaceId         uuid.UUID
 }
 
 type UpdateContentDefinitionHandler struct {
-	Repo contentdefinition.ContentDefinitionRepository
+	WorkspaceRepo workspace.WorkspaceRepository
+	Repo          contentdefinition.ContentDefinitionRepository
 }
 
 func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateContentDefinition) (err error) {
@@ -59,7 +56,7 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 		fmt.Println("UpdateContentDefinitionHandler", cmd, err)
 	}()
 
-	err = c.Repo.UpdateContentDefinition(ctx, cmd.ContentDefinitionID, func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
+	err = c.Repo.UpdateContentDefinition(ctx, cmd.ContentDefinitionID, cmd.WorkspaceId, func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 		if cmd.Name != "" {
 			cd.Name = cmd.Name
@@ -74,7 +71,8 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 }
 
 type DeleteContentDefinition struct {
-	ID uuid.UUID
+	ID          uuid.UUID
+	WorkspaceId uuid.UUID
 }
 
 type DeleteContentDefinitionHandler struct {

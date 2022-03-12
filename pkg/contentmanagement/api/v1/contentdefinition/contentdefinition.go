@@ -23,44 +23,40 @@ type endpoint struct {
 	app app.App
 }
 
-func NewContentDefinitionEndpoint(app app.App) endpoint {
-	return endpoint{app}
-}
+func NewContentDefinitionRoute(app app.App) http.Handler {
 
-func (c endpoint) RegisterEndpoints(router chi.Router) {
+	c := endpoint{app: app}
+	r := chi.NewRouter()
 
-	router.Route("/contentdefinitions", func(r chi.Router) {
+	// ! TODO ContentDefinitionID should use Context instead to remove duplicate code
 
-		// ! TODO ContentDefinitionID should use Context instead to remove duplicate code
+	r.Get("/", c.ListContentDefinitions())
+	r.Post("/", c.CreateContentDefinition())
 
-		r.Get("/", c.ListContentDefinitions())
-		r.Post("/", c.CreateContentDefinition())
+	r.Route("/{id}", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return contentDefinitionIdContext(h, "id", contentKey)
+		})
+		r.Get("/", c.GetContentDefinition())
+		r.Delete("/", c.DeleteContentDefinition())
+		r.Put("/", c.UpdateContentDefinition())
 
-		r.Route("/{id}", func(r chi.Router) {
-			r.Use(func(h http.Handler) http.Handler {
-				return contentDefinitionIdContext(h, "id", contentKey)
-			})
-			r.Get("/", c.GetContentDefinition())
-			r.Delete("/", c.DeleteContentDefinition())
-			r.Put("/", c.UpdateContentDefinition())
+		r.Route("/propertydefinitions", func(r chi.Router) {
 
-			r.Route("/propertydefinitions", func(r chi.Router) {
+			r.Post("/", c.CreatePropertyDefinition())
 
-				r.Post("/", c.CreatePropertyDefinition())
-
-				r.Route("/{pid}", func(r chi.Router) {
-					r.Use(func(h http.Handler) http.Handler {
-						return contentDefinitionIdContext(h, "pid", propertyKey)
-					})
-					r.Get("/", c.GetPropertyDefinition())
-					r.Put("/", c.UpdatePropertyDefinition())
-					r.Delete("/", c.DeletePropertyDefinition())
-
+			r.Route("/{pid}", func(r chi.Router) {
+				r.Use(func(h http.Handler) http.Handler {
+					return contentDefinitionIdContext(h, "pid", propertyKey)
 				})
+				r.Get("/", c.GetPropertyDefinition())
+				r.Put("/", c.UpdatePropertyDefinition())
+				r.Delete("/", c.DeletePropertyDefinition())
+
 			})
 		})
-
 	})
+	return r
 }
 
 func contentDefinitionIdContext(next http.Handler, param string, key key) http.Handler {
@@ -128,11 +124,12 @@ func withPID(ctx context.Context) uuid.UUID {
 // @Tags 						contentdefinition
 // @Accept 						json
 // @Produces 					json
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						body		body	ContentDefinitionBody	true 	"request body"
 // @Success						201			{object}	models.OKResult
 // @Header						201			{string}	Location
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentmanagement/contentdefinitions [post]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions [post]
 func (c endpoint) CreateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -179,10 +176,11 @@ func (c endpoint) CreateContentDefinition() http.HandlerFunc {
 // @Tags 						contentdefinition
 // @Accept 						json
 // @Produces 					json
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success						200			{object}	contentdefinition.ContentDefinition
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentmanagement/contentdefinitions/{id} [get]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id} [get]
 func (c endpoint) GetContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -220,9 +218,10 @@ func (c endpoint) GetContentDefinition() http.HandlerFunc {
 // @Tags 						contentdefinition
 // @Accept 						json
 // @Produces 					json
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Success						200			{object}	query.ListContentDefinitionModel
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentmanagement/contentdefinitions [get]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions [get]
 func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +239,7 @@ func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentmanagement/contentdefinitions/{id} [delete]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id} [delete]
 func (c endpoint) DeleteContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -266,10 +265,11 @@ func (c endpoint) DeleteContentDefinition() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						body		body	ContentDefinitionBody	true 	"request body"
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
-// @Router						/contentmanagement/contentdefinitions/{id} [put]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id} [put]
 func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -302,11 +302,12 @@ func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						body		body	CreatePropertyDefinitionBody	true 	"request body"
 // @Failure						default		{object}	models.GenericError
 // @Success						201			{object}	models.OKResult
 // @Header						201			{string}	Location
-// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions [post]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions [post]
 func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 	// ! TODO Type should not be string, probably enum
 
@@ -346,11 +347,12 @@ func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						body		body	UpdatePropertyDefinitionBody	true 	"request body"
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
-// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid} [put]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [put]
 func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -398,10 +400,11 @@ func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
-// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
 func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -433,10 +436,11 @@ func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	contentdefinition.PropertyDefinition
-// @Router						/contentmanagement/contentdefinitions/{id}/propertydefinitions/{pid} [get]
+// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [get]
 func (c endpoint) GetPropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

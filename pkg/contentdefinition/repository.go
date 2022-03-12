@@ -8,23 +8,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+const contentdefinitionCollection = "contentdefinition"
+
 type ContentDefinitionRepository struct {
-	collection string
-	client     *mongo.Client
-	database   *mongo.Database
+	client *mongo.Client
 }
 
 func NewContentDefinitionRepository(client *mongo.Client) ContentDefinitionRepository {
 
-	db := client.Database("cms")
-	r := &ContentDefinitionRepository{client: client, database: db}
-	r.collection = "contentdefinition"
+	r := &ContentDefinitionRepository{client: client}
 	return *r
 }
 
-func (r ContentDefinitionRepository) CreateContentDefinition(ctx context.Context, cd *ContentDefinition) (uuid.UUID, error) {
+func (r ContentDefinitionRepository) CreateContentDefinition(ctx context.Context, cd *ContentDefinition, workspaceId uuid.UUID) (uuid.UUID, error) {
 	cd.ID = uuid.New()
-	_, err := r.database.Collection(r.collection).InsertOne(ctx, cd)
+
+	_, err := r.client.Database(workspaceId.String()).Collection(contentdefinitionCollection).InsertOne(ctx, cd)
 
 	if err != nil {
 		return uuid.UUID{}, err
@@ -33,10 +32,13 @@ func (r ContentDefinitionRepository) CreateContentDefinition(ctx context.Context
 	return cd.ID, err
 }
 
-func (r ContentDefinitionRepository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error {
+func (r ContentDefinitionRepository) UpdateContentDefinition(ctx context.Context, id uuid.UUID, workspaceId uuid.UUID, updateFn func(ctx context.Context, cd *ContentDefinition) (*ContentDefinition, error)) error {
 
 	entry := &ContentDefinition{}
-	err := r.database.Collection(r.collection).FindOne(ctx, bson.M{"_id": id}).Decode(entry)
+	err := r.client.Database(workspaceId.String()).
+		Collection(contentdefinitionCollection).
+		FindOne(ctx, bson.M{"_id": id}).Decode(entry)
+
 	if err != nil {
 		return err
 	}
@@ -45,7 +47,7 @@ func (r ContentDefinitionRepository) UpdateContentDefinition(ctx context.Context
 		return err
 	}
 
-	_, err = r.database.
+	_, err = r.client.Database(workspaceId.String()).
 		Collection("contentdefinition").
 		UpdateOne(
 			ctx,
@@ -63,21 +65,25 @@ func (r ContentDefinitionRepository) DeleteContentDefinition(ctx context.Context
 	return nil
 }
 
-func (r ContentDefinitionRepository) GetContentDefinition(ctx context.Context, id uuid.UUID) (ContentDefinition, error) {
+func (r ContentDefinitionRepository) GetContentDefinition(ctx context.Context, id uuid.UUID, workspaceId uuid.UUID) (ContentDefinition, error) {
 
 	res := &ContentDefinition{}
-	err := r.database.Collection(r.collection).FindOne(ctx, bson.D{bson.E{Key: "_id", Value: id}}).Decode(res)
+	err := r.client.Database(workspaceId.String()).
+		Collection(contentdefinitionCollection).
+		FindOne(ctx, bson.D{bson.E{Key: "_id", Value: id}}).
+		Decode(res)
+
 	if err != nil {
 		return ContentDefinition{}, err
 	}
 	return *res, nil
 }
 
-func (r ContentDefinitionRepository) CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error) {
+func (r ContentDefinitionRepository) CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, workspaceId uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error) {
 	pd.ID = uuid.New()
 
-	_, err := r.database.
-		Collection(r.collection).
+	_, err := r.client.Database(workspaceId.String()).
+		Collection(contentdefinitionCollection).
 		UpdateOne(
 			ctx,
 			bson.D{bson.E{Key: "_id", Value: cid}},
@@ -117,9 +123,9 @@ func (r ContentDefinitionRepository) CreatePropertyDefinition(ctx context.Contex
 // 	return nil
 // }
 
-func (r ContentDefinitionRepository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID) error {
-	_, err := r.database.
-		Collection(r.collection).
+func (r ContentDefinitionRepository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, workspaceId uuid.UUID) error {
+	_, err := r.client.Database(workspaceId.String()).
+		Collection(contentdefinitionCollection).
 		DeleteOne(
 			ctx,
 			bson.D{
@@ -133,13 +139,13 @@ func (r ContentDefinitionRepository) DeletePropertyDefinition(ctx context.Contex
 	return nil
 }
 
-func (r ContentDefinitionRepository) GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID) (PropertyDefinition, error) {
+func (r ContentDefinitionRepository) GetPropertyDefinition(ctx context.Context, cid, pid uuid.UUID, workspaceId uuid.UUID) (PropertyDefinition, error) {
 	var res struct {
 		PropertyDefinitions []PropertyDefinition `bson:"propertydefinitions,omitempty"`
 	}
 
-	err := r.database.
-		Collection(r.collection).
+	err := r.client.Database(workspaceId.String()).
+		Collection(contentdefinitionCollection).
 		FindOne(
 			ctx,
 			bson.D{

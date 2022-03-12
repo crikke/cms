@@ -25,14 +25,13 @@ type contentEndpoint struct {
 	app app.App
 }
 
-func NewContentEndpoint(app app.App) contentEndpoint {
-	return contentEndpoint{app}
-}
-func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
+func NewContentRoute(app app.App) http.Handler {
+	r := chi.NewRouter()
+	c := contentEndpoint{app}
 
-	router.Route("/content", func(r chi.Router) {
-		r.Use(models.HandleHttpError)
+	r.Use(models.HandleHttpError)
 
+	r.Route("/content", func(r chi.Router) {
 		r.Get("/", c.ListContent())
 		r.Post("/", c.CreateContent())
 		r.Route("/{id}", func(r chi.Router) {
@@ -48,6 +47,7 @@ func (c contentEndpoint) RegisterEndpoints(router chi.Router) {
 			r.Post("/publish", c.PublishContent())
 		})
 	})
+	return r
 }
 
 func contentIdContext(next http.Handler) http.Handler {
@@ -144,11 +144,12 @@ func contentVersionContext(next http.Handler) http.Handler {
 // @Description 	list all content
 // @Tags 			content
 // @Accept 			json
+// @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Produces 		json
 // @Param			cid			query	[]string	true 	"uuid formatted ID." format(uuid)
 // @Success			200			{object}	[]query.ContentListReadModel
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/content [get]
+// @Router			/contentmanagement/workspaces/{workspace}/content [get]
 func (c contentEndpoint) ListContent() http.HandlerFunc {
 
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -209,11 +210,12 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 // @Tags 			content
 // @Accept 			json
 // @Produces 		json
+// @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			version		query	int		false 	"content version"
 // @Success			200			{object}	content.Content
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/content/{id} [get]
+// @Router			/contentmanagement/workspaces/{workspace}/content/{id} [get]
 func (c contentEndpoint) GetContent() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 
@@ -256,11 +258,12 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 // @Tags 			content
 // @Accept 			json
 // @Produces 		json
+// @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			contentdefinitionid	body CreateContentRequest true "contentdefinitionid"
 // @Success						201			{object}	content.Content
 // @Header						201			{string}	Location
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/content [post]
+// @Router			/contentmanagement/workspaces/{workspace}/content [post]
 func (c contentEndpoint) CreateContent() http.HandlerFunc {
 
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -344,11 +347,12 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 // @Tags 			content
 // @Accept 			json
 // @Produces 		json
+// @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			requestbody	body UpdateContentRequestBody true "body"
 // @Success			200		{object}		models.OKResult
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/content/{id} [put]
+// @Router			/contentmanagement/workspaces/{workspace}/content/{id} [put]
 func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -382,10 +386,11 @@ func (c contentEndpoint) UpdateContent() http.HandlerFunc {
 // @Tags 			content
 // @Accept 			json
 // @Produces 		json
+// @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success			200		{object}		OKResult
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/content/{id} [delete]
+// @Router			/contentmanagement/workspaces/{workspace}/content/{id} [delete]
 func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -409,11 +414,12 @@ func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 // @Tags 			content
 // @Accept 			json
 // @Produces 		json
+// @Param			workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			id			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			version		query	int		true 	"content version"
 // @Success			200			{object}		OKResult
 // @Failure			default		{object}		models.GenericError
-// @Router			/contentmanagement/content/{id}/publish [post]
+// @Router			/contentmanagement/workspaces/{workspace}/content/{id}/publish [post]
 func (c contentEndpoint) PublishContent() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {

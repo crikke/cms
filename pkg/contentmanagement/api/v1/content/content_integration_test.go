@@ -2,223 +2,163 @@
 
 package content
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"testing"
+// func Test_CreateAndUpdateNewContent(t *testing.T) {
 
-	domain "github.com/crikke/cms/pkg/content"
-	"github.com/crikke/cms/pkg/contentdefinition"
-	"github.com/crikke/cms/pkg/contentmanagement/app"
-	"github.com/crikke/cms/pkg/contentmanagement/app/command"
-	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/crikke/cms/pkg/db"
-	"github.com/crikke/cms/pkg/siteconfiguration"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/text/language"
-)
+// 	// create content definition
+// 	client, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+// 	assert.NoError(t, err)
 
-func Test_CreateAndUpdateNewContent(t *testing.T) {
+// 	client.Database("cms").Collection("content").Drop(context.Background())
+// 	client.Database("cms").Collection("contentdefinition").Drop(context.Background())
 
-	// create content definition
-	client, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-	assert.NoError(t, err)
+// 	r := api.NewContentManagementAPI(client, nil, nil)
 
-	client.Database("cms").Collection("content").Drop(context.Background())
-	client.Database("cms").Collection("contentdefinition").Drop(context.Background())
-	cd, _ := contentdefinition.NewContentDefinition("test contentdefinition", "test desc")
+// 	cd, _ := contentdefinition.NewContentDefinition("test contentdefinition", "test desc")
 
-	cdRepo := contentdefinition.NewContentDefinitionRepository(client)
-	contentRepo := domain.NewContentRepository(client)
-	cdRepo.CreateContentDefinition(context.Background(), &cd)
+// 	createContent := func(contentdefid uuid.UUID) (url.URL, uuid.UUID, bool) {
+// 		t.Helper()
 
-	factory := domain.Factory{
-		Cfg: &siteconfiguration.SiteConfiguration{
-			Languages: []language.Tag{
-				language.MustParse("sv-SE"),
-			},
-		}}
-	// initialize api endpoint
-	ep := NewContentEndpoint(app.App{
-		Commands: app.Commands{
-			CreateContent: command.CreateContentHandler{
-				ContentDefinitionRepository: cdRepo,
-				ContentRepository:           contentRepo,
-				Factory:                     factory,
-			},
-			UpdateContentFields: command.UpdateContentFieldsHandler{
-				ContentRepository:           contentRepo,
-				ContentDefinitionRepository: cdRepo,
-				Factory:                     factory,
-			},
-			ArchiveContent: command.ArchiveContentHandler{
-				ContentRepository: contentRepo,
-			},
-		},
-		Queries: app.Queries{
-			GetContent: query.GetContentHandler{
-				Repo: contentRepo,
-			},
-			ListContent: query.ListContentHandler{
-				Repo: contentRepo,
-				Cfg:  factory.Cfg},
-		},
-	})
+// 		ok := true
+// 		type request struct {
+// 			ContentDefinitionId uuid.UUID `json:"contentdefinitionid"`
+// 		}
 
-	r := chi.NewRouter()
-	ep.RegisterEndpoints(r)
+// 		body := request{ContentDefinitionId: contentdefid}
+// 		var buf bytes.Buffer
+// 		err = json.NewEncoder(&buf).Encode(body)
+// 		ok = ok && assert.NoError(t, err)
+// 		req, err := http.NewRequest(http.MethodPost, "/content", &buf)
+// 		ok = ok && assert.NoError(t, err)
 
-	createContent := func(contentdefid uuid.UUID) (url.URL, uuid.UUID, bool) {
-		t.Helper()
+// 		res := httptest.NewRecorder()
+// 		r.ServeHTTP(res, req)
+// 		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
 
-		ok := true
-		type request struct {
-			ContentDefinitionId uuid.UUID `json:"contentdefinitionid"`
-		}
+// 		location, err := res.Result().Location()
+// 		ok = ok && assert.NoError(t, err)
 
-		body := request{ContentDefinitionId: contentdefid}
-		var buf bytes.Buffer
-		err = json.NewEncoder(&buf).Encode(body)
-		ok = ok && assert.NoError(t, err)
-		req, err := http.NewRequest(http.MethodPost, "/content", &buf)
-		ok = ok && assert.NoError(t, err)
+// 		actual := &domain.Content{}
+// 		json.NewDecoder(res.Body).Decode(actual)
 
-		res := httptest.NewRecorder()
-		r.ServeHTTP(res, req)
-		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
+// 		return *location, actual.ID, ok
+// 	}
 
-		location, err := res.Result().Location()
-		ok = ok && assert.NoError(t, err)
+// 	getContent := func(url url.URL, expect domain.ContentData) (uuid.UUID, bool) {
+// 		t.Helper()
 
-		actual := &domain.Content{}
-		json.NewDecoder(res.Body).Decode(actual)
+// 		ok := true
+// 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s?version=0", url.String()), nil)
+// 		ok = ok && assert.NoError(t, err)
 
-		return *location, actual.ID, ok
-	}
+// 		res := httptest.NewRecorder()
 
-	getContent := func(url url.URL, expect domain.ContentData) (uuid.UUID, bool) {
-		t.Helper()
+// 		r.ServeHTTP(res, req)
 
-		ok := true
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s?version=0", url.String()), nil)
-		ok = ok && assert.NoError(t, err)
+// 		actual := &domain.Content{}
+// 		json.NewDecoder(res.Body).Decode(actual)
 
-		res := httptest.NewRecorder()
+// 		ok = ok && assert.Equal(t, cd.ID, actual.ContentDefinitionID)
+// 		ok = ok && assert.Equal(t, expect.Status, actual.Data.Status)
 
-		r.ServeHTTP(res, req)
+// 		for lang, fields := range expect.Properties {
+// 			for fieldname, field := range fields {
+// 				ok = ok && assert.Equal(t, field.Value, actual.Data.Properties[lang][fieldname].Value)
+// 			}
+// 		}
+// 		return actual.ID, ok
+// 	}
 
-		actual := &domain.Content{}
-		json.NewDecoder(res.Body).Decode(actual)
+// 	updateContent := func(contentID uuid.UUID) bool {
 
-		ok = ok && assert.Equal(t, cd.ID, actual.ContentDefinitionID)
-		ok = ok && assert.Equal(t, expect.Status, actual.Data.Status)
+// 		t.Helper()
+// 		ok := true
 
-		for lang, fields := range expect.Properties {
-			for fieldname, field := range fields {
-				ok = ok && assert.Equal(t, field.Value, actual.Data.Properties[lang][fieldname].Value)
-			}
-		}
-		return actual.ID, ok
-	}
+// 		type request struct {
+// 			Version  int
+// 			Language string
+// 			Fields   map[string]interface{}
+// 		}
 
-	updateContent := func(contentID uuid.UUID) bool {
+// 		body := request{
+// 			Version:  0,
+// 			Language: "sv-SE",
+// 			Fields: map[string]interface{}{
+// 				contentdefinition.NameField: "updated content",
+// 			},
+// 		}
+// 		var buf bytes.Buffer
+// 		err = json.NewEncoder(&buf).Encode(body)
+// 		req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("/content/%s", contentID.String()), &buf)
+// 		ok = ok && assert.NoError(t, err)
 
-		t.Helper()
-		ok := true
+// 		res := httptest.NewRecorder()
+// 		r.ServeHTTP(res, req)
 
-		type request struct {
-			Version  int
-			Language string
-			Fields   map[string]interface{}
-		}
+// 		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+// 		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
 
-		body := request{
-			Version:  0,
-			Language: "sv-SE",
-			Fields: map[string]interface{}{
-				contentdefinition.NameField: "updated content",
-			},
-		}
-		var buf bytes.Buffer
-		err = json.NewEncoder(&buf).Encode(body)
-		req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("/content/%s", contentID.String()), &buf)
-		ok = ok && assert.NoError(t, err)
+// 		return ok
+// 	}
 
-		res := httptest.NewRecorder()
-		r.ServeHTTP(res, req)
+// 	archiveContent := func(contentID uuid.UUID) bool {
+// 		t.Helper()
+// 		ok := true
 
-		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
-		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
+// 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/content/%s", contentID.String()), nil)
+// 		ok = ok && assert.NoError(t, err)
 
-		return ok
-	}
+// 		res := httptest.NewRecorder()
 
-	archiveContent := func(contentID uuid.UUID) bool {
-		t.Helper()
-		ok := true
+// 		r.ServeHTTP(res, req)
 
-		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/content/%s", contentID.String()), nil)
-		ok = ok && assert.NoError(t, err)
+// 		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+// 		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
 
-		res := httptest.NewRecorder()
+// 		return ok
+// 	}
+// 	//TODO: list content
+// 	listContent := func(expect []query.ContentListReadModel) bool {
+// 		t.Helper()
+// 		ok := true
 
-		r.ServeHTTP(res, req)
+// 		// req, err := http.NewRequest(http.MethodGet, "/content", nil)
+// 		// ok = ok && assert.NoError(t, err)
 
-		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
-		ok = ok && assert.Equal(t, len(res.Body.Bytes()), 0)
+// 		// res := httptest.NewRecorder()
 
-		return ok
-	}
-	//TODO: list content
-	listContent := func(expect []query.ContentListReadModel) bool {
-		t.Helper()
-		ok := true
+// 		// r.ServeHTTP(res, req)
 
-		// req, err := http.NewRequest(http.MethodGet, "/content", nil)
-		// ok = ok && assert.NoError(t, err)
+// 		// result := []query.ContentListReadModel{}
 
-		// res := httptest.NewRecorder()
+// 		// err = json.NewDecoder(res.Body).Decode(&result)
+// 		// ok = ok && assert.NoError(t, err)
+// 		// ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+// 		// ok = ok && assert.Equal(t, len(expect), len(result))
+// 		return ok
+// 	}
 
-		// r.ServeHTTP(res, req)
+// 	t.Run("create new content and update it", func(t *testing.T) {
 
-		// result := []query.ContentListReadModel{}
+// 		location, contentID, ok := createContent(cd.ID)
 
-		// err = json.NewDecoder(res.Body).Decode(&result)
-		// ok = ok && assert.NoError(t, err)
-		// ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
-		// ok = ok && assert.Equal(t, len(expect), len(result))
-		return ok
-	}
+// 		ok = ok && updateContent(contentID)
 
-	t.Run("create new content and update it", func(t *testing.T) {
+// 		if ok {
+// 			_, ok = getContent(location, domain.ContentData{
+// 				Status: domain.Draft,
 
-		location, contentID, ok := createContent(cd.ID)
+// 				Version: 0,
+// 				Properties: domain.ContentLanguage{
+// 					"sv-SE": domain.ContentFields{
+// 						"name": domain.ContentField{
+// 							Value: "updated content",
+// 						},
+// 					},
+// 				},
+// 			})
+// 		}
 
-		ok = ok && updateContent(contentID)
-
-		if ok {
-			_, ok = getContent(location, domain.ContentData{
-				Status: domain.Draft,
-
-				Version: 0,
-				Properties: domain.ContentLanguage{
-					"sv-SE": domain.ContentFields{
-						"name": domain.ContentField{
-							Value: "updated content",
-						},
-					},
-				},
-			})
-		}
-
-		ok = ok && archiveContent(contentID)
-		ok = ok && listContent([]query.ContentListReadModel{})
-	})
-}
+// 		ok = ok && archiveContent(contentID)
+// 		ok = ok && listContent([]query.ContentListReadModel{})
+// 	})
+// }

@@ -2,197 +2,177 @@
 
 package contentdefinition
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"testing"
+// func Test_CreateContentDefinition(t *testing.T) {
+// 	client, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+// 	assert.NoError(t, err)
 
-	"github.com/crikke/cms/pkg/contentdefinition"
-	"github.com/crikke/cms/pkg/contentdefinition/validator"
-	"github.com/crikke/cms/pkg/contentmanagement/app"
-	"github.com/crikke/cms/pkg/contentmanagement/app/command"
-	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/crikke/cms/pkg/db"
-	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
-)
+// 	client.Database("cms").Collection("content").Drop(context.Background())
+// 	client.Database("cms").Collection("contentdefinition").Drop(context.Background())
 
-func Test_CreateContentDefinition(t *testing.T) {
-	client, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-	assert.NoError(t, err)
+// 	cdRepo := contentdefinition.NewContentDefinitionRepository(client)
 
-	client.Database("cms").Collection("content").Drop(context.Background())
-	client.Database("cms").Collection("contentdefinition").Drop(context.Background())
+// 	// initialize api endpoint
+// 	ep := NewContentDefinitionEndpoint(app.App{
+// 		Commands: app.Commands{
+// 			CreateContentDefinition: command.CreateContentDefinitionHandler{
+// 				Repo: cdRepo,
+// 			},
+// 			UpdateContentDefinition: command.UpdateContentDefinitionHandler{
+// 				Repo: cdRepo,
+// 			},
+// 			CreatePropertyDefinition: command.CreatePropertyDefinitionHandler{
+// 				Repo: cdRepo,
+// 			},
+// 			UpdatePropertyDefinition: command.UpdatePropertyDefinitionHandler{
+// 				Repo: cdRepo,
+// 			},
+// 		},
+// 		Queries: app.Queries{
+// 			GetContentDefinition: query.GetContentDefinitionHandler{
+// 				Repo: cdRepo,
+// 			},
+// 		},
+// 	})
+// 	r := chi.NewRouter()
+// 	ep.RegisterEndpoints(r)
 
-	cdRepo := contentdefinition.NewContentDefinitionRepository(client)
+// 	createContentDefinition := func() (url.URL, bool) {
+// 		t.Helper()
 
-	// initialize api endpoint
-	ep := NewContentDefinitionEndpoint(app.App{
-		Commands: app.Commands{
-			CreateContentDefinition: command.CreateContentDefinitionHandler{
-				Repo: cdRepo,
-			},
-			UpdateContentDefinition: command.UpdateContentDefinitionHandler{
-				Repo: cdRepo,
-			},
-			CreatePropertyDefinition: command.CreatePropertyDefinitionHandler{
-				Repo: cdRepo,
-			},
-			UpdatePropertyDefinition: command.UpdatePropertyDefinitionHandler{
-				Repo: cdRepo,
-			},
-		},
-		Queries: app.Queries{
-			GetContentDefinition: query.GetContentDefinitionHandler{
-				Repo: cdRepo,
-			},
-		},
-	})
-	r := chi.NewRouter()
-	ep.RegisterEndpoints(r)
+// 		ok := true
 
-	createContentDefinition := func() (url.URL, bool) {
-		t.Helper()
+// 		type request struct {
+// 			Name        string
+// 			Description string
+// 		}
 
-		ok := true
+// 		body := request{
+// 			Name:        "test contentdefinition ",
+// 			Description: "test description",
+// 		}
 
-		type request struct {
-			Name        string
-			Description string
-		}
+// 		var buf bytes.Buffer
+// 		err = json.NewEncoder(&buf).Encode(body)
+// 		ok = ok && assert.NoError(t, err)
+// 		req, err := http.NewRequest(http.MethodPost, "/contentdefinitions", &buf)
+// 		ok = ok && assert.NoError(t, err)
 
-		body := request{
-			Name:        "test contentdefinition ",
-			Description: "test description",
-		}
+// 		res := httptest.NewRecorder()
+// 		r.ServeHTTP(res, req)
+// 		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
 
-		var buf bytes.Buffer
-		err = json.NewEncoder(&buf).Encode(body)
-		ok = ok && assert.NoError(t, err)
-		req, err := http.NewRequest(http.MethodPost, "/contentdefinitions", &buf)
-		ok = ok && assert.NoError(t, err)
+// 		location, err := res.Result().Location()
+// 		ok = ok && assert.NoError(t, err)
+// 		return *location, ok
+// 	}
 
-		res := httptest.NewRecorder()
-		r.ServeHTTP(res, req)
-		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
+// 	createPropertyDefinition := func(url url.URL) (url.URL, bool) {
+// 		ok := true
+// 		type request struct {
+// 			Name        string
+// 			Description string
+// 			Type        string
+// 		}
 
-		location, err := res.Result().Location()
-		ok = ok && assert.NoError(t, err)
-		return *location, ok
-	}
+// 		body := request{
+// 			Name:        "test_property",
+// 			Description: "test_description",
+// 			Type:        "text",
+// 		}
 
-	createPropertyDefinition := func(url url.URL) (url.URL, bool) {
-		ok := true
-		type request struct {
-			Name        string
-			Description string
-			Type        string
-		}
+// 		var buf bytes.Buffer
+// 		err = json.NewEncoder(&buf).Encode(body)
+// 		ok = ok && assert.NoError(t, err)
+// 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/propertydefinitions", url.String()), &buf)
+// 		ok = ok && assert.NoError(t, err)
 
-		body := request{
-			Name:        "test_property",
-			Description: "test_description",
-			Type:        "text",
-		}
+// 		res := httptest.NewRecorder()
+// 		r.ServeHTTP(res, req)
+// 		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
+// 		location, err := res.Result().Location()
+// 		ok = ok && assert.NoError(t, err)
+// 		return *location, ok
+// 	}
 
-		var buf bytes.Buffer
-		err = json.NewEncoder(&buf).Encode(body)
-		ok = ok && assert.NoError(t, err)
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/propertydefinitions", url.String()), &buf)
-		ok = ok && assert.NoError(t, err)
+// 	updatePropertyDefinition := func(url url.URL) bool {
+// 		ok := true
+// 		type request struct {
+// 			Name        string
+// 			Description string
+// 			Localized   bool
+// 			Validation  map[string]interface{}
+// 		}
 
-		res := httptest.NewRecorder()
-		r.ServeHTTP(res, req)
-		ok = ok && assert.Equal(t, http.StatusCreated, res.Result().StatusCode)
-		location, err := res.Result().Location()
-		ok = ok && assert.NoError(t, err)
-		return *location, ok
-	}
+// 		body := request{
+// 			Name:        "new name",
+// 			Description: "new description",
+// 			Localized:   true,
+// 			Validation: map[string]interface{}{
+// 				validator.RuleRegex: "^[a-z]",
+// 			},
+// 		}
 
-	updatePropertyDefinition := func(url url.URL) bool {
-		ok := true
-		type request struct {
-			Name        string
-			Description string
-			Localized   bool
-			Validation  map[string]interface{}
-		}
+// 		var buf bytes.Buffer
+// 		err = json.NewEncoder(&buf).Encode(body)
+// 		ok = ok && assert.NoError(t, err)
+// 		req, err := http.NewRequest(http.MethodPut, url.String(), &buf)
+// 		ok = ok && assert.NoError(t, err)
+// 		res := httptest.NewRecorder()
+// 		r.ServeHTTP(res, req)
 
-		body := request{
-			Name:        "new name",
-			Description: "new description",
-			Localized:   true,
-			Validation: map[string]interface{}{
-				validator.RuleRegex: "^[a-z]",
-			},
-		}
+// 		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
 
-		var buf bytes.Buffer
-		err = json.NewEncoder(&buf).Encode(body)
-		ok = ok && assert.NoError(t, err)
-		req, err := http.NewRequest(http.MethodPut, url.String(), &buf)
-		ok = ok && assert.NoError(t, err)
-		res := httptest.NewRecorder()
-		r.ServeHTTP(res, req)
+// 		return ok
+// 	}
 
-		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+// 	getContentDefinition := func(url url.URL) bool {
+// 		ok := true
+// 		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
+// 		ok = ok && assert.NoError(t, err)
+// 		res := httptest.NewRecorder()
+// 		r.ServeHTTP(res, req)
 
-		return ok
-	}
+// 		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
 
-	getContentDefinition := func(url url.URL) bool {
-		ok := true
-		req, err := http.NewRequest(http.MethodGet, url.String(), nil)
-		ok = ok && assert.NoError(t, err)
-		res := httptest.NewRecorder()
-		r.ServeHTTP(res, req)
+// 		actual := contentdefinition.ContentDefinition{}
+// 		json.NewDecoder(res.Body).Decode(&actual)
 
-		ok = ok && assert.Equal(t, http.StatusOK, res.Result().StatusCode)
+// 		expect := contentdefinition.ContentDefinition{
+// 			Name:        "test contentdefinition ",
+// 			Description: "test description",
+// 			Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
+// 				"new name": {
+// 					Description: "new description",
+// 					Localized:   true,
+// 					Type:        "text",
+// 					Validators: map[string]interface{}{
+// 						validator.RuleRequired: false,
+// 						validator.RuleRegex:    "^[a-z]",
+// 					},
+// 				},
+// 			},
+// 		}
 
-		actual := contentdefinition.ContentDefinition{}
-		json.NewDecoder(res.Body).Decode(&actual)
+// 		assert.Equal(t, expect.Name, actual.Name)
+// 		assert.Equal(t, expect.Description, actual.Description)
+// 		assert.Equal(t, expect.Propertydefinitions["new name"].Description, actual.Propertydefinitions["new name"].Description)
+// 		assert.Equal(t, expect.Propertydefinitions["new name"].Localized, actual.Propertydefinitions["new name"].Localized)
+// 		assert.Equal(t, expect.Propertydefinitions["new name"].Validators[validator.RuleRegex], actual.Propertydefinitions["new name"].Validators[validator.RuleRegex])
+// 		assert.Equal(t, expect.Propertydefinitions["new name"].Validators[validator.RuleRequired], actual.Propertydefinitions["new name"].Validators[validator.RuleRequired])
 
-		expect := contentdefinition.ContentDefinition{
-			Name:        "test contentdefinition ",
-			Description: "test description",
-			Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
-				"new name": {
-					Description: "new description",
-					Localized:   true,
-					Type:        "text",
-					Validators: map[string]interface{}{
-						validator.RuleRequired: false,
-						validator.RuleRegex:    "^[a-z]",
-					},
-				},
-			},
-		}
+// 		return ok
+// 	}
 
-		assert.Equal(t, expect.Name, actual.Name)
-		assert.Equal(t, expect.Description, actual.Description)
-		assert.Equal(t, expect.Propertydefinitions["new name"].Description, actual.Propertydefinitions["new name"].Description)
-		assert.Equal(t, expect.Propertydefinitions["new name"].Localized, actual.Propertydefinitions["new name"].Localized)
-		assert.Equal(t, expect.Propertydefinitions["new name"].Validators[validator.RuleRegex], actual.Propertydefinitions["new name"].Validators[validator.RuleRegex])
-		assert.Equal(t, expect.Propertydefinitions["new name"].Validators[validator.RuleRequired], actual.Propertydefinitions["new name"].Validators[validator.RuleRequired])
+// 	t.Run("test create and update content def", func(t *testing.T) {
 
-		return ok
-	}
+// 		var propertyLocation url.URL
 
-	t.Run("test create and update content def", func(t *testing.T) {
+// 		contentLocation, ok := createContentDefinition()
+// 		if ok {
+// 			propertyLocation, ok = createPropertyDefinition(contentLocation)
+// 		}
 
-		var propertyLocation url.URL
-
-		contentLocation, ok := createContentDefinition()
-		if ok {
-			propertyLocation, ok = createPropertyDefinition(contentLocation)
-		}
-
-		ok = ok && updatePropertyDefinition(propertyLocation)
-		ok = ok && getContentDefinition(contentLocation)
-	})
-}
+// 		ok = ok && updatePropertyDefinition(propertyLocation)
+// 		ok = ok && getContentDefinition(contentLocation)
+// 	})
+// }

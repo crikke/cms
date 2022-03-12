@@ -112,3 +112,38 @@ func (r WorkspaceRepository) Update(ctx context.Context, id uuid.UUID, updateFn 
 
 	return err
 }
+
+func (r WorkspaceRepository) ListAll(ctx context.Context) ([]Workspace, error) {
+	cursor, err := r.client.Database("cms").
+		Collection(workspaceCollection).
+		Find(ctx, bson.M{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]Workspace, 0)
+	for cursor.Next(ctx) {
+		ws := &Workspace{}
+
+		err = cursor.Decode(&ws)
+
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *ws)
+	}
+
+	return items, nil
+}
+
+func (r WorkspaceRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.client.Database("cms").
+		Collection(workspaceCollection).
+		DeleteOne(ctx, bson.M{"_id": id})
+
+	if err != nil {
+		return err
+	}
+	return r.client.Database(id.String()).Drop(ctx)
+}

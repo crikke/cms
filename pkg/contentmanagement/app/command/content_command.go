@@ -12,6 +12,7 @@ import (
 
 type CreateContent struct {
 	ContentDefinitionId uuid.UUID
+	WorkspaceId         uuid.UUID
 }
 
 type CreateContentHandler struct {
@@ -22,7 +23,7 @@ type CreateContentHandler struct {
 
 func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uuid.UUID, error) {
 
-	cd, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cmd.ContentDefinitionId)
+	cd, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, cmd.ContentDefinitionId, cmd.WorkspaceId)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -40,7 +41,8 @@ type UpdateContentFields struct {
 	Version   int
 	Language  string
 
-	Fields map[string]interface{}
+	Fields      map[string]interface{}
+	WorkspaceId uuid.UUID
 }
 
 type UpdateContentFieldsHandler struct {
@@ -80,8 +82,9 @@ func (h UpdateContentFieldsHandler) Handle(ctx context.Context, cmd UpdateConten
 }
 
 type PublishContent struct {
-	ContentID uuid.UUID
-	Version   int
+	ContentID   uuid.UUID
+	Version     int
+	WorkspaceId uuid.UUID
 }
 
 type PublishContentHandler struct {
@@ -95,7 +98,7 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 		previousVersion := c.Data.Version
 
-		contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, c.ContentDefinitionID)
+		contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, c.ContentDefinitionID, cmd.WorkspaceId)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +179,8 @@ func getPropertyValue(c content.ContentData, name, locale string) interface{} {
 }
 
 type ArchiveContent struct {
-	ID uuid.UUID
+	ID          uuid.UUID
+	WorkspaceId uuid.UUID
 }
 type ArchiveContentHandler struct {
 	ContentRepository content.ContentManagementRepository

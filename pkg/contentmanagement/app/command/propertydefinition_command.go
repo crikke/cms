@@ -38,6 +38,7 @@ PUT /contentdefinition/{cid}/propertydefinition/{pid}
 
 type CreatePropertyDefinition struct {
 	ContentDefinitionID uuid.UUID
+	WorkspaceID         uuid.UUID
 	Name                string
 	Description         string
 	Type                string
@@ -58,6 +59,7 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 	err := h.Repo.UpdateContentDefinition(
 		ctx,
 		cmd.ContentDefinitionID,
+		cmd.WorkspaceID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 			pd, err := h.Factory.NewPropertyDefinition(cmd.Type, cmd.Description, false)
 			if err != nil {
@@ -83,6 +85,7 @@ func (h CreatePropertyDefinitionHandler) Handle(ctx context.Context, cmd CreateP
 type UpdatePropertyDefinition struct {
 	ContentDefinitionID  uuid.UUID
 	PropertyDefinitionID uuid.UUID
+	WorkspaceID          uuid.UUID
 	Name                 *string
 	Description          *string
 	Localized            *bool
@@ -104,7 +107,9 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 	}
 
 	return h.Repo.UpdateContentDefinition(
-		ctx, cmd.ContentDefinitionID,
+		ctx,
+		cmd.ContentDefinitionID,
+		cmd.WorkspaceID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 			pd := contentdefinition.PropertyDefinition{}
@@ -147,6 +152,7 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 type DeletePropertyDefinition struct {
 	ContentDefinitionID  uuid.UUID
 	PropertyDefinitionID uuid.UUID
+	WorkspaceID          uuid.UUID
 }
 
 type DeletePropertyDefinitionHandler struct {
@@ -164,7 +170,9 @@ func (h DeletePropertyDefinitionHandler) Handle(ctx context.Context, cmd DeleteP
 	}
 
 	return h.repo.UpdateContentDefinition(
-		ctx, cmd.ContentDefinitionID,
+		ctx,
+		cmd.ContentDefinitionID,
+		cmd.WorkspaceID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 			name := ""
@@ -188,6 +196,7 @@ type UpdateValidator struct {
 	PropertyDefinitionID uuid.UUID
 	ValidatorName        string
 	Value                interface{}
+	WorkspaceID          uuid.UUID
 }
 
 type UpdateValidatorHandler struct {
@@ -202,8 +211,10 @@ func (h UpdateValidatorHandler) Handle(ctx context.Context, cmd UpdateValidator)
 		return err
 	}
 
-	return h.Repo.UpdateContentDefinition(ctx,
+	return h.Repo.UpdateContentDefinition(
+		ctx,
 		cmd.ContentDefinitionID,
+		cmd.WorkspaceID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
 			pd := contentdefinition.PropertyDefinition{}

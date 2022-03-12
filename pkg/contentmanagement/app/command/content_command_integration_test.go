@@ -12,6 +12,7 @@ import (
 	"github.com/crikke/cms/pkg/contentdefinition/validator"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/crikke/cms/pkg/siteconfiguration"
+	"github.com/crikke/cms/pkg/workspace"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
@@ -50,32 +51,40 @@ var (
 func Test_CreateContent(t *testing.T) {
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
 	assert.NoError(t, err)
-	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-	c.Database("cms").Collection("contentversion").Drop(context.Background())
-	c.Database("cms").Collection("content").Drop(context.Background())
+
+	wsRepo := workspace.NewWorkspaceRepository(c)
+
+	ws, err := wsRepo.Create(context.Background(), workspace.Workspace{
+		Name: "test",
+	})
+	assert.NoError(t, err)
 
 	cdRepo := contentdefinition.NewContentDefinitionRepository(c)
 	contentRepo := content.NewContentRepository(c)
 
-	cid, err := cdRepo.CreateContentDefinition(context.Background(), &contentdefinition.ContentDefinition{
-		Name: "test2",
-		Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
-			contentdefinition.NameField: {
-				ID:          uuid.New(),
-				Description: "Content name",
-				Type:        "text",
-				Localized:   true,
-				Validators: map[string]interface{}{
-					"required": validator.Required(true),
+	cid, err := cdRepo.CreateContentDefinition(
+		context.Background(),
+		&contentdefinition.ContentDefinition{
+			Name: "test2",
+			Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
+				contentdefinition.NameField: {
+					ID:          uuid.New(),
+					Description: "Content name",
+					Type:        "text",
+					Localized:   true,
+					Validators: map[string]interface{}{
+						"required": validator.Required(true),
+					},
 				},
 			},
 		},
-	})
+		ws)
 
 	assert.NoError(t, err)
 
 	cmd := CreateContent{
 		ContentDefinitionId: cid,
+		WorkspaceId:         ws,
 	}
 	handler := CreateContentHandler{
 		ContentDefinitionRepository: cdRepo,
@@ -91,26 +100,6 @@ func Test_CreateContent(t *testing.T) {
 	assert.NotEqual(t, uuid.UUID{}, contentId)
 	assert.Equal(t, content.Draft, actual.Data.Status)
 }
-
-// func Test_CreateContent_Empty_ContentDefinition(t *testing.T) {
-// 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
-// 	assert.NoError(t, err)
-// 	c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-// 	c.Database("cms").Collection("content").Drop(context.Background())
-// 	c.Database("cms").Collection("contentversion").Drop(context.Background())
-
-// 	contentRepo := content.NewContentRepository(c)
-// 	cmd := CreateContent{}
-// 	handler := CreateContentHandler{
-// 		ContentDefinitionRepository: contentdefinition.NewContentDefinitionRepository(c),
-// 		ContentRepository:           contentRepo,
-// 	}
-
-// 	contentId, err := handler.Handle(context.Background(), cmd)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, uuid.UUID{}, contentId)
-// }
 
 func Test_UpdateContent(t *testing.T) {
 
@@ -260,17 +249,19 @@ func Test_UpdateContent(t *testing.T) {
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
 	assert.NoError(t, err)
-
+	wsRepo := workspace.NewWorkspaceRepository(c)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-			c.Database("cms").Collection("content").Drop(context.Background())
-			c.Database("cms").Collection("contentversion").Drop(context.Background())
+
+			ws, err := wsRepo.Create(context.Background(), workspace.Workspace{
+				Name: "test",
+			})
+			assert.NoError(t, err)
 
 			contentDefinitionRepo := contentdefinition.NewContentDefinitionRepository(c)
 			contentRepo := content.NewContentRepository(c)
 
-			contentdefinitionId, err := contentDefinitionRepo.CreateContentDefinition(context.Background(), test.contentdef)
+			contentdefinitionId, err := contentDefinitionRepo.CreateContentDefinition(context.Background(), test.contentdef, ws)
 			assert.NoError(t, err)
 
 			factory := content.Factory{
@@ -295,6 +286,8 @@ func Test_UpdateContent(t *testing.T) {
 			}
 
 			test.cmd.ContentID = contentId
+			test.cmd.WorkspaceId = ws
+
 			err = handler.Handle(context.Background(), test.cmd)
 			if test.expectedErr != "" {
 				assert.Equal(t, test.expectedErr, err.Error())
@@ -425,17 +418,21 @@ func Test_PublishContent(t *testing.T) {
 	}
 
 	c, err := db.Connect(context.Background(), "mongodb://0.0.0.0")
+
+	wsRepo := workspace.NewWorkspaceRepository(c)
 	assert.NoError(t, err)
 
 	for _, test := range tests {
 
 		t.Run(test.name, func(t *testing.T) {
-			c.Database("cms").Collection("contentdefinition").Drop(context.Background())
-			c.Database("cms").Collection("content").Drop(context.Background())
-			c.Database("cms").Collection("contentversion").Drop(context.Background())
+			ws, err := wsRepo.Create(context.Background(), workspace.Workspace{
+				Name:      "tes",
+				Languages: []string{"sv-SE"},
+			})
+			assert.NoError(t, err)
 
 			cdRepo := contentdefinition.NewContentDefinitionRepository(c)
-			_, err := cdRepo.CreateContentDefinition(context.Background(), test.contentdef)
+			_, err = cdRepo.CreateContentDefinition(context.Background(), test.contentdef, ws)
 			assert.NoError(t, err)
 
 			contentRepo := content.NewContentRepository(c)
@@ -456,8 +453,9 @@ func Test_PublishContent(t *testing.T) {
 			}
 
 			cmd := PublishContent{
-				ContentID: id,
-				Version:   test.publishVer,
+				ContentID:   id,
+				Version:     test.publishVer,
+				WorkspaceId: ws,
 			}
 
 			handler := PublishContentHandler{
