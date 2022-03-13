@@ -7,7 +7,6 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/api/handlers"
 	contentapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
 	contentdefapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/contentdefinition"
-	cfgapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/siteconfiguration"
 	"github.com/crikke/cms/pkg/workspace"
 
 	"github.com/crikke/cms/pkg/content"
@@ -15,12 +14,11 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
 	"github.com/crikke/cms/pkg/contentmanagement/app/query"
-	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func NewContentManagementAPI(c *mongo.Client, eventhandler siteconfiguration.ConfigurationEventHandler, cfg *siteconfiguration.SiteConfiguration) http.Handler {
+func NewContentManagementAPI(c *mongo.Client) http.Handler {
 
 	// docs.SwaggerInfo.Title = "Content management API"
 	// docs.SwaggerInfo.Version = "0.1.0"
@@ -28,7 +26,7 @@ func NewContentManagementAPI(c *mongo.Client, eventhandler siteconfiguration.Con
 	// docs.SwaggerInfo.Host = "localhost:8080"
 	// docs.SwaggerInfo.BasePath = "/contentmanagement/"
 
-	app := initializeHandlers(c, eventhandler, cfg)
+	app := initializeHandlers(c)
 	wsHandler := handlers.WorkspaceHandler{App: app}
 
 	r := chi.NewRouter()
@@ -39,25 +37,24 @@ func NewContentManagementAPI(c *mongo.Client, eventhandler siteconfiguration.Con
 		r.Mount("/contentdefinitions", contentdefapi.NewContentDefinitionRoute(app))
 	})
 
-	r.Mount("/siteconfiguration", cfgapi.NewSiteConfigurationRouter(cfg))
-
 	return r
 }
 
-func initializeHandlers(c *mongo.Client, eventhandler siteconfiguration.ConfigurationEventHandler, cfg *siteconfiguration.SiteConfiguration) app.App {
+func initializeHandlers(c *mongo.Client) app.App {
 
 	contentRepo := content.NewContentRepository(c)
 	contentDefinitionRepo := contentdefinition.NewContentDefinitionRepository(c)
-	configRepo := siteconfiguration.NewConfigurationRepository(c)
 	workspaceRepo := workspace.NewWorkspaceRepository(c)
 
 	app := app.App{
 		Queries: app.Queries{
 			GetContent: query.GetContentHandler{
-				Repo: contentRepo,
+				Repo:          contentRepo,
+				WorkspaceRepo: workspaceRepo,
 			},
 			ListContent: query.ListContentHandler{
-				Repo: contentRepo,
+				Repo:                contentRepo,
+				WorkspaceRepository: workspaceRepo,
 			},
 			GetContentDefinition: query.GetContentDefinitionHandler{
 				Repo: contentDefinitionRepo,
@@ -78,12 +75,13 @@ func initializeHandlers(c *mongo.Client, eventhandler siteconfiguration.Configur
 			CreateContent: command.CreateContentHandler{
 				ContentDefinitionRepository: contentDefinitionRepo,
 				ContentRepository:           contentRepo,
-				Factory:                     content.Factory{Cfg: cfg},
+				Factory:                     content.Factory{},
+				WorkspaceRepository:         workspaceRepo,
 			},
 			UpdateContentFields: command.UpdateContentFieldsHandler{
 				ContentRepository:           contentRepo,
 				ContentDefinitionRepository: contentDefinitionRepo,
-				Factory:                     content.Factory{Cfg: cfg},
+				Factory:                     content.Factory{},
 			},
 			ArchiveContent: command.ArchiveContentHandler{
 				ContentRepository: contentRepo,
@@ -91,13 +89,15 @@ func initializeHandlers(c *mongo.Client, eventhandler siteconfiguration.Configur
 			PublishContent: command.PublishContentHandler{
 				ContentDefinitionRepository: contentDefinitionRepo,
 				ContentRepository:           contentRepo,
-				SiteConfiguration:           cfg,
+				WorkspaceRepository:         workspaceRepo,
 			},
 			CreateContentDefinition: command.CreateContentDefinitionHandler{
-				Repo: contentDefinitionRepo,
+				Repo:          contentDefinitionRepo,
+				WorkspaceRepo: workspaceRepo,
 			},
 			UpdateContentDefinition: command.UpdateContentDefinitionHandler{
-				Repo: contentDefinitionRepo,
+				Repo:          contentDefinitionRepo,
+				WorkspaceRepo: workspaceRepo,
 			},
 			DeleteContentDefinition: command.DeleteContentDefinitionHandler{},
 			CreatePropertyDefinition: command.CreatePropertyDefinitionHandler{
@@ -108,11 +108,7 @@ func initializeHandlers(c *mongo.Client, eventhandler siteconfiguration.Configur
 				Repo: contentDefinitionRepo,
 			},
 			DeletePropertyDefinition: command.DeletePropertyDefinitionHandler{},
-			UpdateSiteConfiguration: command.UpdateSiteConfigurationHandler{
-				Cfg:          cfg,
-				Repo:         configRepo,
-				Eventhandler: eventhandler,
-			},
+
 			WorkspaceCommands: app.WorkspaceCommands{},
 		},
 	}

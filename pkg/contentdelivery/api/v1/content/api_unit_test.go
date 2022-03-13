@@ -2,71 +2,54 @@
 
 package content
 
-import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
+// func Test_GetLocale(t *testing.T) {
 
-	"github.com/crikke/cms/pkg/contentdelivery/app"
-	"github.com/crikke/cms/pkg/siteconfiguration"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/text/language"
-)
+// 	tests := []struct {
+// 		acceptlanguage string
+// 		expected       language.Tag
+// 		ok             bool
+// 	}{
+// 		{
+// 			acceptlanguage: "sv-SE",
+// 			expected:       language.MustParse("sv-SE"),
+// 			ok:             true,
+// 		},
+// 		{
+// 			acceptlanguage: "sv-SE;q=0.1, nb-NO;q=0.5",
+// 			expected:       language.MustParse("nb-NO"),
+// 			ok:             true,
+// 		},
+// 		{
+// 			acceptlanguage: "sv-SE;q=0.1, nb-NO;q=0.1",
+// 			expected:       language.MustParse("sv-SE"),
+// 			ok:             true,
+// 		},
+// 		{
+// 			expected: language.MustParse("sv-SE"),
+// 			ok:       true,
+// 		},
+// 		{
+// 			acceptlanguage: "malformed",
+// 			expected:       language.Tag{},
+// 			ok:             false,
+// 		},
+// 	}
 
-func Test_GetLocale(t *testing.T) {
+// 	for _, test := range tests {
+// 		t.Run(test.acceptlanguage, func(t *testing.T) {
 
-	config := &siteconfiguration.SiteConfiguration{
-		Languages: []language.Tag{
-			language.MustParse("sv-SE"),
-			language.MustParse("nb-NO")},
-	}
+// 			req := httptest.NewRequest("GET", "/", nil)
+// 			req.Header.Add("Accept-Language", test.acceptlanguage)
 
-	tests := []struct {
-		acceptlanguage string
-		expected       language.Tag
-		ok             bool
-	}{
-		{
-			acceptlanguage: "sv-SE",
-			expected:       language.MustParse("sv-SE"),
-			ok:             true,
-		},
-		{
-			acceptlanguage: "sv-SE;q=0.1, nb-NO;q=0.5",
-			expected:       language.MustParse("nb-NO"),
-			ok:             true,
-		},
-		{
-			acceptlanguage: "sv-SE;q=0.1, nb-NO;q=0.1",
-			expected:       language.MustParse("sv-SE"),
-			ok:             true,
-		},
-		{
-			expected: language.MustParse("sv-SE"),
-			ok:       true,
-		},
-		{
-			acceptlanguage: "malformed",
-			expected:       language.Tag{},
-			ok:             false,
-		},
-	}
+// 			w := httptest.NewRecorder()
+// 			ep := endpoint{app: app.App{SiteConfiguration: config}}
 
-	for _, test := range tests {
-		t.Run(test.acceptlanguage, func(t *testing.T) {
+// 			ep.localeContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 				actual := withLocale(r.Context())
 
-			req := httptest.NewRequest("GET", "/", nil)
-			req.Header.Add("Accept-Language", test.acceptlanguage)
+// 				assert.Equal(t, test.expected.String(), actual)
+// 			})).ServeHTTP(w, req)
 
-			w := httptest.NewRecorder()
-			ep := endpoint{app: app.App{SiteConfiguration: config}}
-
-			ep.localeContext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				actual := withLocale(r.Context())
-
-				assert.Equal(t, test.expected.String(), actual)
-			})).ServeHTTP(w, req)
-
-		})
-	}
-}
+// 		})
+// 	}
+// }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/crikke/cms/pkg/contentdefinition"
-	"github.com/crikke/cms/pkg/siteconfiguration"
+	"github.com/crikke/cms/pkg/workspace"
 	"github.com/google/uuid"
 )
 
@@ -81,14 +81,9 @@ const (
 )
 
 type Factory struct {
-	Cfg *siteconfiguration.SiteConfiguration
 }
 
-func (f Factory) getDefaultLanguage() string {
-	return f.Cfg.Languages[0].String()
-}
-
-func (f Factory) NewContent(spec contentdefinition.ContentDefinition) (Content, error) {
+func (f Factory) NewContent(spec contentdefinition.ContentDefinition, workspace workspace.Workspace) (Content, error) {
 
 	c := Content{
 		ContentDefinitionID: spec.ID,
@@ -109,7 +104,7 @@ func (f Factory) NewContent(spec contentdefinition.ContentDefinition) (Content, 
 	}
 
 	c.Data = cv
-	cv.Properties[f.getDefaultLanguage()] = cf
+	cv.Properties[workspace.Languages[0]] = cf
 
 	return c, nil
 }
@@ -181,20 +176,6 @@ func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefiniti
 	return cv, nil
 }
 
-// func (c Content) GetPublishedVersion() (ContentData, error) {
-// 	cv, ok := c.Version[c.Data]
-
-// 	if !ok {
-// 		return ContentData{}, errors.New(ErrMissingVersion)
-// 	}
-
-// 	if cv.Status != Published {
-// 		return ContentData{}, errors.New("not published")
-// 	}
-
-// 	return cv, nil
-// }
-
 func (c ContentData) AvailableLanguages() []string {
 
 	res := make([]string, 0)
@@ -216,7 +197,7 @@ func (f Factory) SetField(cv *ContentData, lang, fieldname string, value interfa
 		return errors.New(ErrNotDraft)
 	}
 	if lang == "" {
-		lang = f.getDefaultLanguage()
+		return errors.New(ErrMissingLanguage)
 	}
 
 	cf, ok := cv.Properties[lang]
@@ -225,16 +206,11 @@ func (f Factory) SetField(cv *ContentData, lang, fieldname string, value interfa
 		return errors.New(ErrMissingLanguage)
 	}
 
+	// instead of having to check if language is default language, the property should only exist on the default contentlanguage
 	field, ok := cf[normalizedFieldname]
 
 	if !ok {
 		return errors.New(ErrMissingField)
-	}
-
-	if !field.Localized {
-		if lang != f.getDefaultLanguage() {
-			return errors.New(ErrUnlocalizedPropLocalizedValue)
-		}
 	}
 
 	field.Value = value

@@ -1,206 +1,193 @@
 package content
 
-import (
-	"context"
-	"encoding/json"
-	"net/http"
+// type key string
 
-	"github.com/crikke/cms/pkg/contentdelivery/app"
-	"github.com/crikke/cms/pkg/contentdelivery/app/query"
-	"github.com/crikke/cms/pkg/contentmanagement/api/models"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"golang.org/x/text/language"
-)
+// const langKey = key("language")
+// const contentKey = key("language")
 
-type key string
+// type endpoint struct {
+// 	app app.App
+// }
 
-const langKey = key("language")
-const contentKey = key("language")
+// func NewContentRoute(app app.App) http.Handler {
 
-type endpoint struct {
-	app app.App
-}
+// 	r := chi.NewRouter()
+// 	ep := endpoint{app: app}
 
-func NewContentRoute(app app.App) http.Handler {
+// 	r.Use(ep.localeContext)
 
-	r := chi.NewRouter()
-	ep := endpoint{app: app}
+// 	r.Get("/", ep.ListContentByTags())
+// 	r.Route("/{id}", func(r chi.Router) {
+// 		r.Use(idContext)
+// 		r.Get("/", ep.GetContentById())
+// 	})
 
-	r.Use(ep.localeContext)
+// 	return r
+// }
 
-	r.Get("/", ep.ListContentByTags())
-	r.Route("/{id}", func(r chi.Router) {
-		r.Use(idContext)
-		r.Get("/", ep.GetContentById())
-	})
+// func idContext(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	return r
-}
+// 		contentID := chi.URLParam(r, "id")
+// 		if contentID == "" {
 
-func idContext(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			models.WithError(r.Context(), models.GenericError{
+// 				StatusCode: http.StatusBadRequest,
+// 				Body: models.ErrorBody{
+// 					FieldName: "contentid",
+// 					Message:   "parameter contentid is required",
+// 				},
+// 			})
+// 			return
+// 		}
 
-		contentID := chi.URLParam(r, "id")
-		if contentID == "" {
+// 		cid, err := uuid.Parse(contentID)
 
-			models.WithError(r.Context(), models.GenericError{
-				StatusCode: http.StatusBadRequest,
-				Body: models.ErrorBody{
-					FieldName: "contentid",
-					Message:   "parameter contentid is required",
-				},
-			})
-			return
-		}
+// 		if err != nil {
+// 			models.WithError(r.Context(), models.GenericError{
+// 				StatusCode: http.StatusBadRequest,
+// 				Body: models.ErrorBody{
+// 					FieldName: "contentid",
+// 					Message:   "bad format",
+// 				},
+// 			})
+// 			return
+// 		}
 
-		cid, err := uuid.Parse(contentID)
+// 		ctx := context.WithValue(r.Context(), contentKey, cid)
+// 		next.ServeHTTP(w, r.WithContext(ctx))
+// 	})
+// }
 
-		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				StatusCode: http.StatusBadRequest,
-				Body: models.ErrorBody{
-					FieldName: "contentid",
-					Message:   "bad format",
-				},
-			})
-			return
-		}
+// func withID(ctx context.Context) uuid.UUID {
 
-		ctx := context.WithValue(r.Context(), contentKey, cid)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
+// 	var id uuid.UUID
 
-func withID(ctx context.Context) uuid.UUID {
+// 	if r := ctx.Value(contentKey); r != nil {
+// 		id = r.(uuid.UUID)
+// 	}
 
-	var id uuid.UUID
+// 	return id
+// }
 
-	if r := ctx.Value(contentKey); r != nil {
-		id = r.(uuid.UUID)
-	}
+// func withLocale(ctx context.Context) string {
 
-	return id
-}
+// 	if tag := ctx.Value(langKey); tag != nil {
 
-func withLocale(ctx context.Context) string {
+// 		t := tag.(language.Tag)
 
-	if tag := ctx.Value(langKey); tag != nil {
+// 		return t.String()
+// 	}
 
-		t := tag.(language.Tag)
+// 	return ""
+// }
 
-		return t.String()
-	}
+// func (ep endpoint) localeContext(next http.Handler) http.Handler {
 
-	return ""
-}
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		ctx := r.Context()
+// 		accept := r.Header.Get("Accept-Language")
 
-func (ep endpoint) localeContext(next http.Handler) http.Handler {
+// 		if accept == "" {
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		accept := r.Header.Get("Accept-Language")
+// 			l := ep.app.SiteConfiguration.Languages[0]
+// 			ctx = context.WithValue(ctx, langKey, l)
 
-		if accept == "" {
+// 			next.ServeHTTP(w, r.WithContext(ctx))
+// 			return
+// 		}
 
-			l := ep.app.SiteConfiguration.Languages[0]
-			ctx = context.WithValue(ctx, langKey, l)
+// 		t, _, err := language.ParseAcceptLanguage(accept)
 
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
+// 		if err != nil {
 
-		t, _, err := language.ParseAcceptLanguage(accept)
+// 			models.WithError(r.Context(), models.GenericError{
+// 				StatusCode: http.StatusBadRequest,
+// 				Body: models.ErrorBody{
+// 					FieldName: "",
+// 					Message:   "Accept-language",
+// 				},
+// 			})
+// 			return
+// 		}
+// 		matcher := language.NewMatcher(ep.app.SiteConfiguration.Languages)
 
-		if err != nil {
+// 		tag, _, _ := matcher.Match(t...)
 
-			models.WithError(r.Context(), models.GenericError{
-				StatusCode: http.StatusBadRequest,
-				Body: models.ErrorBody{
-					FieldName: "",
-					Message:   "Accept-language",
-				},
-			})
-			return
-		}
-		matcher := language.NewMatcher(ep.app.SiteConfiguration.Languages)
+// 		base, _ := tag.Base()
+// 		region, _ := tag.Region()
+// 		tag, err = language.Compose(base, region)
 
-		tag, _, _ := matcher.Match(t...)
+// 		if err != nil {
+// 			models.WithError(r.Context(), models.GenericError{
+// 				StatusCode: http.StatusBadRequest,
+// 				Body: models.ErrorBody{
+// 					FieldName: "",
+// 					Message:   "Accept-language",
+// 				},
+// 			})
+// 			return
+// 		}
+// 		ctx = context.WithValue(ctx, langKey, tag)
 
-		base, _ := tag.Base()
-		region, _ := tag.Region()
-		tag, err = language.Compose(base, region)
+// 		next.ServeHTTP(w, r.WithContext(ctx))
+// 	})
+// }
 
-		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				StatusCode: http.StatusBadRequest,
-				Body: models.ErrorBody{
-					FieldName: "",
-					Message:   "Accept-language",
-				},
-			})
-			return
-		}
-		ctx = context.WithValue(ctx, langKey, tag)
+// // GetContentById 		godoc
+// // @Summary 					Get content by ID
+// // @Description 				Gets content by ID and language. If Accept-Language header is not set,
+// // @Description					the default language will be used.
+// //
+// // @Tags 						content
+// // @Accept 						json
+// // @Produces 					json
+// // @Param						id					path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param 						Accept-Language 	header 	string 	false 	"content language"
+// // @Success						200			{object}	query.ContentResponse
+// // @Failure						default		{object}	models.GenericError
+// // @Router						/contentdelivery/content/{id} [get]
+// func (ep endpoint) GetContentById() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
+// 		lang := withLocale(r.Context())
+// 		id := withID(r.Context())
 
-// GetContentById 		godoc
-// @Summary 					Get content by ID
-// @Description 				Gets content by ID and language. If Accept-Language header is not set,
-// @Description					the default language will be used.
-//
-// @Tags 						content
-// @Accept 						json
-// @Produces 					json
-// @Param						id					path	string	true 	"uuid formatted ID." format(uuid)
-// @Param 						Accept-Language 	header 	string 	false 	"content language"
-// @Success						200			{object}	query.ContentResponse
-// @Failure						default		{object}	models.GenericError
-// @Router						/contentdelivery/content/{id} [get]
-func (ep endpoint) GetContentById() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// 		content, err := ep.app.Queries.GetContentByID.Handle(r.Context(), query.GetContentByID{
+// 			ID:       id,
+// 			Language: lang,
+// 		})
 
-		lang := withLocale(r.Context())
-		id := withID(r.Context())
+// 		if err != nil {
+// 			models.WithError(r.Context(), err)
+// 			return
+// 		}
 
-		content, err := ep.app.Queries.GetContentByID.Handle(r.Context(), query.GetContentByID{
-			ID:       id,
-			Language: lang,
-		})
+// 		data, err := json.Marshal(&content)
+// 		if err != nil {
+// 			w.WriteHeader(http.StatusBadRequest)
+// 			w.Write([]byte(err.Error()))
+// 			return
+// 		}
 
-		if err != nil {
-			models.WithError(r.Context(), err)
-			return
-		}
+// 		w.Write(data)
+// 	}
+// }
 
-		data, err := json.Marshal(&content)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
+// // ListContentByTags 			godoc
+// // @Summary 					List content by tags
+// // @Description 				Returns a list of content which has specified tags
+// //
+// // @Tags 						content
+// // @Accept 						json
+// // @Produces 					json
+// // @Param						id					path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param 						Accept-Language 	header 	string 	false 	"content language"
+// // @Success						200			{object}	query.ContentResponse
+// // @Failure						default		{object}	models.GenericError
+// // @Router						/contentdelivery/content/ [get]
+// func (ep endpoint) ListContentByTags() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
 
-		w.Write(data)
-	}
-}
-
-// ListContentByTags 			godoc
-// @Summary 					List content by tags
-// @Description 				Returns a list of content which has specified tags
-//
-// @Tags 						content
-// @Accept 						json
-// @Produces 					json
-// @Param						id					path	string	true 	"uuid formatted ID." format(uuid)
-// @Param 						Accept-Language 	header 	string 	false 	"content language"
-// @Success						200			{object}	query.ContentResponse
-// @Failure						default		{object}	models.GenericError
-// @Router						/contentdelivery/content/ [get]
-func (ep endpoint) ListContentByTags() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-	}
-}
+// 	}
+// }

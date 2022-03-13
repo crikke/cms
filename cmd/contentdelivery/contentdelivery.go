@@ -1,79 +1,67 @@
 package main
 
-import (
-	"context"
+// type Server struct {
+// 	// Configuration config.SiteConfiguration
+// 	database   *mongo.Client
+// 	SiteConfig *siteconfiguration.SiteConfiguration
+// }
 
-	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/db"
-	"github.com/crikke/cms/pkg/siteconfiguration"
-	"github.com/crikke/cms/pkg/telemetry"
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.mongodb.org/mongo-driver/mongo"
-)
+// func main() {
 
-type Server struct {
-	// Configuration config.SiteConfiguration
-	database   *mongo.Client
-	SiteConfig *siteconfiguration.SiteConfiguration
-}
+// 	serverConfig := config.LoadServerConfiguration()
 
-func main() {
+// 	c, err := db.Connect(context.Background(), serverConfig.ConnectionString.Mongodb)
 
-	serverConfig := config.LoadServerConfiguration()
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	c, err := db.Connect(context.Background(), serverConfig.ConnectionString.Mongodb)
+// 	configRepo := siteconfiguration.NewConfigurationRepository(c)
+// 	siteConfig, err := configRepo.LoadConfiguration(context.Background())
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	if err != nil {
-		panic(err)
-	}
+// 	if serverConfig.ConnectionString.Mongodb != "" {
+// 		cfgQueue, err := siteconfiguration.NewConfigurationEventHandler(serverConfig.ConnectionString.RabbitMQ)
 
-	configRepo := siteconfiguration.NewConfigurationRepository(c)
-	siteConfig, err := configRepo.LoadConfiguration(context.Background())
-	if err != nil {
-		panic(err)
-	}
+// 		if err != nil {
+// 			panic(err)
+// 		}
 
-	if serverConfig.ConnectionString.Mongodb != "" {
-		cfgQueue, err := siteconfiguration.NewConfigurationEventHandler(serverConfig.ConnectionString.RabbitMQ)
+// 		defer func() {
+// 			err = cfgQueue.Close()
+// 			if err != nil {
+// 				panic(err)
+// 			}
+// 		}()
+// 		cfgQueue.Watch(siteConfig)
+// 	}
 
-		if err != nil {
-			panic(err)
-		}
+// 	server := Server{
+// 		database:   c,
+// 		SiteConfig: siteConfig,
+// 	}
 
-		defer func() {
-			err = cfgQueue.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-		cfgQueue.Watch(siteConfig)
-	}
+// 	panic(server.Start())
+// }
 
-	server := Server{
-		database:   c,
-		SiteConfig: siteConfig,
-	}
+// func (s Server) Start() error {
 
-	panic(server.Start())
-}
+// 	r := gin.Default()
 
-func (s Server) Start() error {
+// 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+// 	r.Use(
+// 		telemetry.Handle(),
+// 		gin.Recovery(),
+// 		// locale.Handler(s.SiteConfig),
+// 	)
 
-	r := gin.Default()
+// 	// v1 := r.Group("/v1")
+// 	{
+// 		// contentRepo := content.NewContentRepository(s.database, s.SiteConfig)
+// 		// contentapi.NewContentRoute(v1, s.SiteConfig, contentRepo)
+// 	}
 
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	r.Use(
-		telemetry.Handle(),
-		gin.Recovery(),
-		// locale.Handler(s.SiteConfig),
-	)
-
-	// v1 := r.Group("/v1")
-	{
-		// contentRepo := content.NewContentRepository(s.database, s.SiteConfig)
-		// contentapi.NewContentRoute(v1, s.SiteConfig, contentRepo)
-	}
-
-	return r.Run()
-}
+// 	return r.Run()
+// }

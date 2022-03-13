@@ -34,8 +34,7 @@ type Commands struct {
 	UpdatePropertyDefinition contentcmd.UpdatePropertyDefinitionHandler
 	DeletePropertyDefinition contentcmd.DeletePropertyDefinitionHandler
 
-	UpdateSiteConfiguration contentcmd.UpdateSiteConfigurationHandler
-	WorkspaceCommands       WorkspaceCommands
+	WorkspaceCommands WorkspaceCommands
 }
 
 type WorkspaceCommands struct {

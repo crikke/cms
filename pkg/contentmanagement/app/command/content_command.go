@@ -6,7 +6,7 @@ import (
 	"github.com/crikke/cms/pkg/content"
 	"github.com/crikke/cms/pkg/contentdefinition"
 	"github.com/crikke/cms/pkg/contentdefinition/validator"
-	"github.com/crikke/cms/pkg/siteconfiguration"
+	"github.com/crikke/cms/pkg/workspace"
 	"github.com/google/uuid"
 )
 
@@ -18,6 +18,7 @@ type CreateContent struct {
 type CreateContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentManagementRepository
+	WorkspaceRepository         workspace.WorkspaceRepository
 	Factory                     content.Factory
 }
 
@@ -27,8 +28,12 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 	if err != nil {
 		return uuid.UUID{}, err
 	}
+	ws, err := h.WorkspaceRepository.Get(ctx, cmd.WorkspaceId)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
 
-	c, err := h.Factory.NewContent(cd)
+	c, err := h.Factory.NewContent(cd, ws)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -90,13 +95,18 @@ type PublishContent struct {
 type PublishContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentManagementRepository
-	SiteConfiguration           *siteconfiguration.SiteConfiguration
+	WorkspaceRepository         workspace.WorkspaceRepository
 }
 
 func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) error {
 
 	return h.ContentRepository.UpdateContent(ctx, cmd.ContentID, cmd.WorkspaceId, func(ctx context.Context, c *content.Content) (*content.Content, error) {
 		previousVersion := c.Data.Version
+
+		ws, err := h.WorkspaceRepository.Get(ctx, cmd.WorkspaceId)
+		if err != nil {
+			return nil, err
+		}
 
 		contentDefinition, err := h.ContentDefinitionRepository.GetContentDefinition(ctx, c.ContentDefinitionID, cmd.WorkspaceId)
 		if err != nil {
@@ -123,13 +133,13 @@ func (h PublishContentHandler) Handle(ctx context.Context, cmd PublishContent) e
 
 				if pd.Localized {
 
-					for _, l := range h.SiteConfiguration.Languages {
+					for _, l := range ws.Languages {
 
-						p := getPropertyValue(*cd, propName, l.String())
+						p := getPropertyValue(*cd, propName, l)
 						propvalues = append(propvalues, p)
 					}
 				} else {
-					p := getPropertyValue(*cd, propName, h.SiteConfiguration.Languages[0].String())
+					p := getPropertyValue(*cd, propName, ws.Languages[0])
 					propvalues = append(propvalues, p)
 
 				}

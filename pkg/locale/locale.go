@@ -1,35 +1,27 @@
 package locale
 
-import (
-	"errors"
-	"net/http"
+// func GetLocale(r *http.Request, cfg *siteconfiguration.SiteConfiguration) (language.Tag, error) {
 
-	"github.com/crikke/cms/pkg/siteconfiguration"
-	"golang.org/x/text/language"
-)
+// 	accept := r.Header.Get("Accept-Language")
 
-func GetLocale(r *http.Request, cfg *siteconfiguration.SiteConfiguration) (language.Tag, error) {
+// 	t, _, err := language.ParseAcceptLanguage(accept)
 
-	accept := r.Header.Get("Accept-Language")
+// 	if err != nil {
 
-	t, _, err := language.ParseAcceptLanguage(accept)
+// 		return language.Tag{}, errors.New("Accept-Language")
+// 	}
 
-	if err != nil {
+// 	matcher := language.NewMatcher(cfg.Languages)
 
-		return language.Tag{}, errors.New("Accept-Language")
-	}
+// 	tag, _, _ := matcher.Match(t...)
 
-	matcher := language.NewMatcher(cfg.Languages)
+// 	base, _ := tag.Base()
+// 	region, _ := tag.Region()
+// 	tag, err = language.Compose(base, region)
 
-	tag, _, _ := matcher.Match(t...)
+// 	if err != nil {
+// 		return language.Tag{}, errors.New("Accept-Language")
+// 	}
 
-	base, _ := tag.Base()
-	region, _ := tag.Region()
-	tag, err = language.Compose(base, region)
-
-	if err != nil {
-		return language.Tag{}, errors.New("Accept-Language")
-	}
-
-	return tag, nil
-}
+// 	return tag, nil
+// }

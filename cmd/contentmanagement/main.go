@@ -8,7 +8,6 @@ import (
 	"github.com/crikke/cms/pkg/config"
 	"github.com/crikke/cms/pkg/contentmanagement/api"
 	"github.com/crikke/cms/pkg/db"
-	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -17,9 +16,7 @@ import (
 
 type Server struct {
 	// Configuration config.SiteConfiguration
-	Database     *mongo.Client
-	Eventhandler siteconfiguration.ConfigurationEventHandler
-	SiteConfig   *siteconfiguration.SiteConfiguration
+	Database *mongo.Client
 }
 
 // @title           Swagger Example API
@@ -43,32 +40,8 @@ func main() {
 		panic(err)
 	}
 
-	configRepo := siteconfiguration.NewConfigurationRepository(c)
-	siteConfig, err := configRepo.LoadConfiguration(context.Background())
-
 	server := Server{
-		Database:   c,
-		SiteConfig: siteConfig,
-	}
-
-	if err != nil {
-		panic(err)
-	}
-	if serverConfig.ConnectionString.RabbitMQ != "" {
-		eventhandler, err := siteconfiguration.NewConfigurationEventHandler(serverConfig.ConnectionString.RabbitMQ)
-
-		if err != nil {
-			panic(err)
-		}
-
-		defer func() {
-			err = eventhandler.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-		eventhandler.Watch(siteConfig)
-		server.Eventhandler = eventhandler
+		Database: c,
 	}
 
 	panic(server.Start())
@@ -86,7 +59,7 @@ func (s Server) Start() error {
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"), //The url pointing to API definition
 	))
 
-	r.Mount("/contentmanagement", api.NewContentManagementAPI(s.Database, s.Eventhandler, s.SiteConfig))
+	r.Mount("/contentmanagement", api.NewContentManagementAPI(s.Database))
 
 	return http.ListenAndServe(":8080", r)
 }

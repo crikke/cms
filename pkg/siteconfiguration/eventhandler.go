@@ -1,159 +1,150 @@
 package siteconfiguration
 
-import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
+// type ConfigurationEventHandler interface {
+// 	io.Closer
+// 	Watch(cfg *SiteConfiguration) error
+// 	Publish(cfg SiteConfiguration) error
+// }
 
-	"github.com/streadway/amqp"
-)
+// const cfgExchange = "cms.siteconfiguration"
 
-type ConfigurationEventHandler interface {
-	io.Closer
-	Watch(cfg *SiteConfiguration) error
-	Publish(cfg SiteConfiguration) error
-}
+// type configurationQueue struct {
+// 	conn        *amqp.Connection
+// 	channel     *amqp.Channel
+// 	queue       string
+// 	tag         string
+// 	done        chan error
+// 	initialized bool
+// }
 
-const cfgExchange = "cms.siteconfiguration"
+// // Initializes a temporary queue that subscribes to configuration changes
+// func NewConfigurationEventHandler(uri string) (ConfigurationEventHandler, error) {
+// 	c := &configurationQueue{
+// 		conn:    nil,
+// 		channel: nil,
+// 		tag:     "",
+// 		done:    make(chan error),
+// 	}
 
-type configurationQueue struct {
-	conn        *amqp.Connection
-	channel     *amqp.Channel
-	queue       string
-	tag         string
-	done        chan error
-	initialized bool
-}
+// 	var err error
+// 	c.conn, err = amqp.Dial(uri)
 
-// Initializes a temporary queue that subscribes to configuration changes
-func NewConfigurationEventHandler(uri string) (ConfigurationEventHandler, error) {
-	c := &configurationQueue{
-		conn:    nil,
-		channel: nil,
-		tag:     "",
-		done:    make(chan error),
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var err error
-	c.conn, err = amqp.Dial(uri)
+// 	go func() {
+// 		fmt.Printf("%s", <-c.conn.NotifyClose(make(chan *amqp.Error)))
+// 	}()
 
-	if err != nil {
-		return nil, err
-	}
+// 	c.channel, err = c.conn.Channel()
 
-	go func() {
-		fmt.Printf("%s", <-c.conn.NotifyClose(make(chan *amqp.Error)))
-	}()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	c.channel, err = c.conn.Channel()
+// 	err = c.channel.ExchangeDeclare(
+// 		cfgExchange,
+// 		amqp.ExchangeFanout,
+// 		false,
+// 		false,
+// 		false,
+// 		false,
+// 		nil)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	err = c.channel.ExchangeDeclare(
-		cfgExchange,
-		amqp.ExchangeFanout,
-		false,
-		false,
-		false,
-		false,
-		nil)
+// 	q, err := c.channel.QueueDeclare(
+// 		"",
+// 		false,
+// 		false,
+// 		false,
+// 		false,
+// 		nil,
+// 	)
+// 	c.queue = q.Name
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	q, err := c.channel.QueueDeclare(
-		"",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	c.queue = q.Name
+// 	err = c.channel.QueueBind(
+// 		q.Name,
+// 		"",
+// 		cfgExchange,
+// 		false,
+// 		nil,
+// 	)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	err = c.channel.QueueBind(
-		q.Name,
-		"",
-		cfgExchange,
-		false,
-		nil,
-	)
+// 	c.initialized = true
 
-	if err != nil {
-		return nil, err
-	}
+// 	return c, nil
+// }
 
-	c.initialized = true
+// func (c *configurationQueue) Close() error {
+// 	c.conn.Close()
+// 	c.initialized = false
+// 	return <-c.done
+// }
 
-	return c, nil
-}
+// func (c configurationQueue) Watch(cfg *SiteConfiguration) error {
 
-func (c *configurationQueue) Close() error {
-	c.conn.Close()
-	c.initialized = false
-	return <-c.done
-}
+// 	if !c.initialized {
+// 		return errors.New("cannot watch before channel is initialized")
+// 	}
 
-func (c configurationQueue) Watch(cfg *SiteConfiguration) error {
+// 	messages, err := c.channel.Consume(c.queue, "", false, true, false, false, nil)
 
-	if !c.initialized {
-		return errors.New("cannot watch before channel is initialized")
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	messages, err := c.channel.Consume(c.queue, "", false, true, false, false, nil)
+// 	go messageHandler(cfg, messages, c.done)
 
-	if err != nil {
-		return err
-	}
+// 	return nil
+// }
 
-	go messageHandler(cfg, messages, c.done)
+// func messageHandler(cfg *SiteConfiguration, messages <-chan amqp.Delivery, done chan error) {
 
-	return nil
-}
+// 	for msg := range messages {
 
-func messageHandler(cfg *SiteConfiguration, messages <-chan amqp.Delivery, done chan error) {
+// 		// store unmarshaled code in a temporary variable to prevent config to be corrupt if error occures
+// 		unmarshaled := &SiteConfiguration{}
+// 		err := json.Unmarshal(msg.Body, unmarshaled)
 
-	for msg := range messages {
+// 		if err != nil {
+// 			fmt.Println(err.Error())
+// 			continue
+// 		}
 
-		// store unmarshaled code in a temporary variable to prevent config to be corrupt if error occures
-		unmarshaled := &SiteConfiguration{}
-		err := json.Unmarshal(msg.Body, unmarshaled)
+// 		*cfg = *unmarshaled
 
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
+// 		msg.Ack(false)
+// 	}
+// 	done <- nil
+// }
 
-		*cfg = *unmarshaled
+// func (c configurationQueue) Publish(cfg SiteConfiguration) error {
 
-		msg.Ack(false)
-	}
-	done <- nil
-}
+// 	data, err := json.Marshal(&cfg)
 
-func (c configurationQueue) Publish(cfg SiteConfiguration) error {
+// 	if err != nil {
+// 		return err
+// 	}
 
-	data, err := json.Marshal(&cfg)
-
-	if err != nil {
-		return err
-	}
-
-	return c.channel.Publish(
-		cfgExchange,
-		"",
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        data,
-		})
-}
+// 	return c.channel.Publish(
+// 		cfgExchange,
+// 		"",
+// 		false,
+// 		false,
+// 		amqp.Publishing{
+// 			ContentType: "application/json",
+// 			Body:        data,
+// 		})
+// }

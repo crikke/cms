@@ -2,42 +2,33 @@
 
 package siteconfiguration
 
-import (
-	"encoding/json"
-	"testing"
+// func Test_MessageHandlerUpdatesConfiguration(t *testing.T) {
 
-	"github.com/streadway/amqp"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/text/language"
-)
+// 	ch := make(chan amqp.Delivery)
+// 	done := make(chan error)
+// 	cfg := &SiteConfiguration{
+// 		Languages: []language.Tag{
+// 			language.Swahili,
+// 		},
+// 	}
 
-func Test_MessageHandlerUpdatesConfiguration(t *testing.T) {
+// 	newCfg := &SiteConfiguration{
+// 		Languages: []language.Tag{
+// 			language.Norwegian,
+// 		},
+// 	}
 
-	ch := make(chan amqp.Delivery)
-	done := make(chan error)
-	cfg := &SiteConfiguration{
-		Languages: []language.Tag{
-			language.Swahili,
-		},
-	}
+// 	data, err := json.Marshal(newCfg)
 
-	newCfg := &SiteConfiguration{
-		Languages: []language.Tag{
-			language.Norwegian,
-		},
-	}
+// 	assert.NoError(t, err)
 
-	data, err := json.Marshal(newCfg)
+// 	go messageHandler(cfg, ch, done)
+// 	ch <- amqp.Delivery{
+// 		Body: data,
+// 	}
+// 	close(ch)
 
-	assert.NoError(t, err)
-
-	go messageHandler(cfg, ch, done)
-	ch <- amqp.Delivery{
-		Body: data,
-	}
-	close(ch)
-
-	err = <-done
-	assert.NoError(t, err)
-	assert.Equal(t, language.Norwegian, cfg.Languages[0])
-}
+// 	err = <-done
+// 	assert.NoError(t, err)
+// 	assert.Equal(t, language.Norwegian, cfg.Languages[0])
+// }

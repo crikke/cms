@@ -6,7 +6,6 @@ import (
 
 	"github.com/crikke/cms/pkg/content"
 	"github.com/crikke/cms/pkg/contentdefinition"
-	"github.com/crikke/cms/pkg/siteconfiguration"
 	"github.com/crikke/cms/pkg/workspace"
 	"github.com/google/uuid"
 )
@@ -24,15 +23,19 @@ type ListContent struct {
 }
 
 type ListContentHandler struct {
-	Repo content.ContentManagementRepository
-	Cfg  *siteconfiguration.SiteConfiguration
+	Repo                content.ContentManagementRepository
+	WorkspaceRepository workspace.WorkspaceRepository
 }
 
 //! TODO Should name be returned for current locale?
 func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]ContentListReadModel, error) {
 
 	items, err := h.Repo.ListContent(ctx, query.ContentDefinitionIDs, query.Tags, query.WorkspaceId)
+	if err != nil {
+		return nil, err
+	}
 
+	ws, err := h.WorkspaceRepository.Get(ctx, query.WorkspaceId)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +43,7 @@ func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]Co
 	result := []ContentListReadModel{}
 
 	for _, ch := range items {
-		name := ch.Data.Properties[h.Cfg.Languages[0].String()][contentdefinition.NameField].Value
+		name := ch.Data.Properties[ws.Languages[0]][contentdefinition.NameField].Value
 		result = append(result, ContentListReadModel{
 			ID:   ch.ID,
 			Name: name.(string),
