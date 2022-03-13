@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/crikke/cms/pkg/contentdefinition"
-	"github.com/crikke/cms/pkg/workspace"
 	"github.com/google/uuid"
 )
 
@@ -80,22 +79,49 @@ const (
 	Archived            PublishStatus = "archived"
 )
 
-type Factory struct {
+type ContentFactory struct {
 }
 
-func (f Factory) NewContent(spec contentdefinition.ContentDefinition, workspace workspace.Workspace) (Content, error) {
+func (f ContentFactory) NewContent(contentDefinition contentdefinition.ContentDefinition, defaultLanguage string) Content {
 
 	c := Content{
-		ContentDefinitionID: spec.ID,
+		ContentDefinitionID: contentDefinition.ID,
+		Data: ContentData{
+			Status:     Draft,
+			Created:    time.Now(),
+			Properties: make(ContentLanguage),
+		},
 	}
 
-	cv := ContentData{
-		Status:     Draft,
-		Created:    time.Now(),
-		Properties: make(ContentLanguage),
+	f.AddLanguage(&c.Data, defaultLanguage, true, contentDefinition)
+
+	return c
+}
+
+// Language is added to ContentData
+func (f ContentFactory) AddLanguage(c *ContentData, language string, addLocalized bool, contentDefinition contentdefinition.ContentDefinition) error {
+
+	if c.Status != Draft {
+		return errors.New(ErrNotDraft)
 	}
+
+	if c.Properties == nil {
+		c.Properties = make(ContentLanguage)
+	}
+
+	// check if language already exists on contentdata
+	if _, ok := c.Properties[language]; ok {
+		return errors.New("language already exist")
+	}
+
+	// if propertydefinition is localized add if localized
+	// if propertydefinition is not localized add
 	cf := make(ContentFields)
-	for name, val := range spec.Propertydefinitions {
+	for name, val := range contentDefinition.Propertydefinitions {
+		if val.Localized && !addLocalized {
+			continue
+		}
+
 		cf[name] = ContentField{
 			ID:        val.ID,
 			Type:      val.Type,
@@ -103,54 +129,32 @@ func (f Factory) NewContent(spec contentdefinition.ContentDefinition, workspace 
 		}
 	}
 
-	c.Data = cv
-	cv.Properties[workspace.Languages[0]] = cf
-
-	return c, nil
+	c.Properties[language] = cf
+	return nil
 }
 
-func (f Factory) AddLanguage(c *ContentData, language string) (ContentFields, error) {
+// Creates a new content version from an existing version.
+func (f ContentFactory) NewContentVersion(c *Content, contentDefinition contentdefinition.ContentDefinition, version int, defaultLanguage string) (*ContentData, error) {
 
-	if c.Status != Draft {
-		return nil, errors.New(ErrNotDraft)
-	}
+	old := c.Data
 
-	cl := make(ContentFields)
-	if _, ok := c.Properties[language]; !ok {
-		c.Properties[language] = cl
-	}
-
-	return cl, nil
-}
-
-func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefinition.ContentDefinition, version int) (*ContentData, error) {
-
-	existing := c.Data
-
-	cv := &ContentData{
+	contentData := &ContentData{
 		Status:     Draft,
 		Created:    time.Now(),
 		Properties: make(ContentLanguage),
 	}
 
-	for lang, cl := range existing.Properties {
-		cf := make(ContentFields)
+	for lang, oldFields := range old.Properties {
 
-		// create new properties from propertydefinitions
-		for name, val := range contentDefinition.Propertydefinitions {
-			cf[name] = ContentField{
-				ID:        val.ID,
-				Type:      val.Type,
-				Localized: val.Localized,
-			}
-		}
+		addLocalized := lang == defaultLanguage
+		f.AddLanguage(contentData, lang, addLocalized, contentDefinition)
 
 		lookupfields := map[uuid.UUID]ContentField{}
-		for fieldname, field := range cl {
+		for fieldname, field := range oldFields {
 
 			// happends if the fields name has changed
 			// checking for ID is edge case when the old fields name has changed and a new field has the old fields name.00
-			if newfield, ok := cf[fieldname]; ok && field.ID == newfield.ID {
+			if newfield, ok := contentData.Properties[lang][fieldname]; ok && field.ID == newfield.ID {
 				newfield.Value = field.Value
 			} else {
 				lookupfields[field.ID] = field
@@ -158,22 +162,20 @@ func (f Factory) NewContentVersion(c *Content, contentDefinition contentdefiniti
 		}
 
 		// find all the fields with changed names by id
-		for name, field := range contentDefinition.Propertydefinitions {
+		for newName, field := range contentDefinition.Propertydefinitions {
 
 			// if there is no match, the field is deleted from the contentdefinition
 			if match, ok := lookupfields[field.ID]; ok {
 
-				newfield := cl[name]
+				existingField := oldFields[newName]
 
-				newfield.Value = match.Value
-				cl[name] = newfield
+				existingField.Value = match.Value
+				contentData.Properties[lang][newName] = existingField
 			}
 		}
-
-		cv.Properties[lang] = cf
 	}
 
-	return cv, nil
+	return contentData, nil
 }
 
 func (c ContentData) AvailableLanguages() []string {
@@ -190,7 +192,7 @@ func (c ContentData) CanEdit() bool {
 	return c.Status == Draft
 }
 
-func (f Factory) SetField(cv *ContentData, lang, fieldname string, value interface{}) error {
+func (f ContentFactory) SetField(cv *ContentData, lang, fieldname string, value interface{}) error {
 
 	normalizedFieldname := strings.ToLower(fieldname)
 	if !cv.CanEdit() {

@@ -88,7 +88,7 @@ func Test_CreateContent(t *testing.T) {
 	handler := CreateContentHandler{
 		ContentDefinitionRepository: cdRepo,
 		ContentRepository:           content.NewContentRepository(c),
-		Factory:                     content.Factory{},
+		Factory:                     content.ContentFactory{},
 		WorkspaceRepository:         wsRepo,
 	}
 
@@ -433,8 +433,8 @@ func Test_PublishContent(t *testing.T) {
 
 			contentRepo := content.NewContentRepository(c)
 
-			factory := content.Factory{}
-			newContent, err := factory.NewContent(*test.contentdef, ws)
+			factory := content.ContentFactory{}
+			newContent := factory.NewContent(*test.contentdef, ws.Languages[0])
 
 			id, err := contentRepo.CreateContent(context.Background(), newContent, wsId)
 			assert.NoError(t, err)

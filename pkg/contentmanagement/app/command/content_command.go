@@ -19,7 +19,7 @@ type CreateContentHandler struct {
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
 	ContentRepository           content.ContentManagementRepository
 	WorkspaceRepository         workspace.WorkspaceRepository
-	Factory                     content.Factory
+	Factory                     content.ContentFactory
 }
 
 func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uuid.UUID, error) {
@@ -33,10 +33,7 @@ func (h CreateContentHandler) Handle(ctx context.Context, cmd CreateContent) (uu
 		return uuid.UUID{}, err
 	}
 
-	c, err := h.Factory.NewContent(cd, ws)
-	if err != nil {
-		return uuid.UUID{}, err
-	}
+	c := h.Factory.NewContent(cd, ws.Languages[0])
 
 	return h.ContentRepository.CreateContent(ctx, c, cmd.WorkspaceId)
 }
@@ -53,7 +50,7 @@ type UpdateContentFields struct {
 type UpdateContentFieldsHandler struct {
 	ContentRepository           content.ContentManagementRepository
 	ContentDefinitionRepository contentdefinition.ContentDefinitionRepository
-	Factory                     content.Factory
+	Factory                     content.ContentFactory
 }
 
 func (h UpdateContentFieldsHandler) Handle(ctx context.Context, cmd UpdateContentFields) error {

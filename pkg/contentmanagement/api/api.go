@@ -75,13 +75,13 @@ func initializeHandlers(c *mongo.Client) app.App {
 			CreateContent: command.CreateContentHandler{
 				ContentDefinitionRepository: contentDefinitionRepo,
 				ContentRepository:           contentRepo,
-				Factory:                     content.Factory{},
+				Factory:                     content.ContentFactory{},
 				WorkspaceRepository:         workspaceRepo,
 			},
 			UpdateContentFields: command.UpdateContentFieldsHandler{
 				ContentRepository:           contentRepo,
 				ContentDefinitionRepository: contentDefinitionRepo,
-				Factory:                     content.Factory{},
+				Factory:                     content.ContentFactory{},
 			},
 			ArchiveContent: command.ArchiveContentHandler{
 				ContentRepository: contentRepo,
