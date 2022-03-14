@@ -102,7 +102,7 @@ func initializeHandlers(c *mongo.Client) app.App {
 			DeleteContentDefinition: command.DeleteContentDefinitionHandler{},
 			CreatePropertyDefinition: command.CreatePropertyDefinitionHandler{
 				Repo:    contentDefinitionRepo,
-				Factory: contentdefinition.PropertyDefinitionFactory{},
+				Factory: contentdefinition.ContentDefinitionFactory{},
 			},
 			UpdatePropertyDefinition: command.UpdatePropertyDefinitionHandler{
 				Repo: contentDefinitionRepo,

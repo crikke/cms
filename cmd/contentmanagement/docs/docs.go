@@ -21,90 +21,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/contentdelivery/content/": {
-            "get": {
-                "description": "Returns a list of content which has specified tags",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "content"
-                ],
-                "summary": "List content by tags",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "content language",
-                        "name": "Accept-Language",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/query.ContentResponse"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            }
-        },
-        "/contentdelivery/content/{id}": {
-            "get": {
-                "description": "Gets content by ID and language. If Accept-Language header is not set,\nthe default language will be used.",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "content"
-                ],
-                "summary": "Get content by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "content language",
-                        "name": "Accept-Language",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/query.ContentResponse"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            }
-        },
         "/contentmanagement/workspace": {
             "post": {
                 "description": "Create a new workspace",
@@ -446,6 +362,16 @@ const docTemplate = `{
                         "name": "cid",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "tag id",
+                        "name": "tag",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -553,7 +479,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/content.Content"
+                            "$ref": "#/definitions/query.ContentReadModel"
                         }
                     },
                     "default": {
@@ -1140,61 +1066,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/siteconfiguration": {
-            "get": {
-                "description": "Gets siteconfiguration for this site.",
-                "tags": [
-                    "siteconfiguration"
-                ],
-                "summary": "Get siteconfiguration",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/siteconfiguration.SiteConfigurationRequest"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Updates siteconfiguration for this site.",
-                "tags": [
-                    "siteconfiguration"
-                ],
-                "summary": "Updates siteconfiguration",
-                "parameters": [
-                    {
-                        "description": "request body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/siteconfiguration.SiteConfigurationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.OKResult"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -1249,6 +1120,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tags": {
+                    "description": "Tag IDs",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -1445,23 +1317,36 @@ const docTemplate = `{
                 }
             }
         },
-        "query.ContentResponse": {
+        "query.ContentReadModel": {
             "type": "object",
             "properties": {
-                "availableLanguages": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "contentDefinitionID": {
+                    "type": "string"
                 },
                 "created": {
                     "type": "string"
                 },
-                "fields": {
-                    "$ref": "#/definitions/content.ContentFields"
-                },
                 "id": {
                     "type": "string"
+                },
+                "properties": {
+                    "description": "properties for the content",
+                    "$ref": "#/definitions/content.ContentLanguage"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "updated": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },
@@ -1487,17 +1372,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "siteconfiguration.SiteConfigurationRequest": {
-            "type": "object",
-            "properties": {
-                "languages": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

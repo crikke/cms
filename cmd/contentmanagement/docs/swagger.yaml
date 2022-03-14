@@ -34,6 +34,7 @@ definitions:
       status:
         type: string
       tags:
+        description: Tag IDs
         items:
           type: string
         type: array
@@ -167,18 +168,27 @@ definitions:
       name:
         type: string
     type: object
-  query.ContentResponse:
+  query.ContentReadModel:
     properties:
-      availableLanguages:
-        items:
-          type: string
-        type: array
+      contentDefinitionID:
+        type: string
       created:
         type: string
-      fields:
-        $ref: '#/definitions/content.ContentFields'
       id:
         type: string
+      properties:
+        $ref: '#/definitions/content.ContentLanguage'
+        description: properties for the content
+      status:
+        type: string
+      tags:
+        additionalProperties:
+          type: string
+        type: object
+      updated:
+        type: string
+      version:
+        type: integer
     type: object
   query.ListContentDefinitionModel:
     properties:
@@ -195,13 +205,6 @@ definitions:
         type: string
       name:
         type: string
-    type: object
-  siteconfiguration.SiteConfigurationRequest:
-    properties:
-      languages:
-        items:
-          type: string
-        type: array
     type: object
   workspace.TagBody:
     properties:
@@ -238,64 +241,6 @@ info:
   title: Swagger Example API
   version: "1.0"
 paths:
-  /contentdelivery/content/:
-    get:
-      consumes:
-      - application/json
-      description: Returns a list of content which has specified tags
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: content language
-        in: header
-        name: Accept-Language
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/query.ContentResponse'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: List content by tags
-      tags:
-      - content
-  /contentdelivery/content/{id}:
-    get:
-      consumes:
-      - application/json
-      description: |-
-        Gets content by ID and language. If Accept-Language header is not set,
-        the default language will be used.
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: content language
-        in: header
-        name: Accept-Language
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/query.ContentResponse'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Get content by ID
-      tags:
-      - content
   /contentmanagement/workspace:
     post:
       description: Create a new workspace
@@ -525,6 +470,13 @@ paths:
         name: cid
         required: true
         type: array
+      - description: tag id
+        in: query
+        items:
+          type: string
+        name: tag
+        required: true
+        type: array
       responses:
         "200":
           description: OK
@@ -626,7 +578,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/content.Content'
+            $ref: '#/definitions/query.ContentReadModel'
         default:
           description: ""
           schema:
@@ -1002,40 +954,4 @@ paths:
       summary: Updates an property definition
       tags:
       - contentdefinition
-  /siteconfiguration:
-    get:
-      description: Gets siteconfiguration for this site.
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/siteconfiguration.SiteConfigurationRequest'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Get siteconfiguration
-      tags:
-      - siteconfiguration
-    put:
-      description: Updates siteconfiguration for this site.
-      parameters:
-      - description: request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/siteconfiguration.SiteConfigurationRequest'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.OKResult'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Updates siteconfiguration
-      tags:
-      - siteconfiguration
 swagger: "2.0"
