@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/crikke/cms/pkg/contentmanagement/api/handlers"
 	"github.com/crikke/cms/pkg/contentmanagement/api/models"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
@@ -135,32 +136,22 @@ func (c endpoint) CreateContentDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		req := &ContentDefinitionBody{}
-
+		ws := handlers.WithWorkspace(r.Context())
 		err := json.NewDecoder(r.Body).Decode(req)
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
-			return
-		}
-
 		id, err := c.app.Commands.CreateContentDefinition.Handle(r.Context(), command.CreateContentDefinition{
 			Name:        req.Name,
 			Description: req.Description,
+			WorkspaceId: ws.ID,
 		})
 
 		if err != nil {
-			models.WithError(r.Context(), err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		url := r.URL.String()
@@ -186,24 +177,19 @@ func (c endpoint) GetContentDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
-		cd, err := c.app.Queries.GetContentDefinition.Handle(r.Context(), query.GetContentDefinition{ID: id})
+		cd, err := c.app.Queries.GetContentDefinition.Handle(r.Context(), query.GetContentDefinition{ID: id, WorkspaceID: ws.ID})
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		bytes, err := json.Marshal(&cd)
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -225,7 +211,8 @@ func (c endpoint) GetContentDefinition() http.HandlerFunc {
 func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, _ = c.app.Queries.ListContentDefinitions.Handle(r.Context(), query.ListContentDefinition{})
+		ws := handlers.WithWorkspace(r.Context())
+		_, _ = c.app.Queries.ListContentDefinitions.Handle(r.Context(), query.ListContentDefinition{WorkspaceID: ws.ID})
 	}
 }
 
@@ -245,13 +232,11 @@ func (c endpoint) DeleteContentDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
-		err := c.app.Commands.DeleteContentDefinition.Handle(r.Context(), command.DeleteContentDefinition{ID: id})
+		err := c.app.Commands.DeleteContentDefinition.Handle(r.Context(), command.DeleteContentDefinition{ID: id, WorkspaceId: ws.ID})
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}
@@ -275,14 +260,12 @@ func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
 		body := &ContentDefinitionBody{}
 		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -290,6 +273,7 @@ func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 			ContentDefinitionID: id,
 			Name:                body.Name,
 			Description:         body.Description,
+			WorkspaceId:         ws.ID,
 		})
 	}
 }
@@ -314,6 +298,7 @@ func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 		body := &CreatePropertyDefinitionBody{}
 		json.NewDecoder(r.Body).Decode(body)
 
@@ -322,13 +307,12 @@ func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 			Name:                body.Name,
 			Description:         body.Description,
 			Type:                body.Type,
+			WorkspaceID:         ws.ID,
 		})
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 
@@ -358,6 +342,7 @@ func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		body := &UpdatePropertyDefinitionBody{}
+		ws := handlers.WithWorkspace(r.Context())
 
 		id := withID(r.Context())
 		pid := withPID(r.Context())
@@ -365,10 +350,7 @@ func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(body)
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -379,14 +361,12 @@ func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
 			Description:          &body.Description,
 			Localized:            &body.Localized,
 			Rules:                body.Validation,
+			WorkspaceID:          ws.ID,
 		}
 		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}
@@ -411,17 +391,16 @@ func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 
 		id := withID(r.Context())
 		pid := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
 		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{
 			ContentDefinitionID:  id,
 			PropertyDefinitionID: pid,
+			WorkspaceID:          ws.ID,
 		})
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -446,26 +425,22 @@ func (c endpoint) GetPropertyDefinition() http.HandlerFunc {
 
 		id := withID(r.Context())
 		pid := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
 		pd, err := c.app.Queries.GetPropertyDefinition.Handle(r.Context(), query.GetPropertyDefinition{
 			ContentDefinitionID:  id,
 			PropertyDefinitionID: pid,
+			WorkspaceID:          ws.ID,
 		})
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		bytes, err := json.Marshal(&pd)
 
 		if err != nil {
-			models.WithError(r.Context(), models.GenericError{
-				Body:       models.ErrorBody{Message: err.Error()},
-				StatusCode: http.StatusBadRequest,
-			})
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 

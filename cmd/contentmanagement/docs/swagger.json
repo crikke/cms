@@ -12,7 +12,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/api/v1",
+    "basePath": "",
     "paths": {
         "/contentmanagement/workspace": {
             "post": {

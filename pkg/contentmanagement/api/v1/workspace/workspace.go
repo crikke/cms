@@ -72,7 +72,7 @@ func withTag(ctx context.Context) string {
 // @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
 // @Success			200			{object}	workspace.Workspace
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace} [get]
+// @Router			/contentmanagement/workspaces/{workspace} [get]
 func getWorkspace(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())
@@ -98,7 +98,7 @@ func getWorkspace(app app.App) http.HandlerFunc {
 // @Success			201			{object}	workspace.Workspace
 // @Header						201			{string}	Location
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace [post]
+// @Router			/contentmanagement/workspaces [post]
 func createWorkspace(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -151,7 +151,7 @@ type TagBody struct {
 // @Param			workspace	body workspace.Workspace true "workspace body"
 // @Success			200			{object}	workspace.Workspace
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace} [put]
+// @Router			/contentmanagement/workspaces/{workspace} [put]
 func updateWorkspace(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())
@@ -197,7 +197,7 @@ func updateWorkspace(app app.App) http.HandlerFunc {
 // @Success			201			{object}	workspace.Workspace
 // @Header						201			{string}	Location
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace}/tag [post]
+// @Router			/contentmanagement/workspaces/{workspace}/tag [post]
 func createTag(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -237,7 +237,7 @@ func createTag(app app.App) http.HandlerFunc {
 // @Produces 		json
 // @Success			200			{object}	[]query.Tag
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace}/tag [get]
+// @Router			/contentmanagement/workspaces/{workspace}/tag [get]
 func listTags(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		workspace := handlers.WithWorkspace(r.Context())
@@ -268,7 +268,7 @@ func listTags(app app.App) http.HandlerFunc {
 // @Produces 		json
 // @Success			200			{object}	query.Tag
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [get]
+// @Router			/contentmanagement/workspaces/{workspace}/tag/{tag} [get]
 func getTag(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagId := withTag(r.Context())
@@ -299,7 +299,7 @@ func getTag(app app.App) http.HandlerFunc {
 // @Param			body	body string true "Tag"
 // @Success			200			{object}	query.Tag
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [put]
+// @Router			/contentmanagement/workspaces/{workspace}/tag/{tag} [put]
 func updateTag(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())
@@ -346,7 +346,7 @@ func updateTag(app app.App) http.HandlerFunc {
 // @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
 // @Param			tag					path	string	true 	"tag id"
 // @Failure			default		{object}	models.GenericError
-// @Router			/contentmanagement/workspace/{workspace}/tag/{tag} [delete]
+// @Router			/contentmanagement/workspaces/{workspace}/tag/{tag} [delete]
 func deleteTag(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())

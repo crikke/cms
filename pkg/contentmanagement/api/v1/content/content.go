@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/crikke/cms/pkg/contentmanagement/api/handlers"
 	"github.com/crikke/cms/pkg/contentmanagement/api/models"
 	"github.com/crikke/cms/pkg/contentmanagement/app"
 	"github.com/crikke/cms/pkg/contentmanagement/app/command"
@@ -29,23 +30,19 @@ func NewContentRoute(app app.App) http.Handler {
 	r := chi.NewRouter()
 	c := contentEndpoint{app}
 
-	r.Use(models.HandleHttpError)
+	r.Get("/", c.ListContent())
+	r.Post("/", c.CreateContent())
+	r.Route("/{id}", func(r chi.Router) {
+		r.Use(contentIdContext)
+		r.Put("/", c.UpdateContent())
+		r.Delete("/", c.ArchiveContent())
 
-	r.Route("/content", func(r chi.Router) {
-		r.Get("/", c.ListContent())
-		r.Post("/", c.CreateContent())
-		r.Route("/{id}", func(r chi.Router) {
-			r.Use(contentIdContext)
-			r.Put("/", c.UpdateContent())
-			r.Delete("/", c.ArchiveContent())
-
-			r.Route("/", func(r chi.Router) {
-				r.Use(contentVersionContext)
-				r.Get("/", c.GetContent())
-			})
-
-			r.Post("/publish", c.PublishContent())
+		r.Route("/", func(r chi.Router) {
+			r.Use(contentVersionContext)
+			r.Get("/", c.GetContent())
 		})
+
+		r.Post("/publish", c.PublishContent())
 	})
 	return r
 }
@@ -154,6 +151,7 @@ func contentVersionContext(next http.Handler) http.Handler {
 func (c contentEndpoint) ListContent() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ws := handlers.WithWorkspace(r.Context())
 
 		val, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
@@ -163,6 +161,7 @@ func (c contentEndpoint) ListContent() http.HandlerFunc {
 
 		q := query.ListContent{
 			ContentDefinitionIDs: make([]uuid.UUID, 0),
+			WorkspaceId:          ws.ID,
 		}
 
 		if ids, ok := val["cid"]; ok {
@@ -211,10 +210,12 @@ func (c contentEndpoint) GetContent() http.HandlerFunc {
 
 		id := withID(r.Context())
 		version := withVersion(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
 		q := query.GetContent{
-			Id:      id,
-			Version: version,
+			Id:          id,
+			Version:     version,
+			WorkspaceId: ws.ID,
 		}
 
 		res, err := c.app.Queries.GetContent.Handle(r.Context(), q)
@@ -251,7 +252,7 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		body := &CreateContentRequest{}
-
+		ws := handlers.WithWorkspace(r.Context())
 		err := json.NewDecoder(r.Body).Decode(body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -266,6 +267,7 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 		id, err := c.app.Commands.CreateContent.Handle(r.Context(),
 			command.CreateContent{
 				ContentDefinitionId: cid,
+				WorkspaceId:         ws.ID,
 			},
 		)
 		if err != nil {
@@ -274,8 +276,9 @@ func (c contentEndpoint) CreateContent() http.HandlerFunc {
 		}
 
 		created, err := c.app.Queries.GetContent.Handle(r.Context(), query.GetContent{
-			Id:      id,
-			Version: 0,
+			Id:          id,
+			Version:     0,
+			WorkspaceId: ws.ID,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -351,11 +354,13 @@ func (c contentEndpoint) ArchiveContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
 		err := c.app.Commands.ArchiveContent.Handle(
 			r.Context(),
 			command.ArchiveContent{
-				ID: id,
+				ID:          id,
+				WorkspaceId: ws.ID,
 			})
 
 		if err != nil {
@@ -382,12 +387,14 @@ func (c contentEndpoint) PublishContent() http.HandlerFunc {
 
 		id := withID(r.Context())
 		version := withVersion(r.Context())
+		ws := handlers.WithWorkspace(r.Context())
 
 		err := c.app.Commands.PublishContent.Handle(
 			r.Context(),
 			command.PublishContent{
-				ContentID: id,
-				Version:   version,
+				ContentID:   id,
+				Version:     version,
+				WorkspaceId: ws.ID,
 			})
 
 		if err != nil {

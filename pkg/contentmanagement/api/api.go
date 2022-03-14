@@ -7,6 +7,7 @@ import (
 	"github.com/crikke/cms/pkg/contentmanagement/api/handlers"
 	contentapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/content"
 	contentdefapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/contentdefinition"
+	workspaceapi "github.com/crikke/cms/pkg/contentmanagement/api/v1/workspace"
 	"github.com/crikke/cms/pkg/workspace"
 
 	"github.com/crikke/cms/pkg/content"
@@ -30,11 +31,16 @@ func NewContentManagementAPI(c *mongo.Client) http.Handler {
 	wsHandler := handlers.WorkspaceHandler{App: app}
 
 	r := chi.NewRouter()
-	r.Route("/workspaces/{workspace}", func(r chi.Router) {
-		r.Use(wsHandler.WorkspaceParamContext)
 
-		r.Mount("/content", contentapi.NewContentRoute(app))
-		r.Mount("/contentdefinitions", contentdefapi.NewContentDefinitionRoute(app))
+	r.Route("/workspaces", func(r chi.Router) {
+
+		r.Mount("/", workspaceapi.NewWorkspaceRoute(app))
+		r.Route("/{workspace}", func(r chi.Router) {
+			r.Use(wsHandler.WorkspaceParamContext)
+
+			r.Mount("/content", contentapi.NewContentRoute(app))
+			r.Mount("/contentdefinitions", contentdefapi.NewContentDefinitionRoute(app))
+		})
 	})
 
 	return r
@@ -109,7 +115,17 @@ func initializeHandlers(c *mongo.Client) app.App {
 			},
 			DeletePropertyDefinition: command.DeletePropertyDefinitionHandler{},
 
-			WorkspaceCommands: app.WorkspaceCommands{},
+			WorkspaceCommands: app.WorkspaceCommands{
+				CreateWorkspace: command.CreateWorkspaceHandler{
+					Repo: workspaceRepo,
+				},
+				UpdateTag: command.UpdateTagHandler{
+					Repo: workspaceRepo,
+				},
+				DeleteTag: command.DeleteTagHandler{
+					Repo: workspaceRepo,
+				},
+			},
 		},
 	}
 
