@@ -118,7 +118,7 @@ func (f ContentFactory) AddLanguage(c *ContentData, language string, addLocalize
 	// if propertydefinition is not localized add
 	cf := make(ContentFields)
 	for name, val := range contentDefinition.Propertydefinitions {
-		if val.Localized && !addLocalized {
+		if !val.Localized && !addLocalized {
 			continue
 		}
 
@@ -134,7 +134,7 @@ func (f ContentFactory) AddLanguage(c *ContentData, language string, addLocalize
 }
 
 // Creates a new content version from an existing version.
-func (f ContentFactory) NewContentVersion(c *Content, contentDefinition contentdefinition.ContentDefinition, version int, defaultLanguage string) (*ContentData, error) {
+func (f ContentFactory) NewContentVersion(c Content, contentDefinition contentdefinition.ContentDefinition, version int, defaultLanguage string) (*ContentData, error) {
 
 	old := c.Data
 
@@ -156,7 +156,10 @@ func (f ContentFactory) NewContentVersion(c *Content, contentDefinition contentd
 			// checking for ID is edge case when the old fields name has changed and a new field has the old fields name.00
 			if newfield, ok := contentData.Properties[lang][fieldname]; ok && field.ID == newfield.ID {
 				newfield.Value = field.Value
+				contentData.Properties[lang][fieldname] = newfield
 			} else {
+
+				// if field is not found,
 				lookupfields[field.ID] = field
 			}
 		}
@@ -167,10 +170,7 @@ func (f ContentFactory) NewContentVersion(c *Content, contentDefinition contentd
 			// if there is no match, the field is deleted from the contentdefinition
 			if match, ok := lookupfields[field.ID]; ok {
 
-				existingField := oldFields[newName]
-
-				existingField.Value = match.Value
-				contentData.Properties[lang][newName] = existingField
+				contentData.Properties[lang][newName] = match
 			}
 		}
 	}
