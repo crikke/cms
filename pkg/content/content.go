@@ -192,31 +192,31 @@ func (c ContentData) CanEdit() bool {
 	return c.Status == Draft
 }
 
-func (f ContentFactory) SetField(cv *ContentData, lang, fieldname string, value interface{}) error {
+func (f ContentFactory) SetField(contentData *ContentData, lang, fieldname string, value interface{}) error {
 
 	normalizedFieldname := strings.ToLower(fieldname)
-	if !cv.CanEdit() {
+	if !contentData.CanEdit() {
 		return errors.New(ErrNotDraft)
 	}
 	if lang == "" {
 		return errors.New(ErrMissingLanguage)
 	}
 
-	cf, ok := cv.Properties[lang]
+	contentFields, ok := contentData.Properties[lang]
 
 	if !ok {
 		return errors.New(ErrMissingLanguage)
 	}
 
 	// instead of having to check if language is default language, the property should only exist on the default contentlanguage
-	field, ok := cf[normalizedFieldname]
+	field, ok := contentFields[normalizedFieldname]
 
 	if !ok {
 		return errors.New(ErrMissingField)
 	}
 
 	field.Value = value
-	cf[normalizedFieldname] = field
+	contentFields[normalizedFieldname] = field
 
 	return nil
 }

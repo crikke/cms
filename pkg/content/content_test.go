@@ -177,305 +177,110 @@ func Test_NewContentVersion(t *testing.T) {
 
 }
 
-// func Test_UpdateField(t *testing.T) {
+func Test_SetField(t *testing.T) {
 
-// 	tests := []struct {
-// 		name      string
-// 		content   Content
-// 		expect    Content
-// 		expectErr string
-// 		update    struct {
-// 			version   int
-// 			fieldname string
-// 			lang      string
-// 			value     interface{}
-// 		}
-// 	}{
-// 		// {
-// 		// 	name: "update valid field",
-// 		// 	content: Content{
-// 		// 		ID:     uuid.New(),
-// 		// 		Data: ContentData{
-// 		// 				Status: Draft,
-// 		// 				Properties: ContentLanguage{
-// 		// 					"sv-SE": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							ID:        uuid.New(),
-// 		// 							Type:      "text",
-// 		// 							Localized: false,
-// 		// 						},
-// 		// 					},
-// 		// 				},
-// 		// 			},
-// 		// 		},
-// 		// 	},
-// 		// 	expect: Content{
-// 		// 		Data: ontentData{
-// 		// 			Status: Draft,
-// 		// 			Properties: ContentLanguage{
-// 		// 				"sv-SE": ContentFields{
-// 		// 					"foo": ContentField{
-// 		// 						Type:      "text",
-// 		// 						Localized: false,
-// 		// 						Value:     "bar",
-// 		// 					},
-// 		// 				},
-// 		// 			},
-// 		// 		},
-// 		// 	},
-// 		// 	update: struct {
-// 		// 		version   int
-// 		// 		fieldname string
-// 		// 		lang      string
-// 		// 		value     interface{}
-// 		// 	}{
-// 		// 		version:   0,
-// 		// 		fieldname: "foo",
-// 		// 		lang:      "sv-SE",
-// 		// 		value:     "bar",
-// 		// 	},
-// 		// },
-// 		// {
-// 		// 	name: "update localized field no language set",
-// 		// 	content: Content{
-// 		// 		ID:     uuid.New(),
-// 		// 		Data:   0,
-// 		// 		Status: Draft,
-// 		// 		Version: map[int]ContentData{
-// 		// 			0: {
-// 		// 				Status: Draft,
-// 		// 				Properties: ContentLanguage{
-// 		// 					"sv-SE": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							ID:        uuid.New(),
-// 		// 							Type:      "text",
-// 		// 							Localized: true,
-// 		// 						},
-// 		// 					},
-// 		// 				},
-// 		// 			},
-// 		// 		},
-// 		// 	},
-// 		// 	expect: Content{
-// 		// 		Data: ContentData{
-// 		// 				Status: Draft,
-// 		// 				Properties: ContentLanguage{
-// 		// 					"sv-SE": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							Type:      "text",
-// 		// 							Localized: false,
-// 		// 							Value:     "bar",
-// 		// 						},
-// 		// 					},
-// 		// 				},
-// 		// 		},
-// 		// 	},
-// 		// 	update: struct {
-// 		// 		version   int
-// 		// 		fieldname string
-// 		// 		lang      string
-// 		// 		value     interface{}
-// 		// 	}{
-// 		// 		version:   0,
-// 		// 		fieldname: "foo",
-// 		// 		lang:      "",
-// 		// 		value:     "bar",
-// 		// 	},
-// 		// },
-// 		// {
-// 		// 	name: "update not draft should return error",
-// 		// 	content: Content{
-// 		// 		ID:     uuid.New(),
-// 		// 		Data: ContentData{
-// 		// 				Status: Published,
-// 		// 				Properties: ContentLanguage{
-// 		// 					"nb-NO": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							ID:        uuid.New(),
-// 		// 							Type:      "text",
-// 		// 							Localized: true,
-// 		// 						},
-// 		// 					},
-// 		// 					"sv-SE": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							ID:        uuid.New(),
-// 		// 							Type:      "text",
-// 		// 							Localized: true,
-// 		// 						},
-// 		// 					},
-// 		// 				},
-// 		// 		},
-// 		// 	},
-// 		// 	expectErr: ErrNotDraft,
-// 		// 	update: struct {
-// 		// 		version   int
-// 		// 		fieldname string
-// 		// 		lang      string
-// 		// 		value     interface{}
-// 		// 	}{
-// 		// 		version:   0,
-// 		// 		fieldname: "foo",
-// 		// 		lang:      "nb-NO",
-// 		// 		value:     "bar",
-// 		// 	},
-// 		// },
+	tests := []struct {
+		name      string
+		content   ContentData
+		expect    ContentData
+		lang      string
+		fieldname string
+		value     interface{}
+		expectErr string
+	}{
+		{
+			name: "set field ok",
+			content: ContentData{
+				Status: Draft,
+				Properties: ContentLanguage{
+					"default": ContentFields{
+						"field": ContentField{
+							Value: "foo",
+						},
+					},
+				},
+			},
+			expect: ContentData{
+				Status: Draft,
+				Properties: ContentLanguage{
+					"default": ContentFields{
+						"field": ContentField{
+							Value: "bar",
+						},
+					},
+				},
+			},
+			lang:      "default",
+			fieldname: "field",
+			value:     "bar",
+		},
+		{
+			name: "missing locale",
+			content: ContentData{
+				Status:     Draft,
+				Properties: ContentLanguage{},
+			},
+			expect: ContentData{
+				Status:     Draft,
+				Properties: ContentLanguage{},
+			},
+			lang:      "default",
+			fieldname: "field",
+			value:     "bar",
+			expectErr: ErrMissingLanguage,
+		},
+		{
+			name: "not draft",
+			content: ContentData{
+				Status:     Published,
+				Properties: ContentLanguage{},
+			},
+			expect: ContentData{
+				Status:     Published,
+				Properties: ContentLanguage{},
+			},
+			lang:      "default",
+			fieldname: "field",
+			value:     "bar",
+			expectErr: ErrNotDraft,
+		},
+		{
+			name: "field not exists",
+			content: ContentData{
+				Status: Draft,
+				Properties: ContentLanguage{
+					"default": ContentFields{},
+				},
+			},
+			expect: ContentData{
+				Status: Draft,
+				Properties: ContentLanguage{
+					"default": ContentFields{},
+				},
+			},
+			lang:      "default",
+			fieldname: "field",
+			value:     "bar",
+			expectErr: ErrMissingField,
+		},
+	}
 
-// 		// {
-// 		// 	name: "update unlocalized field not default language return error",
-// 		// 	content: Content{
-// 		// 		ID:     uuid.New(),
-// 		// 		Data: ContentData{
-// 		// 				Status: Draft,
-// 		// 				Properties: ContentLanguage{
-// 		// 					"nb-NO": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							ID:        uuid.New(),
-// 		// 							Type:      "text",
-// 		// 							Localized: false,
-// 		// 						},
-// 		// 					},
-// 		// 					"sv-SE": ContentFields{
-// 		// 						"foo": ContentField{
-// 		// 							ID:        uuid.New(),
-// 		// 							Type:      "text",
-// 		// 							Localized: false,
-// 		// 						},
-// 		// 					},
-// 		// 				},
-// 		// 		},
-// 		// 	},
-// 		// 	expectErr: ErrUnlocalizedPropLocalizedValue,
-// 		// 	update: struct {
-// 		// 		version   int
-// 		// 		fieldname string
-// 		// 		lang      string
-// 		// 		value     interface{}
-// 		// 	}{
-// 		// 		version:   0,
-// 		// 		fieldname: "foo",
-// 		// 		lang:      "nb-NO",
-// 		// 		value:     "bar",
-// 		// 	},
-// 		// },
-// 	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 
-// 	factory := Factory{Cfg: &siteconfiguration.SiteConfiguration{
-// 		Languages: []language.Tag{
-// 			language.MustParse("sv-SE"),
-// 		},
-// 	}}
+			f := ContentFactory{}
 
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
+			err := f.SetField(&test.content, test.lang, test.fieldname, test.value)
 
-// 			cv := test.content.Version[test.update.version]
-// 			err := factory.SetField(&cv, test.update.lang, test.update.fieldname, test.update.value)
+			if test.expectErr != "" {
+				if assert.Error(t, err) {
+					assert.Equal(t, test.expectErr, err.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
 
-// 			if test.expectErr != "" {
-// 				assert.Equal(t, test.expectErr, err.Error())
-// 			} else {
-// 				assert.NoError(t, err)
-// 			}
-
-// 			for ver, ecv := range test.expect.Version {
-// 				for lang, ecl := range ecv.Properties {
-// 					for field, val := range ecl {
-
-// 						assert.Equal(t, val.Type, test.content.Version[ver].Properties[lang][field].Type)
-// 						assert.Equal(t, val.Value, test.content.Version[ver].Properties[lang][field].Value)
-// 					}
-// 				}
-// 			}
-// 		})
-// 	}
-// }
-
-// // todo test property ID
-// func Test_CreateNewVersion(t *testing.T) {
-// 	tests := []struct {
-// 		name       string
-// 		contentDef contentdefinition.ContentDefinition
-// 		content    Content
-// 		expect     Content
-// 		updateFn   func(cd contentdefinition.ContentDefinition) contentdefinition.ContentDefinition
-// 	}{
-// 		{
-// 			name: "rename field",
-// 			contentDef: contentdefinition.ContentDefinition{
-// 				ID: uuid.New(),
-// 				Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
-// 					"field1": {
-// 						ID:   uuid.New(),
-// 						Type: "bool",
-// 					},
-// 				},
-// 			},
-// 			content: Content{
-// 				Version: map[int]ContentData{
-// 					0: {
-// 						Properties: ContentLanguage{
-// 							"sv-SE": ContentFields{
-// 								"field1": ContentField{
-// 									Type: "bool",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			updateFn: func(cd contentdefinition.ContentDefinition) contentdefinition.ContentDefinition {
-
-// 				cd.Propertydefinitions["field_new"] = cd.Propertydefinitions["field1"]
-// 				return cd
-// 			},
-// 			expect: Content{
-// 				Version: map[int]ContentData{
-// 					1: {
-// 						Properties: ContentLanguage{
-// 							"sv-SE": ContentFields{
-// 								"field_new": ContentField{
-// 									Type: "bool",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	f := Factory{
-// 		Cfg: &siteconfiguration.SiteConfiguration{Languages: []language.Tag{
-// 			language.MustParse("sv-SE"),
-// 		}},
-// 	}
-
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
-
-// 			cd := test.updateFn(test.contentDef)
-// 			_, err := f.NewContentVersion(&test.content, cd, 0)
-// 			assert.NoError(t, err)
-
-// 			// assert
-// 			for ver, ecv := range test.expect.Version {
-// 				for lan, ecl := range ecv.Properties {
-// 					for name, ecf := range ecl {
-
-// 						acv, ok := test.content.Version[ver]
-// 						assert.True(t, ok)
-// 						acl, ok := acv.Properties[lan]
-// 						assert.Equal(t, Draft, acv.Status)
-// 						assert.True(t, ok)
-// 						acf, ok := acl[name]
-// 						assert.True(t, ok)
-
-// 						assert.Equal(t, ecf.Localized, acf.Localized)
-// 						assert.Equal(t, ecf.Type, acf.Type)
-// 						// assert.Equal(t, ecf.ID, acf.ID)
-// 					}
-// 				}
-// 			}
-// 		})
-// 	}
-// }
+			assert.Equal(t, test.expect, test.content)
+		})
+	}
+}
