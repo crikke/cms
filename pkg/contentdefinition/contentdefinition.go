@@ -94,6 +94,68 @@ func (f ContentDefinitionFactory) NewPropertyDefinition(cd *ContentDefinition, n
 	return nil
 }
 
+func (f ContentDefinitionFactory) UpdatePropertyDefinitionName(cd *ContentDefinition, id uuid.UUID, name string) error {
+
+	if name == "" {
+		return errors.New("name required")
+	}
+
+	if _, exists := cd.Propertydefinitions[name]; exists {
+		return errors.New("property with name already exists")
+	}
+
+	pd := PropertyDefinition{}
+	pdName := ""
+	for n, p := range cd.Propertydefinitions {
+		if p.ID == id {
+			pd = p
+			pdName = n
+			break
+		}
+	}
+
+	if pdName == "" {
+		return errors.New("property not found")
+	}
+
+	delete(cd.Propertydefinitions, pdName)
+	cd.Propertydefinitions[name] = pd
+
+	return nil
+}
+
+func (f ContentDefinitionFactory) UpdatePropertyDefinition(cd *ContentDefinition, id uuid.UUID, desc string, localized bool, validationRules map[string]interface{}) error {
+	pd := PropertyDefinition{}
+	pdName := ""
+	for n, p := range cd.Propertydefinitions {
+		if p.ID == id {
+			pd = p
+			pdName = n
+			break
+		}
+	}
+
+	if pdName == "" {
+		return errors.New("property not found")
+	}
+
+	pd.Localized = localized
+	pd.Description = desc
+
+	for k, v := range validationRules {
+		_, ok := pd.Validators[k]
+
+		if !ok {
+			return errors.New("validator not found")
+		}
+
+		pd.Validators[k] = v
+	}
+
+	cd.Propertydefinitions[pdName] = pd
+	return nil
+}
+
 const (
 	PropertyTypeText   = "text"
 	PropertyTypeNumber = "number"

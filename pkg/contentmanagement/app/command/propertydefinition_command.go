@@ -108,39 +108,21 @@ func (h UpdatePropertyDefinitionHandler) Handle(ctx context.Context, cmd UpdateP
 		cmd.WorkspaceID,
 		func(ctx context.Context, cd *contentdefinition.ContentDefinition) (*contentdefinition.ContentDefinition, error) {
 
-			pd := contentdefinition.PropertyDefinition{}
-			pdName := ""
-			for n, p := range cd.Propertydefinitions {
-				if p.ID == cmd.PropertyDefinitionID {
-					pd = p
-					pdName = n
-					break
+			f := contentdefinition.ContentDefinitionFactory{}
+
+			if *cmd.Name != "" && cmd.Name != nil {
+				err := f.UpdatePropertyDefinitionName(cd, cmd.PropertyDefinitionID, *cmd.Name)
+
+				if err != nil {
+					return nil, err
 				}
 			}
 
-			if pd.ID == (uuid.UUID{}) {
-				return nil, errors.New("propertydefinition not found")
+			err := f.UpdatePropertyDefinition(cd, cmd.PropertyDefinitionID, *cmd.Description, *cmd.Localized, cmd.Rules)
+			if err != nil {
+				return nil, err
 			}
 
-			if cmd.Description != nil {
-				pd.Description = *cmd.Description
-			}
-
-			if cmd.Name != nil && *cmd.Name != "" && *cmd.Name != pdName {
-
-				delete(cd.Propertydefinitions, pdName)
-				pdName = *cmd.Name
-			}
-
-			if cmd.Localized != nil {
-				pd.Localized = *cmd.Localized
-			}
-
-			for k, v := range cmd.Rules {
-				pd.Validators[k] = v
-			}
-
-			cd.Propertydefinitions[pdName] = pd
 			return cd, nil
 		})
 }
