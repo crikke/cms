@@ -10,6 +10,7 @@ import (
 	"github.com/crikke/cms/pkg/db"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -29,7 +30,7 @@ type Server struct {
 // @contact.email  support@swagger.io
 
 // @host      localhost:8080
-// @BasePath  /api/v1
+// @BasePath  /
 func main() {
 
 	serverConfig := config.LoadServerConfiguration()
@@ -51,6 +52,11 @@ func (s Server) Start() error {
 
 	r := chi.NewRouter()
 
+	r.Use(cors.Handler(cors.Options{
+		AllowOriginFunc: func(r *http.Request, origin string) bool {
+			return origin == "http://localhost:3000"
+		},
+	}))
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)

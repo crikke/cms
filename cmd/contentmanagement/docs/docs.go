@@ -21,7 +21,31 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/contentmanagement/workspace": {
+        "/contentmanagement/workspaces": {
+            "get": {
+                "description": "List workspaces",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "List workspaces",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/query.ListWorkspaceResult"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new workspace",
                 "tags": [
@@ -60,7 +84,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/contentmanagement/workspace/{workspace}": {
+        "/contentmanagement/workspaces/{workspace}": {
             "get": {
                 "description": "Get workspace by id",
                 "tags": [
@@ -124,206 +148,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/workspace.Workspace"
                         }
                     },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            }
-        },
-        "/contentmanagement/workspace/{workspace}/tag": {
-            "get": {
-                "description": "List all tags in workspace",
-                "tags": [
-                    "workspace"
-                ],
-                "summary": "List all tags in workspace",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "workspace",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/query.Tag"
-                            }
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Creates a tag in given workspace",
-                "tags": [
-                    "workspace"
-                ],
-                "summary": "Create tag",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "workspace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Tag",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/workspace.TagBody"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/workspace.Workspace"
-                        },
-                        "headers": {
-                            "Location": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            }
-        },
-        "/contentmanagement/workspace/{workspace}/tag/{tag}": {
-            "get": {
-                "description": "Get tag by id",
-                "tags": [
-                    "workspace"
-                ],
-                "summary": "Get tag",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "workspace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name",
-                        "name": "tag",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/query.Tag"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update tag by id",
-                "tags": [
-                    "workspace"
-                ],
-                "summary": "Update tag",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "workspace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "name",
-                        "name": "tag",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Tag",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/query.Tag"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/models.GenericError"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete tag by id",
-                "tags": [
-                    "workspace"
-                ],
-                "summary": "Delete tag",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "uuid formatted ID.",
-                        "name": "workspace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "tag id",
-                        "name": "tag",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
                     "default": {
                         "description": "",
                         "schema": {
@@ -830,6 +654,14 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1058,6 +890,206 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.OKResult"
                         }
                     },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentmanagement/workspaces/{workspace}/tag": {
+            "get": {
+                "description": "List all tags in workspace",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "List all tags in workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/query.Tag"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a tag in given workspace",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Create tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Tag",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/workspace.TagBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/workspace.Workspace"
+                        },
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            }
+        },
+        "/contentmanagement/workspaces/{workspace}/tag/{tag}": {
+            "get": {
+                "description": "Get tag by id",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Get tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "tag",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/query.Tag"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update tag by id",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Update tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "tag",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Tag",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/query.Tag"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.GenericError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete tag by id",
+                "tags": [
+                    "workspace"
+                ],
+                "summary": "Delete tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "uuid formatted ID.",
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "tag id",
+                        "name": "tag",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
                     "default": {
                         "description": "",
                         "schema": {
@@ -1364,6 +1396,17 @@ const docTemplate = `{
                 }
             }
         },
+        "query.ListWorkspaceResult": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "query.Tag": {
             "type": "object",
             "properties": {
@@ -1419,7 +1462,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Swagger Example API",
 	Description:      "This is a sample server celler server.",

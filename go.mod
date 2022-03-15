@@ -79,6 +79,7 @@ require (
 require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/cors v1.2.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/spf13/viper v1.10.1
 	golang.org/x/text v0.3.7

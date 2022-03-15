@@ -224,6 +224,7 @@ func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
 // @Success						200			{object}	models.OKResult
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id} [delete]
@@ -390,7 +391,7 @@ func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		id := withID(r.Context())
-		pid := withID(r.Context())
+		pid := withPID(r.Context())
 		ws := handlers.WithWorkspace(r.Context())
 
 		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{

@@ -23,6 +23,7 @@ func NewWorkspaceRoute(app app.App) http.Handler {
 	wsHandler := handlers.WorkspaceHandler{App: app}
 
 	r.Post("/", createWorkspace(app))
+	r.Get("/", listWorkspaces(app))
 	r.Route("/{workspace}", func(r chi.Router) {
 		r.Use(wsHandler.WorkspaceParamContext)
 
@@ -88,6 +89,31 @@ func getWorkspace(app app.App) http.HandlerFunc {
 	}
 }
 
+// getWorkspace 		godoc
+// @Summary 		List workspaces
+// @Description 	List workspaces
+// @Tags 			workspace
+// @Produces 		json
+// @Success			200			{object}	[]query.ListWorkspaceResult
+// @Failure			default		{object}	models.GenericError
+// @Router			/contentmanagement/workspaces [get]
+func listWorkspaces(app app.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		// app.Queries.WorkspaceQueries.GetTag.Repo
+		// ws := handlers.WithWorkspace(r.Context())
+
+		// data, err := json.Marshal(&ws)
+
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+
+		// w.Write(data)
+	}
+}
+
 // createWorkspace 		godoc
 // @Summary 		Create workspace
 // @Description 	Create a new workspace
@@ -148,7 +174,7 @@ type TagBody struct {
 // @Consumes 		json
 // @Produces 		json
 // @Param			workspace			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param			workspace	body workspace.Workspace true "workspace body"
+// @Param			body	body workspace.Workspace true "workspace body"
 // @Success			200			{object}	workspace.Workspace
 // @Failure			default		{object}	models.GenericError
 // @Router			/contentmanagement/workspaces/{workspace} [put]

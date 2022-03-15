@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /
 definitions:
   command.CreateWorkspace:
     properties:
@@ -199,6 +199,13 @@ definitions:
       name:
         type: string
     type: object
+  query.ListWorkspaceResult:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   query.Tag:
     properties:
       id:
@@ -241,7 +248,23 @@ info:
   title: Swagger Example API
   version: "1.0"
 paths:
-  /contentmanagement/workspace:
+  /contentmanagement/workspaces:
+    get:
+      description: List workspaces
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/query.ListWorkspaceResult'
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: List workspaces
+      tags:
+      - workspace
     post:
       description: Create a new workspace
       parameters:
@@ -266,7 +289,7 @@ paths:
       summary: Create workspace
       tags:
       - workspace
-  /contentmanagement/workspace/{workspace}:
+  /contentmanagement/workspaces/{workspace}:
     get:
       description: Get workspace by id
       parameters:
@@ -313,141 +336,6 @@ paths:
           schema:
             $ref: '#/definitions/models.GenericError'
       summary: Update workspace
-      tags:
-      - workspace
-  /contentmanagement/workspace/{workspace}/tag:
-    get:
-      description: List all tags in workspace
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: workspace
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/query.Tag'
-            type: array
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: List all tags in workspace
-      tags:
-      - workspace
-    post:
-      description: Creates a tag in given workspace
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: workspace
-        required: true
-        type: string
-      - description: Tag
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/workspace.TagBody'
-      responses:
-        "201":
-          description: Created
-          headers:
-            Location:
-              type: string
-          schema:
-            $ref: '#/definitions/workspace.Workspace'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Create tag
-      tags:
-      - workspace
-  /contentmanagement/workspace/{workspace}/tag/{tag}:
-    delete:
-      description: Delete tag by id
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: workspace
-        required: true
-        type: string
-      - description: tag id
-        in: path
-        name: tag
-        required: true
-        type: string
-      responses:
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Delete tag
-      tags:
-      - workspace
-    get:
-      description: Get tag by id
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: workspace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: tag
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/query.Tag'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Get tag
-      tags:
-      - workspace
-    put:
-      description: Update tag by id
-      parameters:
-      - description: uuid formatted ID.
-        format: uuid
-        in: path
-        name: workspace
-        required: true
-        type: string
-      - description: name
-        in: path
-        name: tag
-        required: true
-        type: string
-      - description: Tag
-        in: body
-        name: body
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/query.Tag'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GenericError'
-      summary: Update tag
       tags:
       - workspace
   /contentmanagement/workspaces/{workspace}/content:
@@ -727,6 +615,12 @@ paths:
         name: id
         required: true
         type: string
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
       responses:
         "200":
           description: OK
@@ -954,4 +848,139 @@ paths:
       summary: Updates an property definition
       tags:
       - contentdefinition
+  /contentmanagement/workspaces/{workspace}/tag:
+    get:
+      description: List all tags in workspace
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/query.Tag'
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: List all tags in workspace
+      tags:
+      - workspace
+    post:
+      description: Creates a tag in given workspace
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: Tag
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/workspace.TagBody'
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              type: string
+          schema:
+            $ref: '#/definitions/workspace.Workspace'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Create tag
+      tags:
+      - workspace
+  /contentmanagement/workspaces/{workspace}/tag/{tag}:
+    delete:
+      description: Delete tag by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: tag id
+        in: path
+        name: tag
+        required: true
+        type: string
+      responses:
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Delete tag
+      tags:
+      - workspace
+    get:
+      description: Get tag by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: tag
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.Tag'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Get tag
+      tags:
+      - workspace
+    put:
+      description: Update tag by id
+      parameters:
+      - description: uuid formatted ID.
+        format: uuid
+        in: path
+        name: workspace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: tag
+        required: true
+        type: string
+      - description: Tag
+        in: body
+        name: body
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/query.Tag'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/models.GenericError'
+      summary: Update tag
+      tags:
+      - workspace
 swagger: "2.0"

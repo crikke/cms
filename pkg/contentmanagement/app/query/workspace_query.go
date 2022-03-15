@@ -82,3 +82,15 @@ func (h ListTagsHandler) Handle(ctx context.Context, workspaceID uuid.UUID) ([]T
 
 	return tags, nil
 }
+
+type ListWorkspaceResult struct {
+	Name string
+	Id   uuid.UUID
+}
+
+type ListWorkspaceHandler struct {
+}
+
+func (h ListWorkspaceHandler) Handle(ctx context.Context) []ListWorkspaceResult {
+	return nil
+}
