@@ -45,7 +45,8 @@ type WorkspaceCommands struct {
 }
 
 type WorkspaceQueries struct {
-	GetTag       query.GetTagHandler
-	GetWorkspace query.GetWorkspaceHandler
-	ListTags     query.ListTagsHandler
+	GetTag         query.GetTagHandler
+	GetWorkspace   query.GetWorkspaceHandler
+	ListTags       query.ListTagsHandler
+	ListWorkspaces query.ListWorkspaceHandler
 }

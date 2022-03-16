@@ -89,8 +89,24 @@ type ListWorkspaceResult struct {
 }
 
 type ListWorkspaceHandler struct {
+	Repo workspace.WorkspaceRepository
 }
 
-func (h ListWorkspaceHandler) Handle(ctx context.Context) []ListWorkspaceResult {
-	return nil
+func (h ListWorkspaceHandler) Handle(ctx context.Context) ([]ListWorkspaceResult, error) {
+	workspaces, err := h.Repo.ListAll(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]ListWorkspaceResult, 0)
+
+	for _, ws := range workspaces {
+		items = append(items, ListWorkspaceResult{
+			Name: ws.Name,
+			Id:   ws.ID,
+		})
+	}
+
+	return items, nil
 }

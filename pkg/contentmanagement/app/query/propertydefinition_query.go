@@ -52,5 +52,21 @@ type ListContentDefinitionHandler struct {
 
 func (h ListContentDefinitionHandler) Handle(ctx context.Context, query ListContentDefinition) ([]ListContentDefinitionModel, error) {
 
-	return nil, nil
+	items, err := h.Repo.ListContentDefinitions(ctx, query.WorkspaceID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]ListContentDefinitionModel, 0)
+
+	for _, item := range items {
+		result = append(result, ListContentDefinitionModel{
+			ID:          item.ID,
+			Name:        item.Name,
+			Description: item.Description,
+		})
+	}
+
+	return result, nil
 }

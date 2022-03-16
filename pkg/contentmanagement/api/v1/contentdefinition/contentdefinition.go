@@ -205,14 +205,27 @@ func (c endpoint) GetContentDefinition() http.HandlerFunc {
 // @Accept 						json
 // @Produces 					json
 // @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
-// @Success						200			{object}	query.ListContentDefinitionModel
+// @Success						200			{object}	[]query.ListContentDefinitionModel
 // @Failure						default		{object}	models.GenericError
 // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions [get]
 func (c endpoint) ListContentDefinitions() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws := handlers.WithWorkspace(r.Context())
-		_, _ = c.app.Queries.ListContentDefinitions.Handle(r.Context(), query.ListContentDefinition{WorkspaceID: ws.ID})
+		cd, err := c.app.Queries.ListContentDefinitions.Handle(r.Context(), query.ListContentDefinition{WorkspaceID: ws.ID})
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		data, err := json.Marshal(cd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Write(data)
 	}
 }
 

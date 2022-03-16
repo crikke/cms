@@ -100,17 +100,21 @@ func getWorkspace(app app.App) http.HandlerFunc {
 func listWorkspaces(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// app.Queries.WorkspaceQueries.GetTag.Repo
-		// ws := handlers.WithWorkspace(r.Context())
+		items, err := app.Queries.WorkspaceQueries.ListWorkspaces.Handle(r.Context())
 
-		// data, err := json.Marshal(&ws)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
+		data, err := json.Marshal(&items)
 
-		// w.Write(data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(data)
 	}
 }
 

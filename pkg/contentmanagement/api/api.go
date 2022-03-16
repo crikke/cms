@@ -75,6 +75,15 @@ func initializeHandlers(c *mongo.Client) app.App {
 				GetWorkspace: query.GetWorkspaceHandler{
 					Repo: workspaceRepo,
 				},
+				ListTags: query.ListTagsHandler{
+					Repo: workspaceRepo,
+				},
+				GetTag: query.GetTagHandler{
+					Repo: workspaceRepo,
+				},
+				ListWorkspaces: query.ListWorkspaceHandler{
+					Repo: workspaceRepo,
+				},
 			},
 		},
 		Commands: app.Commands{

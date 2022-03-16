@@ -79,6 +79,31 @@ func (r ContentDefinitionRepository) GetContentDefinition(ctx context.Context, i
 	return *res, nil
 }
 
+func (r ContentDefinitionRepository) ListContentDefinitions(ctx context.Context, workspaceId uuid.UUID) ([]ContentDefinition, error) {
+	cursor, err := r.client.Database(workspaceId.String()).
+		Collection(contentdefinitionCollection).
+		Find(ctx, bson.M{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]ContentDefinition, 0)
+
+	for cursor.Next(ctx) {
+
+		res := &ContentDefinition{}
+		err := cursor.Decode(res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, *res)
+	}
+
+	return items, nil
+}
+
 func (r ContentDefinitionRepository) CreatePropertyDefinition(ctx context.Context, cid uuid.UUID, workspaceId uuid.UUID, pd *PropertyDefinition) (uuid.UUID, error) {
 	pd.ID = uuid.New()
 
@@ -95,33 +120,6 @@ func (r ContentDefinitionRepository) CreatePropertyDefinition(ctx context.Contex
 
 	return pd.ID, err
 }
-
-// func (r repository) UpdatePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, updateFn func(ctx context.Context, pd *PropertyDefinition) (*PropertyDefinition, error)) error {
-
-// 	entry, err := r.GetPropertyDefinition(ctx, cid, pid)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	e, err := updateFn(ctx, &entry)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	_, err = r.database.
-// 		Collection(r.collection).
-// 		UpdateOne(
-// 			ctx,
-// 			bson.D{
-// 				bson.E{Key: "_id", Value: cid},
-// 				bson.E{Key: "propertydefinitions.id", Value: pid}},
-// 			bson.M{"$set": bson.M{"propertydefinitions.$": e}})
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
 
 func (r ContentDefinitionRepository) DeletePropertyDefinition(ctx context.Context, cid, pid uuid.UUID, workspaceId uuid.UUID) error {
 	_, err := r.client.Database(workspaceId.String()).
