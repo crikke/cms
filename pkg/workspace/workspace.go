@@ -10,12 +10,15 @@ import (
 	"golang.org/x/text/language"
 )
 
+//! TODO: Is using Languages[0] better than having a field for default language?
+//! Having a field is more verbose.
 type Workspace struct {
-	ID          uuid.UUID         `bson:"_id"`
-	Name        string            `bson:"name"`
-	Description string            `bson:"description"`
-	Languages   []string          `bson:"languages"`
-	Tags        map[string]string `bson:"tags"`
+	ID              uuid.UUID         `bson:"_id"`
+	Name            string            `bson:"name"`
+	Description     string            `bson:"description"`
+	Languages       []string          `bson:"languages"`
+	DefaultLanguage string            `bson:"defaultlanguage"`
+	Tags            map[string]string `bson:"tags"`
 }
 
 func NewWorkspace(name, description, defaultLocale string) (Workspace, error) {

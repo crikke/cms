@@ -66,7 +66,7 @@ func Test_CreateContent(t *testing.T) {
 		&contentdefinition.ContentDefinition{
 			Name: "test2",
 			Propertydefinitions: map[string]contentdefinition.PropertyDefinition{
-				contentdefinition.NameField: {
+				contentdefinition.PROPFIELD_NAME: {
 					ID:          uuid.New(),
 					Description: "Content name",
 					Type:        "text",
@@ -349,7 +349,7 @@ func Test_PublishContent(t *testing.T) {
 					Status:  content.Draft,
 					Properties: content.ContentLanguage{
 						"sv-SE": {
-							contentdefinition.NameField: content.ContentField{
+							contentdefinition.PROPFIELD_NAME: content.ContentField{
 								ID:        uuid.New(),
 								Type:      "text",
 								Localized: true,
@@ -380,7 +380,7 @@ func Test_PublishContent(t *testing.T) {
 					Status:  content.Published,
 					Properties: content.ContentLanguage{
 						"sv-SE": {
-							contentdefinition.NameField: content.ContentField{
+							contentdefinition.PROPFIELD_NAME: content.ContentField{
 								Type:      "text",
 								Localized: false,
 								Value:     "version 1",
@@ -393,7 +393,7 @@ func Test_PublishContent(t *testing.T) {
 					Version: 1,
 					Properties: content.ContentLanguage{
 						"sv-SE": {
-							contentdefinition.NameField: content.ContentField{
+							contentdefinition.PROPFIELD_NAME: content.ContentField{
 								Type:      "text",
 								Localized: false,
 								Value:     "version 2",

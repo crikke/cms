@@ -43,7 +43,7 @@ func (h ListContentHandler) Handle(ctx context.Context, query ListContent) ([]Co
 	result := []ContentListReadModel{}
 
 	for _, ch := range items {
-		name := ch.Data.Properties[ws.Languages[0]][contentdefinition.NameField].Value
+		name := ch.Data.Properties[ws.Languages[0]][contentdefinition.PROPFIELD_NAME].Value
 		result = append(result, ContentListReadModel{
 			ID:   ch.ID,
 			Name: name.(string),

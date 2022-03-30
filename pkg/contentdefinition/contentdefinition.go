@@ -9,8 +9,14 @@ import (
 )
 
 const (
-	NameField       = "name"
-	UrlSegmentField = "url"
+	PROPFIELD_NAME = "name"
+
+	PropertyTypeText   = "text"
+	PropertyTypeNumber = "number"
+	PropertyTypeBool   = "bool"
+
+	ErrPropertyAlreadyExists = "propertydefinition already exists on contentdefinition"
+	ErrPropertyTypeNotExists = "propertydefinition type does not exist"
 )
 
 // swagger:model ContentDefinition
@@ -46,7 +52,7 @@ func (f ContentDefinitionFactory) NewContentDefinition(name, desc string) (Conte
 		Name:        name,
 		Description: desc,
 		Propertydefinitions: map[string]PropertyDefinition{
-			NameField: {
+			PROPFIELD_NAME: {
 				ID:        uuid.New(),
 				Type:      "text",
 				Localized: true,
@@ -156,15 +162,6 @@ func (f ContentDefinitionFactory) UpdatePropertyDefinition(cd *ContentDefinition
 	return nil
 }
 
-const (
-	PropertyTypeText   = "text"
-	PropertyTypeNumber = "number"
-	PropertyTypeBool   = "bool"
-)
-
-const ErrPropertyAlreadyExists = "propertydefinition already exists on contentdefinition"
-const ErrPropertyTypeNotExists = "propertydefinition type does not exist"
-
 func NewContentDefinition(name, desc string) (ContentDefinition, error) {
 
 	if name == "" {
@@ -175,7 +172,7 @@ func NewContentDefinition(name, desc string) (ContentDefinition, error) {
 		Name:        name,
 		Description: desc,
 		Propertydefinitions: map[string]PropertyDefinition{
-			NameField: {
+			PROPFIELD_NAME: {
 				ID:        uuid.New(),
 				Type:      "text",
 				Localized: true,
