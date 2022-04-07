@@ -42,11 +42,21 @@ type UpdateContentDefinition struct {
 	Name                string    `bson:"omitempty"`
 	Description         string    `bson:"omitempty"`
 	WorkspaceId         uuid.UUID
+	PropertyDefinitions []struct {
+		ID          uuid.UUID              `bson:_id, omitempty"`
+		Description string                 `bson:"description, omitempty"`
+		Localized   bool                   `bson:"localized, omitempty"`
+		Validators  map[string]interface{} `bson:"validators, omitempty"`
+	}
 }
 
 type UpdateContentDefinitionHandler struct {
-	WorkspaceRepo workspace.WorkspaceRepository
-	Repo          contentdefinition.ContentDefinitionRepository
+	WorkspaceRepo            workspace.WorkspaceRepository
+	Repo                     contentdefinition.ContentDefinitionRepository
+	ContentDefinitionFactory contentdefinition.ContentDefinitionFactory
+
+	// Properties are stored by their name, since name is unique
+	// To allow chaning names map them by ID
 }
 
 func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateContentDefinition) (err error) {
@@ -65,6 +75,30 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 		if cmd.Description != "" {
 			cd.Description = cmd.Description
 		}
+
+		// All propertydefinitions that havent been updated will be deleted.
+		updatedProps := make(map[uuid.UUID]bool, 0)
+
+		for propname, prop := range cmd.PropertyDefinitions {
+			c.ContentDefinitionFactory.UpdatePropertyDefinition(
+				cd,
+				prop.ID,
+				prop.Description,
+				prop.Localized,
+				prop.Validators)
+			updatedProps[prop.ID] = true
+		}
+
+		for _, prop := range cd.Propertydefinitions {
+
+			if _, ok := updatedProps[prop.ID]; ok {
+				continue
+			}
+
+			delete(cd.Propertydefinitions, prop.Name)
+
+		}
+
 		return cd, nil
 	})
 	return
