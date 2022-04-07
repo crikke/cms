@@ -42,7 +42,7 @@ type UpdateContentDefinition struct {
 	Name                string    `bson:"omitempty"`
 	Description         string    `bson:"omitempty"`
 	WorkspaceId         uuid.UUID
-	PropertyDefinitions []struct {
+	PropertyDefinitions map[string]struct {
 		ID          uuid.UUID              `bson:_id, omitempty"`
 		Description string                 `bson:"description, omitempty"`
 		Localized   bool                   `bson:"localized, omitempty"`
@@ -77,28 +77,46 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 		}
 
 		// All propertydefinitions that havent been updated will be deleted.
-		updatedProps := make(map[uuid.UUID]bool, 0)
+		updatedProps := make(map[uuid.UUID]contentdefinition.PropertyDefinition, 0)
 
-		for propname, prop := range cmd.PropertyDefinitions {
+		for _, prop := range cmd.PropertyDefinitions {
 			c.ContentDefinitionFactory.UpdatePropertyDefinition(
 				cd,
 				prop.ID,
 				prop.Description,
 				prop.Localized,
 				prop.Validators)
-			updatedProps[prop.ID] = true
+			updatedProps[prop.ID] = contentdefinition.PropertyDefinition{
+				ID:          prop.ID,
+				Description: prop.Description,
+				Localized:   prop.Localized,
+				Validators:  prop.Validators,
+			}
+
 		}
 
-		for _, prop := range cd.Propertydefinitions {
+		// check for props that should be deleted
+		for name, prop := range cd.Propertydefinitions {
 
 			if _, ok := updatedProps[prop.ID]; ok {
 				continue
 			}
 
-			delete(cd.Propertydefinitions, prop.Name)
+			delete(cd.Propertydefinitions, name)
 
 		}
+		// todo: handle swapping propertynames
+		for name, prop := range cmd.PropertyDefinitions {
+			_, ok := cd.PropertyDefinitions[name]
 
+			if ok {
+				continue
+			}
+
+			if err := c.ContentDefinitionFactory.UpdatePropertyDefinitionName(cd, prop.ID, name); err != nil {
+				return nil, err
+			}
+		}
 		return cd, nil
 	})
 	return
