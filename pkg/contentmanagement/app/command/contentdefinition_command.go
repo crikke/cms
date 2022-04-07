@@ -107,7 +107,7 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 		}
 		// todo: handle swapping propertynames
 		for name, prop := range cmd.PropertyDefinitions {
-			_, ok := cd.PropertyDefinitions[name]
+			_, ok := cd.Propertydefinitions[name]
 
 			if ok {
 				continue
