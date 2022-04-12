@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/crikke/cms/pkg/contentmanagement/api/handlers"
-	"github.com/crikke/cms/pkg/contentmanagement/api/models"
-	"github.com/crikke/cms/pkg/contentmanagement/app"
-	"github.com/crikke/cms/pkg/contentmanagement/app/command"
-	"github.com/crikke/cms/pkg/contentmanagement/app/query"
+	"github.com/crikke/cms/cmd/contentmanagement/api/handlers"
+	"github.com/crikke/cms/cmd/contentmanagement/api/models"
+	"github.com/crikke/cms/cmd/contentmanagement/app"
+	"github.com/crikke/cms/cmd/contentmanagement/app/command"
+	"github.com/crikke/cms/cmd/contentmanagement/app/query"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -42,20 +42,20 @@ func NewContentDefinitionRoute(app app.App) http.Handler {
 		r.Delete("/", c.DeleteContentDefinition())
 		r.Put("/", c.UpdateContentDefinition())
 
-		r.Route("/propertydefinitions", func(r chi.Router) {
+		// r.Route("/propertydefinitions", func(r chi.Router) {
 
-			r.Post("/", c.CreatePropertyDefinition())
+		//	r.Post("/", c.CreatePropertyDefinition())
 
-			r.Route("/{pid}", func(r chi.Router) {
-				r.Use(func(h http.Handler) http.Handler {
-					return contentDefinitionIdContext(h, "pid", propertyKey)
-				})
-				r.Get("/", c.GetPropertyDefinition())
-				r.Put("/", c.UpdatePropertyDefinition())
-				r.Delete("/", c.DeletePropertyDefinition())
-
-			})
-		})
+		//	r.Route("/{pid}", func(r chi.Router) {
+		//		r.Use(func(h http.Handler) http.Handler {
+		//			return contentDefinitionIdContext(h, "pid", propertyKey)
+		//		})
+		//		r.Get("/", c.GetPropertyDefinition())
+		//		r.Put("/", c.UpdatePropertyDefinition())
+		//		r.Delete("/", c.DeletePropertyDefinition())
+		//
+		//			})
+		//		})
 	})
 	return r
 }
@@ -288,6 +288,7 @@ func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 			Name:                body.Name,
 			Description:         body.Description,
 			WorkspaceId:         ws.ID,
+			PropertyDefinitions: body.PropertyDefinitions,
 		})
 	}
 }
@@ -351,40 +352,40 @@ func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
 // @Failure						default		{object}	models.GenericError
 // @Success						200			{object}	models.OKResult
 // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [put]
-func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
-
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		body := &UpdatePropertyDefinitionBody{}
-		ws := handlers.WithWorkspace(r.Context())
-
-		id := withID(r.Context())
-		pid := withPID(r.Context())
-
-		err := json.NewDecoder(r.Body).Decode(body)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		cmd := command.UpdatePropertyDefinition{
-			ContentDefinitionID:  id,
-			PropertyDefinitionID: pid,
-			Name:                 &body.Name,
-			Description:          &body.Description,
-			Localized:            &body.Localized,
-			Rules:                body.Validation,
-			WorkspaceID:          ws.ID,
-		}
-		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-}
+// func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
+//
+// 	return func(w http.ResponseWriter, r *http.Request) {
+//
+// 		// body := &PropertyDefinition{}
+// 		ws := handlers.WithWorkspace(r.Context())
+//
+// 		id := withID(r.Context())
+// 		pid := withPID(r.Context())
+//
+// 		err := json.NewDecoder(r.Body).Decode(body)
+//
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			return
+// 		}
+//
+// 		cmd := command.UpdatePropertyDefinition{
+// 			ContentDefinitionID:  id,
+// 			PropertyDefinitionID: pid,
+// 			Name:                 &body.Name,
+// 			Description:          &body.Description,
+// 			Localized:            &body.Localized,
+// 			Rules:                body.Validation,
+// 			WorkspaceID:          ws.ID,
+// 		}
+// 		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
+//
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			return
+// 		}
+// 	}
+// }
 
 // DeletePropertyDefinition 	godoc
 // @Summary 					Deletes a propertydefinition

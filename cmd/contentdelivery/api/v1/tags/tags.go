@@ -3,7 +3,7 @@ package tags
 import (
 	"net/http"
 
-	"github.com/crikke/cms/pkg/contentdelivery/app"
+	"github.com/crikke/cms/cmd/contentdelivery/app"
 	"github.com/go-chi/chi/v5"
 )
 

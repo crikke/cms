@@ -115,6 +115,7 @@ func (r ContentDefinitionRepository) CreatePropertyDefinition(ctx context.Contex
 			bson.M{"$push": bson.M{"propertydefinitions": pd}})
 
 	if err != nil {
+
 		return uuid.UUID{}, err
 	}
 

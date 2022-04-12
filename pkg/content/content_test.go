@@ -164,7 +164,6 @@ func Test_NewContentVersion(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 
 			f := ContentFactory{}
-
 			contentData, err := f.NewContentVersion(test.existing, test.contentdef, test.existing.Data.Version, "defaultlang")
 			assert.NoError(t, err)
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/crikke/cms/cmd/contentmanagement/api"
 	_ "github.com/crikke/cms/cmd/contentmanagement/docs"
 	"github.com/crikke/cms/pkg/config"
-	"github.com/crikke/cms/pkg/contentmanagement/api"
 	"github.com/crikke/cms/pkg/db"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

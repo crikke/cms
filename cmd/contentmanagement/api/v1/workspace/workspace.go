@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/crikke/cms/pkg/contentmanagement/api/handlers"
-	"github.com/crikke/cms/pkg/contentmanagement/app"
-	"github.com/crikke/cms/pkg/contentmanagement/app/command"
-	"github.com/crikke/cms/pkg/contentmanagement/app/query"
+	"github.com/crikke/cms/cmd/contentmanagement/api/handlers"
+	"github.com/crikke/cms/cmd/contentmanagement/app"
+	"github.com/crikke/cms/cmd/contentmanagement/app/command"
+	"github.com/crikke/cms/cmd/contentmanagement/app/query"
 	"github.com/go-chi/chi/v5"
 )
 

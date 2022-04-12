@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/crikke/cms/pkg/contentmanagement/app"
+	"github.com/crikke/cms/cmd/contentmanagement/app"
 	"github.com/crikke/cms/pkg/workspace"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"

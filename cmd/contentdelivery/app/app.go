@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/crikke/cms/pkg/contentdelivery/app/query"
+	"github.com/crikke/cms/cmd/contentdelivery/app/query"
 )
 
 type Queries struct {

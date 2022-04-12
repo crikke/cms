@@ -42,12 +42,7 @@ type UpdateContentDefinition struct {
 	Name                string    `bson:"omitempty"`
 	Description         string    `bson:"omitempty"`
 	WorkspaceId         uuid.UUID
-	PropertyDefinitions map[string]struct {
-		ID          uuid.UUID              `bson:_id, omitempty"`
-		Description string                 `bson:"description, omitempty"`
-		Localized   bool                   `bson:"localized, omitempty"`
-		Validators  map[string]interface{} `bson:"validators, omitempty"`
-	}
+	PropertyDefinitions map[string]contentdefinition.PropertyDefinition
 }
 
 type UpdateContentDefinitionHandler struct {
