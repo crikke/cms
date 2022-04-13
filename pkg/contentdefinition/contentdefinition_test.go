@@ -1,5 +1,3 @@
-//go:build unit
-
 package contentdefinition
 
 import (
@@ -62,7 +60,6 @@ func Test_NewPropertyDefinition(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			f := ContentDefinitionFactory{}
-
 			err := f.NewPropertyDefinition(&test.contentDef, "test", test.typ, test.desc, test.localized)
 
 			if test.expectedErr != "" && assert.Error(t, err) {
@@ -223,6 +220,84 @@ func Test_UpdatePropertyDefinition(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expect, test.contentDef.Propertydefinitions["prop"])
+		})
+	}
+}
+
+func Test_UpdatePropertyDefinitionRange(t *testing.T) {
+	tests := []struct {
+		name       string
+		contentdef ContentDefinition
+		properties map[string]PropertyDefinition
+		expect     map[string]PropertyDefinition
+		expectErr  string
+	}{
+		{
+			name: "swap property names",
+			contentdef: ContentDefinition{
+				Propertydefinitions: map[string]PropertyDefinition{
+					"prop1": PropertyDefinition{
+						ID: uuid.MustParse("b537b379-5da1-49df-b39e-a2b5d10e5a2e"),
+					},
+					"prop2": PropertyDefinition{
+						ID: uuid.MustParse("a43bcfec-de6c-40cf-af37-3748e27ccb70"),
+					},
+				},
+			},
+			properties: map[string]PropertyDefinition{
+				"prop2": PropertyDefinition{
+					ID: uuid.MustParse("b537b379-5da1-49df-b39e-a2b5d10e5a2e"),
+				},
+				"prop1": PropertyDefinition{
+					ID: uuid.MustParse("a43bcfec-de6c-40cf-af37-3748e27ccb70"),
+				},
+			},
+			expect: map[string]PropertyDefinition{
+				"prop2": PropertyDefinition{
+					ID: uuid.MustParse("b537b379-5da1-49df-b39e-a2b5d10e5a2e"),
+				},
+				"prop1": PropertyDefinition{
+					ID: uuid.MustParse("a43bcfec-de6c-40cf-af37-3748e27ccb70"),
+				},
+			},
+			expectErr: ErrPropertyAlreadyExists,
+		},
+		{
+			name: "update property ok",
+			contentdef: ContentDefinition{
+				Propertydefinitions: map[string]PropertyDefinition{
+					"1": PropertyDefinition{
+						ID:        uuid.MustParse("a43bcfec-de6c-40cf-af37-3748e27ccb70"),
+						Localized: true},
+				},
+			},
+			properties: map[string]PropertyDefinition{
+				"1": PropertyDefinition{
+					ID:        uuid.MustParse("a43bcfec-de6c-40cf-af37-3748e27ccb70"),
+					Localized: false,
+				},
+			},
+			expect: map[string]PropertyDefinition{
+				"1": PropertyDefinition{
+					ID:        uuid.MustParse("a43bcfec-de6c-40cf-af37-3748e27ccb70"),
+					Localized: false,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			f := ContentDefinitionFactory{}
+
+			err := f.UpdatePropertyDefinitions(&test.contentdef, test.properties)
+			if test.expectErr != "" {
+				if assert.Error(t, err) {
+					assert.Equal(t, err.Error(), test.expectErr)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

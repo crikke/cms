@@ -71,47 +71,10 @@ func (c UpdateContentDefinitionHandler) Handle(ctx context.Context, cmd UpdateCo
 			cd.Description = cmd.Description
 		}
 
-		// All propertydefinitions that havent been updated will be deleted.
-		updatedProps := make(map[uuid.UUID]contentdefinition.PropertyDefinition, 0)
-
-		for _, prop := range cmd.PropertyDefinitions {
-			c.ContentDefinitionFactory.UpdatePropertyDefinition(
-				cd,
-				prop.ID,
-				prop.Description,
-				prop.Localized,
-				prop.Validators)
-			updatedProps[prop.ID] = contentdefinition.PropertyDefinition{
-				ID:          prop.ID,
-				Description: prop.Description,
-				Localized:   prop.Localized,
-				Validators:  prop.Validators,
-			}
-
+		if err = c.ContentDefinitionFactory.UpdatePropertyDefinitions(cd, cmd.PropertyDefinitions); err != nil {
+			return nil, err
 		}
 
-		// check for props that should be deleted
-		for name, prop := range cd.Propertydefinitions {
-
-			if _, ok := updatedProps[prop.ID]; ok {
-				continue
-			}
-
-			delete(cd.Propertydefinitions, name)
-
-		}
-		// todo: handle swapping propertynames
-		for name, prop := range cmd.PropertyDefinitions {
-			_, ok := cd.Propertydefinitions[name]
-
-			if ok {
-				continue
-			}
-
-			if err := c.ContentDefinitionFactory.UpdatePropertyDefinitionName(cd, prop.ID, name); err != nil {
-				return nil, err
-			}
-		}
 		return cd, nil
 	})
 	return

@@ -293,172 +293,172 @@ func (c endpoint) UpdateContentDefinition() http.HandlerFunc {
 	}
 }
 
-// CreatePropertyDefinition 	godoc
-// @Summary 					Creates a new propertydefinition
-// @Description 				Creates a new propertydefinition
-//
-// @Tags 						contentdefinition
-// @Accept 						json
-// @Produces 					json
-// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						body		body	CreatePropertyDefinitionBody	true 	"request body"
-// @Failure						default		{object}	models.GenericError
-// @Success						201			{object}	models.OKResult
-// @Header						201			{string}	Location
-// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions [post]
-func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
-	// ! TODO Type should not be string, probably enum
+// // CreatePropertyDefinition 	godoc
+// // @Summary 					Creates a new propertydefinition
+// // @Description 				Creates a new propertydefinition
+// //
+// // @Tags 						contentdefinition
+// // @Accept 						json
+// // @Produces 					json
+// // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						body		body	CreatePropertyDefinitionBody	true 	"request body"
+// // @Failure						default		{object}	models.GenericError
+// // @Success						201			{object}	models.OKResult
+// // @Header						201			{string}	Location
+// // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions [post]
+// func (c endpoint) CreatePropertyDefinition() http.HandlerFunc {
+// 	// ! TODO Type should not be string, probably enum
 
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		id := withID(r.Context())
-		ws := handlers.WithWorkspace(r.Context())
-		body := &CreatePropertyDefinitionBody{}
-		json.NewDecoder(r.Body).Decode(body)
-
-		pid, err := c.app.Commands.CreatePropertyDefinition.Handle(r.Context(), command.CreatePropertyDefinition{
-			ContentDefinitionID: id,
-			Name:                body.Name,
-			Description:         body.Description,
-			Type:                body.Type,
-			WorkspaceID:         ws.ID,
-		})
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-
-			return
-		}
-
-		url := r.URL.String()
-		w.Header().Add("Location", fmt.Sprintf("%s/%s", url, pid.String()))
-		w.WriteHeader(http.StatusCreated)
-
-	}
-}
-
-// UpdatePropertyDefinition 	godoc
-// @Summary 					Updates an property definition
-// @Description 				Updates an property definition
-//
-// @Tags 						contentdefinition
-// @Accept 						json
-// @Produces 					json
-// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						body		body	UpdatePropertyDefinitionBody	true 	"request body"
-// @Failure						default		{object}	models.GenericError
-// @Success						200			{object}	models.OKResult
-// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [put]
-// func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
-//
 // 	return func(w http.ResponseWriter, r *http.Request) {
-//
-// 		// body := &PropertyDefinition{}
-// 		ws := handlers.WithWorkspace(r.Context())
-//
+
 // 		id := withID(r.Context())
-// 		pid := withPID(r.Context())
-//
-// 		err := json.NewDecoder(r.Body).Decode(body)
-//
+// 		ws := handlers.WithWorkspace(r.Context())
+// 		body := &CreatePropertyDefinitionBody{}
+// 		json.NewDecoder(r.Body).Decode(body)
+
+// 		pid, err := c.app.Commands.CreatePropertyDefinition.Handle(r.Context(), command.CreatePropertyDefinition{
+// 			ContentDefinitionID: id,
+// 			Name:                body.Name,
+// 			Description:         body.Description,
+// 			Type:                body.Type,
+// 			WorkspaceID:         ws.ID,
+// 		})
+
 // 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 // 			return
 // 		}
-//
-// 		cmd := command.UpdatePropertyDefinition{
-// 			ContentDefinitionID:  id,
-// 			PropertyDefinitionID: pid,
-// 			Name:                 &body.Name,
-// 			Description:          &body.Description,
-// 			Localized:            &body.Localized,
-// 			Rules:                body.Validation,
-// 			WorkspaceID:          ws.ID,
-// 		}
-// 		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
-//
-// 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusBadRequest)
-// 			return
-// 		}
+
+// 		url := r.URL.String()
+// 		w.Header().Add("Location", fmt.Sprintf("%s/%s", url, pid.String()))
+// 		w.WriteHeader(http.StatusCreated)
+
 // 	}
 // }
 
-// DeletePropertyDefinition 	godoc
-// @Summary 					Deletes a propertydefinition
-// @Description 				Deletes a propertydefinition
-//
-// @Tags 						contentdefinition
-// @Accept 						json
-// @Produces 					json
-// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
-// @Failure						default		{object}	models.GenericError
-// @Success						200			{object}	models.OKResult
-// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
-func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
+// // UpdatePropertyDefinition 	godoc
+// // @Summary 					Updates an property definition
+// // @Description 				Updates an property definition
+// //
+// // @Tags 						contentdefinition
+// // @Accept 						json
+// // @Produces 					json
+// // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						body		body	UpdatePropertyDefinitionBody	true 	"request body"
+// // @Failure						default		{object}	models.GenericError
+// // @Success						200			{object}	models.OKResult
+// // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [put]
+// // func (c endpoint) UpdatePropertyDefinition() http.HandlerFunc {
+// //
+// // 	return func(w http.ResponseWriter, r *http.Request) {
+// //
+// // 		// body := &PropertyDefinition{}
+// // 		ws := handlers.WithWorkspace(r.Context())
+// //
+// // 		id := withID(r.Context())
+// // 		pid := withPID(r.Context())
+// //
+// // 		err := json.NewDecoder(r.Body).Decode(body)
+// //
+// // 		if err != nil {
+// // 			http.Error(w, err.Error(), http.StatusBadRequest)
+// // 			return
+// // 		}
+// //
+// // 		cmd := command.UpdatePropertyDefinition{
+// // 			ContentDefinitionID:  id,
+// // 			PropertyDefinitionID: pid,
+// // 			Name:                 &body.Name,
+// // 			Description:          &body.Description,
+// // 			Localized:            &body.Localized,
+// // 			Rules:                body.Validation,
+// // 			WorkspaceID:          ws.ID,
+// // 		}
+// // 		err = c.app.Commands.UpdatePropertyDefinition.Handle(r.Context(), cmd)
+// //
+// // 		if err != nil {
+// // 			http.Error(w, err.Error(), http.StatusBadRequest)
+// // 			return
+// // 		}
+// // 	}
+// // }
 
-	return func(w http.ResponseWriter, r *http.Request) {
+// // DeletePropertyDefinition 	godoc
+// // @Summary 					Deletes a propertydefinition
+// // @Description 				Deletes a propertydefinition
+// //
+// // @Tags 						contentdefinition
+// // @Accept 						json
+// // @Produces 					json
+// // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Failure						default		{object}	models.GenericError
+// // @Success						200			{object}	models.OKResult
+// // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [delete]
+// func (c endpoint) DeletePropertyDefinition() http.HandlerFunc {
 
-		id := withID(r.Context())
-		pid := withPID(r.Context())
-		ws := handlers.WithWorkspace(r.Context())
+// 	return func(w http.ResponseWriter, r *http.Request) {
 
-		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{
-			ContentDefinitionID:  id,
-			PropertyDefinitionID: pid,
-			WorkspaceID:          ws.ID,
-		})
+// 		id := withID(r.Context())
+// 		pid := withPID(r.Context())
+// 		ws := handlers.WithWorkspace(r.Context())
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+// 		err := c.app.Commands.DeletePropertyDefinition.Handle(r.Context(), command.DeletePropertyDefinition{
+// 			ContentDefinitionID:  id,
+// 			PropertyDefinitionID: pid,
+// 			WorkspaceID:          ws.ID,
+// 		})
 
-	}
-}
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			return
+// 		}
 
-// GetPropertyDefinition 	godoc
-// @Summary 					Gets a propertydefinition
-// @Description 				Gets a propertydefinition
-//
-// @Tags 						contentdefinition
-// @Accept 						json
-// @Produces 					json
-// @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
-// @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
-// @Failure						default		{object}	models.GenericError
-// @Success						200			{object}	contentdefinition.PropertyDefinition
-// @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [get]
-func (c endpoint) GetPropertyDefinition() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// 	}
+// }
 
-		id := withID(r.Context())
-		pid := withID(r.Context())
-		ws := handlers.WithWorkspace(r.Context())
+// // GetPropertyDefinition 	godoc
+// // @Summary 					Gets a propertydefinition
+// // @Description 				Gets a propertydefinition
+// //
+// // @Tags 						contentdefinition
+// // @Accept 						json
+// // @Produces 					json
+// // @Param						id			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						workspace	path	string	true 	"uuid formatted ID." format(uuid)
+// // @Param						pid			path	string	true 	"uuid formatted ID." format(uuid)
+// // @Failure						default		{object}	models.GenericError
+// // @Success						200			{object}	contentdefinition.PropertyDefinition
+// // @Router						/contentmanagement/workspaces/{workspace}/contentdefinitions/{id}/propertydefinitions/{pid} [get]
+// func (c endpoint) GetPropertyDefinition() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
 
-		pd, err := c.app.Queries.GetPropertyDefinition.Handle(r.Context(), query.GetPropertyDefinition{
-			ContentDefinitionID:  id,
-			PropertyDefinitionID: pid,
-			WorkspaceID:          ws.ID,
-		})
+// 		id := withID(r.Context())
+// 		pid := withID(r.Context())
+// 		ws := handlers.WithWorkspace(r.Context())
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		bytes, err := json.Marshal(&pd)
+// 		pd, err := c.app.Queries.GetPropertyDefinition.Handle(r.Context(), query.GetPropertyDefinition{
+// 			ContentDefinitionID:  id,
+// 			PropertyDefinitionID: pid,
+// 			WorkspaceID:          ws.ID,
+// 		})
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			return
+// 		}
+// 		bytes, err := json.Marshal(&pd)
 
-		w.Write(bytes)
-	}
-}
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			return
+// 		}
+
+// 		w.Write(bytes)
+// 	}
+// }

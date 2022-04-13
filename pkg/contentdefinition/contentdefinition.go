@@ -119,13 +119,73 @@ func (f ContentDefinitionFactory) UpdatePropertyDefinitionName(cd *ContentDefini
 			break
 		}
 	}
-
 	if pdName == "" {
 		return errors.New("property not found")
 	}
 
 	delete(cd.Propertydefinitions, pdName)
 	cd.Propertydefinitions[name] = pd
+
+	return nil
+}
+
+// This is essentialy an HTTP PUT, every propertydefinition that must be included in the argument, otherwise it is assumed to be deleted.
+func (f ContentDefinitionFactory) UpdatePropertyDefinitions(cd *ContentDefinition, propertyDefinitions map[string]PropertyDefinition) error {
+
+	// All propertydefinitions that havent been updated will be deleted.
+	updatedProps := make(map[uuid.UUID]PropertyDefinition, 0)
+
+	for _, prop := range propertyDefinitions {
+		err := f.UpdatePropertyDefinition(
+			cd,
+			prop.ID,
+			prop.Description,
+			prop.Localized,
+			prop.Validators)
+
+		updatedProps[prop.ID] = prop
+
+		if err != nil {
+			return err
+		}
+	}
+
+	// check for props that should be deleted
+	for name, prop := range cd.Propertydefinitions {
+
+		if _, ok := updatedProps[prop.ID]; ok {
+			continue
+		}
+
+		delete(cd.Propertydefinitions, name)
+
+	}
+
+	// if property exist, remove it from map and store it in collidingNames
+	// next loop, set each property again, if still collides there is an actual collsion and return error
+	// collidingNames := make(map[uuid.UUID]string)
+
+	// update property names
+	for name, prop := range propertyDefinitions {
+
+		existing, ok := cd.Propertydefinitions[name]
+
+		if ok {
+
+			// if property with name exist and the IDs isnt equal, add property to map.
+			// when all names have been updated
+			// try to resolve colliding names
+			if existing.ID != prop.ID {
+				return errors.New(ErrPropertyAlreadyExists)
+			}
+
+			continue
+		}
+
+		if err := f.UpdatePropertyDefinitionName(cd, prop.ID, name); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -137,6 +197,7 @@ func (f ContentDefinitionFactory) UpdatePropertyDefinition(cd *ContentDefinition
 		if p.ID == id {
 			pd = p
 			pdName = n
+
 			break
 		}
 	}
