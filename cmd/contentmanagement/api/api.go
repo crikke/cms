@@ -9,6 +9,7 @@ import (
 	contentdefapi "github.com/crikke/cms/cmd/contentmanagement/api/v1/contentdefinition"
 	workspaceapi "github.com/crikke/cms/cmd/contentmanagement/api/v1/workspace"
 	"github.com/crikke/cms/pkg/workspace"
+	"go.uber.org/zap"
 
 	"github.com/crikke/cms/cmd/contentmanagement/app"
 	"github.com/crikke/cms/cmd/contentmanagement/app/command"
@@ -19,7 +20,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func NewContentManagementAPI(c *mongo.Client) http.Handler {
+func NewContentManagementAPI(c *mongo.Client, log *zap.SugaredLogger) http.Handler {
 
 	// docs.SwaggerInfo.Title = "Content management API"
 	// docs.SwaggerInfo.Version = "0.1.0"
@@ -34,7 +35,7 @@ func NewContentManagementAPI(c *mongo.Client) http.Handler {
 
 	r.Route("/workspaces", func(r chi.Router) {
 
-		r.Mount("/", workspaceapi.NewWorkspaceRoute(app))
+		r.Mount("/", workspaceapi.NewWorkspaceRoute(app, log))
 		r.Route("/{workspace}", func(r chi.Router) {
 			r.Use(wsHandler.WorkspaceParamContext)
 
@@ -126,6 +127,9 @@ func initializeHandlers(c *mongo.Client) app.App {
 
 			WorkspaceCommands: app.WorkspaceCommands{
 				CreateWorkspace: command.CreateWorkspaceHandler{
+					Repo: workspaceRepo,
+				},
+				UpdateWorkspace: command.UpdateWorkspaceHandler{
 					Repo: workspaceRepo,
 				},
 				UpdateTag: command.UpdateTagHandler{

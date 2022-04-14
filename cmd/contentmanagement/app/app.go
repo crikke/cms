@@ -39,9 +39,9 @@ type Commands struct {
 
 type WorkspaceCommands struct {
 	CreateWorkspace contentcmd.CreateWorkspaceHandler
-
-	UpdateTag contentcmd.UpdateTagHandler
-	DeleteTag contentcmd.DeleteTagHandler
+	UpdateWorkspace contentcmd.UpdateWorkspaceHandler
+	UpdateTag       contentcmd.UpdateTagHandler
+	DeleteTag       contentcmd.DeleteTagHandler
 }
 
 type WorkspaceQueries struct {

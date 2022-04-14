@@ -13,11 +13,13 @@ import (
 	"github.com/go-chi/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 type Server struct {
 	// Configuration config.SiteConfiguration
 	Database *mongo.Client
+	Logger   *zap.SugaredLogger
 }
 
 // @title           Swagger Example API
@@ -32,6 +34,10 @@ type Server struct {
 // @host      localhost:8080
 // @BasePath  /
 func main() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	sugar := logger.Sugar()
 
 	serverConfig := config.LoadServerConfiguration()
 
@@ -43,6 +49,7 @@ func main() {
 
 	server := Server{
 		Database: c,
+		Logger:   sugar,
 	}
 
 	panic(server.Start())

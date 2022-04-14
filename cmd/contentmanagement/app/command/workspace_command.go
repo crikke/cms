@@ -65,3 +65,17 @@ func (h DeleteTagHandler) Handle(ctx context.Context, cmd DeleteTag) error {
 		return ws, nil
 	})
 }
+
+type UpdateWorkspace struct {
+	ID          uuid.UUID
+	Name        string
+	Description string
+}
+
+type UpdateWorkspaceHandler struct {
+	Repo workspace.WorkspaceRepository
+}
+
+func (h UpdateWorkspaceHandler) Handle(ctx context.Context, cmd UpdateWorkspace) error {
+	return nil
+}

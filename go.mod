@@ -62,6 +62,8 @@ require (
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
+	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220307203707-22a9840ba4d7 // indirect
@@ -83,5 +85,6 @@ require (
 	github.com/go-chi/cors v1.2.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/spf13/viper v1.10.1
+	go.uber.org/zap v1.21.0
 	golang.org/x/text v0.3.7
 )
